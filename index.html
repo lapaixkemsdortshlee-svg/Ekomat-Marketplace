@@ -3805,6 +3805,9 @@
             A.tab = tab; A.stack = [];
             document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
             document.getElementById("s-" + tab).classList.add("on");
+            // Restore the global topbar if a previous screen (eg. seller
+            // profile) had hidden it.
+            document.getElementById("topbar")?.classList.remove("hidden");
             const isDark = document.body.classList.contains('dark');
             document.querySelectorAll(".ntab").forEach(b => {
                 b.classList.remove("on");
@@ -10467,14 +10470,13 @@
             document.getElementById('s-seller').classList.add('on');
             document.getElementById('bottomNav').classList.add('hidden');
             document.getElementById('fab').classList.add('hidden');
-            document.getElementById('backbtn').classList.remove('hidden');
-            document.getElementById('backbtn').classList.add('flex');
-
-            // Update topbar
-            const logoEl = document.getElementById('headerLogo');
-            const titleEl = document.getElementById('toptitle');
-            if (logoEl) logoEl.style.display = 'none';
-            if (titleEl) { titleEl.style.display = 'block'; titleEl.textContent = seller.name; }
+            document.getElementById('backbtn').classList.add('hidden');
+            // Bug 2: the global #topbar (fixed, z-50, glass) was overlapping
+            // the seller's product images on scroll. This screen has its own
+            // gradient header with a back button and the seller name already,
+            // so the global topbar is redundant — hide it. goBack() restores
+            // it because navTo re-shows it for any normal tab destination.
+            document.getElementById('topbar')?.classList.add('hidden');
 
             renderSellerProfile(seller);
             window.scrollTo({ top: 0, behavior: 'instant' });
