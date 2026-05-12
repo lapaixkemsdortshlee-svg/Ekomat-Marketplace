@@ -3493,6 +3493,36 @@
         }
         window.notifyAdmins = notifyAdmins;
 
+        // ── Sales/orders count sync ───────────────────────────────────
+        // profiles.sales_count and profiles.order_count are the public
+        // counters shown on the seller profile screen and the buyer
+        // profile. There's no DB trigger keeping them in sync with the
+        // orders table, so they would otherwise stay at 0 forever. We
+        // recount from orders and overwrite — idempotent and self-healing.
+        // Called whenever an order reaches a "sale completed" state
+        // (otp_confirmed / released / completed).
+        const COMPLETED_SALE_STATUSES = ['otp_confirmed', 'released', 'completed'];
+        async function syncSaleCompletionCounts(sellerId, buyerId) {
+            if (!db) return;
+            try {
+                if (sellerId) {
+                    const { count } = await db.from('orders')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('seller_id', sellerId)
+                        .in('status', COMPLETED_SALE_STATUSES);
+                    await db.from('profiles').update({ sales_count: count || 0 }).eq('id', sellerId);
+                }
+                if (buyerId) {
+                    const { count } = await db.from('orders')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('buyer_id', buyerId)
+                        .in('status', COMPLETED_SALE_STATUSES);
+                    await db.from('profiles').update({ order_count: count || 0 }).eq('id', buyerId);
+                }
+            } catch (e) { console.warn('[syncSaleCounts]', e.message); }
+        }
+        window.syncSaleCompletionCounts = syncSaleCompletionCounts;
+
         // ══════════════════════════════════════════════════════════
         //  INIT — Splash → Auth Check → Login ou Feed
         //  Séquence: Splash 1.8s → Vérifye Supabase session → Boot ou Login
@@ -7378,6 +7408,8 @@
                 body: 'Komand "' + (o.product_title || 'pwodwi') + '" fini. Mèsi!',
                 color: '#065f46',
             });
+            // Bug 3: keep public profile counters in sync with orders
+            syncSaleCompletionCounts(o.seller_id, o.buyer_id);
             renderAdminOrders();
         }
         window.adminReleaseEscrow = adminReleaseEscrow;
@@ -8866,6 +8898,10 @@
                         body: 'Achtè a konfime resepsyon "' + (o.product_title || 'komand') + '". Lajan ap libere.',
                         color: '#065f46',
                     });
+                    // Bug 3: OTP confirmed = delivery acknowledged. Bump
+                    // the public seller sales count + buyer order count
+                    // now, even before the admin releases the escrow.
+                    syncSaleCompletionCounts(o.seller_id, o.buyer_id);
                 }
                 if (typeof renderOrderScreen === 'function') renderOrderScreen();
             } else if (data && data.locked) {
