@@ -10624,14 +10624,18 @@
             const imgHtml = p.img
                 ? `<img src="${p.img}" class="w-full h-full object-cover" alt="${p.t}"/>`
                 : prodPlaceholder(p, imgHeight);
+            // UUIDs from Supabase are strings — must be quoted in inline
+            // onclick handlers, otherwise `openProduct(abc-def-123)` parses
+            // as identifier-minus and the click silently throws.
+            const pidAttr = typeof p.id === 'string' ? `'${String(p.id).replace(/'/g, "\\'")}'` : p.id;
 
             return `
   <div class="mi cursor-pointer" style="${i % 2 === 1 ? 'margin-top:' + offset + 'px' : ''}">
     <div class="bg-surface-container-lowest rounded-xl overflow-hidden amb active:scale-[.97] transition-transform"
-         onclick="openProduct(${p.id})">
+         onclick="openProduct(${pidAttr})">
       <div class="relative w-full" style="height:${imgHeight}px;overflow:hidden">
         ${imgHtml}
-        <button onclick="event.stopPropagation();toggleFav(${p.id})"
+        <button onclick="event.stopPropagation();toggleFav(${pidAttr})"
                 class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full"
                 style="background:rgba(252,249,244,.88);backdrop-filter:blur(4px)">
           <span class="material-symbols-outlined fi" style="font-size:15px;color:${isFav ? '#f99188' : '#3d4949'}">favorite</span>
@@ -10647,7 +10651,7 @@
         </div>
         <div class="flex items-center justify-between mt-1.5">
           <p class="font-label text-on-surface-variant" style="font-size:9px">${p.l} · ${p.r}★</p>
-          <button onclick="event.stopPropagation();startOrder(${p.id})"
+          <button onclick="event.stopPropagation();startOrder(${pidAttr})"
                   class="flex items-center gap-1 px-2 py-1 rounded-full cta active:scale-90"
                   style="font-size:9px;font-family:'Manrope',sans-serif;font-weight:700">
             Achte
