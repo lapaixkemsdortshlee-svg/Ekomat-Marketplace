@@ -3962,6 +3962,43 @@
             setTimeout(() => { lb.style.pointerEvents = 'none'; img.src = ''; }, 250);
         }
 
+        // Detail screen carousel: scroll by one viewport-width slide. dir=+1
+        // for next, dir=-1 for previous. Wraps at edges so the user can loop
+        // through all photos with the chevrons alone.
+        function detailCarouselScroll(dir) {
+            const car = document.getElementById('detailCarousel');
+            if (!car) return;
+            const w = car.offsetWidth || 0;
+            if (w <= 0) return;
+            const maxLeft = car.scrollWidth - w;
+            let target = car.scrollLeft + dir * w;
+            // Loop: jump to opposite edge when overshooting
+            if (target < 0) target = Math.max(0, maxLeft);
+            else if (target > maxLeft + 4) target = 0;
+            car.scrollTo({ left: target, behavior: 'smooth' });
+        }
+        window.detailCarouselScroll = detailCarouselScroll;
+
+        // Sync the dot indicator with the carousel scroll position. Attached
+        // after the innerHTML is set; safe to call multiple times.
+        function attachDetailCarouselDots() {
+            const car = document.getElementById('detailCarousel');
+            const dotsWrap = document.getElementById('detailDots');
+            if (!car || !dotsWrap) return;
+            const dots = Array.from(dotsWrap.children);
+            const update = () => {
+                const w = car.offsetWidth || 1;
+                const idx = Math.round(car.scrollLeft / w);
+                dots.forEach((d, i) => {
+                    d.style.background = i === idx ? 'rgba(252,249,244,.95)' : 'rgba(252,249,244,.5)';
+                    d.style.width = i === idx ? '14px' : '6px';
+                });
+            };
+            car.addEventListener('scroll', update, { passive: true });
+            update();
+        }
+        window.attachDetailCarouselDots = attachDetailCarouselDots;
+
         function goBack() {
             // If leaving the chat screen, unsubscribe realtime + reconcile unread count
             const onChat = document.getElementById('s-chat')?.classList.contains('on');
@@ -3993,8 +4030,11 @@
             document.getElementById("s-detail").classList.add("on");
             document.getElementById("bottomNav").classList.add("hidden");
             document.getElementById("fab").classList.add("hidden");
-            document.getElementById("backbtn").classList.remove("hidden");
-            document.getElementById("backbtn").classList.add("flex");
+            // Bug 2 (suite): the detail carousel has its own floating back
+            // button overlaid on the image. The global #topbar was sitting
+            // over the picture — hide it. navTo restores it on goBack.
+            document.getElementById("topbar")?.classList.add("hidden");
+            document.getElementById("backbtn").classList.add("hidden");
             document.getElementById("toptitle").textContent = p.t;
 
             // Bug G: support multiple product photos. Prefer the images
@@ -4014,17 +4054,26 @@
                     return `<div class="flex-shrink-0 w-full h-full snap-center cursor-pointer flex items-center justify-center" onclick="openProductLightbox('${safeSrc}')"><img src="${src}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/></div>`;
                 }).join('');
             const dotsHTML = imgs.length > 1
-                ? `<div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">${imgs.map((_, idx) => `<span class="block rounded-full" style="width:6px;height:6px;background:${idx === 0 ? 'rgba(252,249,244,.95)' : 'rgba(252,249,244,.5)'}"></span>`).join('')}</div>`
+                ? `<div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" id="detailDots">${imgs.map((_, idx) => `<span class="block rounded-full transition-all" style="width:6px;height:6px;background:${idx === 0 ? 'rgba(252,249,244,.95)' : 'rgba(252,249,244,.5)'}"></span>`).join('')}</div>`
                 : '';
+            // Chevron navigation (only when there's more than one image)
+            const chevronsHTML = imgs.length > 1 ? `
+      <button onclick="detailCarouselScroll(-1)" class="absolute top-1/2 left-3 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)" aria-label="Foto presedan">
+        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:22px">chevron_left</span>
+      </button>
+      <button onclick="detailCarouselScroll(1)" class="absolute top-1/2 right-3 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)" aria-label="Foto pwochen">
+        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:22px">chevron_right</span>
+      </button>` : '';
 
             document.getElementById("detailContent").innerHTML = `
     <div class="relative">
-      <div class="w-full flex overflow-x-auto snap-x snap-mandatory noscroll" style="height:340px;background:#f0ede8">${carouselHTML}</div>
+      <div id="detailCarousel" class="w-full flex overflow-x-auto snap-x snap-mandatory noscroll" style="height:340px;background:#f0ede8">${carouselHTML}</div>
       ${dotsHTML}
-      <button onclick="goBack()" class="absolute top-10 left-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
+      ${chevronsHTML}
+      <button onclick="goBack()" class="absolute top-10 left-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
         <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">arrow_back</span>
       </button>
-      <button onclick="toggleFav(${dpid})" class="absolute top-10 right-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
+      <button onclick="toggleFav(${dpid})" class="absolute top-10 right-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
         <span class="material-symbols-outlined fi" style="font-size:17px;color:${A.favs.has(p.id) ? '#f99188' : '#3d4949'}">favorite</span>
       </button>
     </div>
@@ -4121,6 +4170,8 @@
             track("view", p.c);
             // Rann pwodwi similè yo apre yon ti délai
             setTimeout(() => renderSimilarProducts(p), 80);
+            // Wire up the carousel dot indicator now that the DOM exists
+            attachDetailCarouselDots();
         }
 
         function selSz(el) { el.closest('div').querySelectorAll('.szb').forEach(b => { b.className = b.className.replace('bg-primary text-white', 'bg-surface-container text-on-surface-variant'); }); el.classList.remove('bg-surface-container', 'text-on-surface-variant'); el.classList.add('bg-primary', 'text-white'); }
