@@ -3052,6 +3052,63 @@
             </div>
         </div>
 
+        <!-- Notifikasyon detaye (Bug 4) -->
+        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Notifikasyon detaye</p>
+        <div class="bg-surface-container-lowest rounded-xl amb overflow-hidden mb-4">
+            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
+                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">shopping_bag</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-headline font-bold text-sm text-on-surface">Komand</p>
+                    <p class="font-label text-xs text-on-surface-variant">Komand nouvo, peman, livrezon</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                    <input type="checkbox" id="notifTog-order" class="sr-only peer" onchange="setNotifPref('order', this.checked)"/>
+                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="notifTogBg-order" style="background:#00666f"></div>
+                </label>
+            </div>
+            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
+                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">chat</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-headline font-bold text-sm text-on-surface">Mesaj</p>
+                    <p class="font-label text-xs text-on-surface-variant">Chat ak nòt vokal</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                    <input type="checkbox" id="notifTog-chat" class="sr-only peer" onchange="setNotifPref('chat', this.checked)"/>
+                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="notifTogBg-chat" style="background:#00666f"></div>
+                </label>
+            </div>
+            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
+                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">info</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-headline font-bold text-sm text-on-surface">Sistèm</p>
+                    <p class="font-label text-xs text-on-surface-variant">Verifikasyon, ban, anons</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                    <input type="checkbox" id="notifTog-system" class="sr-only peer" onchange="setNotifPref('system', this.checked)"/>
+                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="notifTogBg-system" style="background:#00666f"></div>
+                </label>
+            </div>
+            <div class="flex items-center gap-3 p-4">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
+                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">local_offer</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-headline font-bold text-sm text-on-surface">Pwomosyon</p>
+                    <p class="font-label text-xs text-on-surface-variant">Flash deals ak rabè</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                    <input type="checkbox" id="notifTog-promo" class="sr-only peer" onchange="setNotifPref('promo', this.checked)"/>
+                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="notifTogBg-promo" style="background:#00666f"></div>
+                </label>
+            </div>
+        </div>
+
         <!-- Son & Vibrasyon -->
         <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Son & Vibrasyon</p>
         <div class="bg-surface-container-lowest rounded-xl amb overflow-hidden mb-4">
@@ -3068,7 +3125,7 @@
                     <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="soundToggleBg" style="background:#00666f"></div>
                 </label>
             </div>
-            <div class="flex items-center gap-3 p-4">
+            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
                     <span class="material-symbols-outlined fi text-primary" style="font-size:18px">vibration</span>
                 </div>
@@ -3080,6 +3137,21 @@
                     <input type="checkbox" id="vibrateCheck" class="sr-only peer" checked onchange="toggleVibration(this.checked)"/>
                     <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="vibrateToggleBg" style="background:#00666f"></div>
                 </label>
+            </div>
+            <!-- Bug 4: vibration pattern picker -->
+            <div class="flex items-center gap-3 p-4">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
+                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">graphic_eq</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-headline font-bold text-sm text-on-surface">Tip vibrasyon</p>
+                    <p class="font-label text-xs text-on-surface-variant">Klike pou tande modèl la</p>
+                </div>
+                <div class="flex items-center gap-1 rounded-full p-1" style="background:#e5e2dd">
+                    <button id="vibPat-short" onclick="setVibratePattern('short')" class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all" style="background:#00666f;color:#fff">Kout</button>
+                    <button id="vibPat-medium" onclick="setVibratePattern('medium')" class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all" style="background:transparent;color:#3d4949">Mwayen</button>
+                    <button id="vibPat-long" onclick="setVibratePattern('long')" class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all" style="background:transparent;color:#3d4949">Long</button>
+                </div>
             </div>
         </div>
 
@@ -3493,6 +3565,36 @@
         }
         window.notifyAdmins = notifyAdmins;
 
+        // ── Sales/orders count sync ───────────────────────────────────
+        // profiles.sales_count and profiles.order_count are the public
+        // counters shown on the seller profile screen and the buyer
+        // profile. There's no DB trigger keeping them in sync with the
+        // orders table, so they would otherwise stay at 0 forever. We
+        // recount from orders and overwrite — idempotent and self-healing.
+        // Called whenever an order reaches a "sale completed" state
+        // (otp_confirmed / released / completed).
+        const COMPLETED_SALE_STATUSES = ['otp_confirmed', 'released', 'completed'];
+        async function syncSaleCompletionCounts(sellerId, buyerId) {
+            if (!db) return;
+            try {
+                if (sellerId) {
+                    const { count } = await db.from('orders')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('seller_id', sellerId)
+                        .in('status', COMPLETED_SALE_STATUSES);
+                    await db.from('profiles').update({ sales_count: count || 0 }).eq('id', sellerId);
+                }
+                if (buyerId) {
+                    const { count } = await db.from('orders')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('buyer_id', buyerId)
+                        .in('status', COMPLETED_SALE_STATUSES);
+                    await db.from('profiles').update({ order_count: count || 0 }).eq('id', buyerId);
+                }
+            } catch (e) { console.warn('[syncSaleCounts]', e.message); }
+        }
+        window.syncSaleCompletionCounts = syncSaleCompletionCounts;
+
         // ══════════════════════════════════════════════════════════
         //  INIT — Splash → Auth Check → Login ou Feed
         //  Séquence: Splash 1.8s → Vérifye Supabase session → Boot ou Login
@@ -3805,6 +3907,9 @@
             A.tab = tab; A.stack = [];
             document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
             document.getElementById("s-" + tab).classList.add("on");
+            // Restore the global topbar if a previous screen (eg. seller
+            // profile) had hidden it.
+            document.getElementById("topbar")?.classList.remove("hidden");
             const isDark = document.body.classList.contains('dark');
             document.querySelectorAll(".ntab").forEach(b => {
                 b.classList.remove("on");
@@ -7375,6 +7480,8 @@
                 body: 'Komand "' + (o.product_title || 'pwodwi') + '" fini. Mèsi!',
                 color: '#065f46',
             });
+            // Bug 3: keep public profile counters in sync with orders
+            syncSaleCompletionCounts(o.seller_id, o.buyer_id);
             renderAdminOrders();
         }
         window.adminReleaseEscrow = adminReleaseEscrow;
@@ -8863,6 +8970,10 @@
                         body: 'Achtè a konfime resepsyon "' + (o.product_title || 'komand') + '". Lajan ap libere.',
                         color: '#065f46',
                     });
+                    // Bug 3: OTP confirmed = delivery acknowledged. Bump
+                    // the public seller sales count + buyer order count
+                    // now, even before the admin releases the escrow.
+                    syncSaleCompletionCounts(o.seller_id, o.buyer_id);
                 }
                 if (typeof renderOrderScreen === 'function') renderOrderScreen();
             } else if (data && data.locked) {
@@ -9262,6 +9373,23 @@
             const vb = document.getElementById('vibrateToggleBg');
             if (vc) vc.checked = VIBRATE_ON;
             if (vb) vb.style.background = VIBRATE_ON ? '#00666f' : '#e5e2dd';
+
+            // Bug 4: per-type notif prefs + vibration pattern
+            const prefs = getNotifPrefs();
+            ['order','chat','system','promo'].forEach(t => {
+                const chk = document.getElementById('notifTog-' + t);
+                const bgEl = document.getElementById('notifTogBg-' + t);
+                if (chk) chk.checked = prefs[t] !== false;
+                if (bgEl) bgEl.style.background = prefs[t] !== false ? '#00666f' : '#e5e2dd';
+            });
+            const curPat = getVibratePattern();
+            ['short','medium','long'].forEach(k => {
+                const btn = document.getElementById('vibPat-' + k);
+                if (btn) {
+                    btn.style.background = k === curPat ? '#00666f' : 'transparent';
+                    btn.style.color = k === curPat ? '#fff' : '#3d4949';
+                }
+            });
         }
         function closeSheets() { document.getElementById("scrim").classList.remove("on"); document.querySelectorAll(".sheet").forEach(s => s.classList.remove("on")); }
 
@@ -10122,6 +10250,66 @@
             toast(on ? 'Vibrasyon aktive' : 'Vibrasyon dezaktive');
         }
 
+        // ── Bug 4: per-type notification prefs + vibration patterns ──
+        // Default: all 4 notification types enabled, short pulse pattern.
+        const DEFAULT_NOTIF_PREFS = { order: true, chat: true, system: true, promo: true };
+        const VIBRATE_PATTERNS = {
+            short:  30,
+            medium: 100,
+            long:   [80, 40, 80, 40, 150],
+        };
+        function getNotifPrefs() {
+            try {
+                const raw = localStorage.getItem('aym_notif_prefs');
+                if (!raw) return { ...DEFAULT_NOTIF_PREFS };
+                return { ...DEFAULT_NOTIF_PREFS, ...JSON.parse(raw) };
+            } catch (e) { return { ...DEFAULT_NOTIF_PREFS }; }
+        }
+        function setNotifPref(type, on) {
+            const prefs = getNotifPrefs();
+            prefs[type] = !!on;
+            localStorage.setItem('aym_notif_prefs', JSON.stringify(prefs));
+            const bg = document.getElementById('notifTogBg-' + type);
+            if (bg) bg.style.background = prefs[type] ? '#00666f' : '#e5e2dd';
+        }
+        window.setNotifPref = setNotifPref;
+
+        function getVibratePattern() {
+            return localStorage.getItem('aym_vibrate_pattern') || 'short';
+        }
+        function setVibratePattern(key) {
+            if (!VIBRATE_PATTERNS[key]) return;
+            localStorage.setItem('aym_vibrate_pattern', key);
+            ['short','medium','long'].forEach(k => {
+                const btn = document.getElementById('vibPat-' + k);
+                if (btn) {
+                    btn.style.background = k === key ? '#00666f' : 'transparent';
+                    btn.style.color = k === key ? '#fff' : '#3d4949';
+                }
+            });
+            // Preview the pattern when the user picks one
+            if (VIBRATE_ON && navigator.vibrate) navigator.vibrate(VIBRATE_PATTERNS[key]);
+        }
+        window.setVibratePattern = setVibratePattern;
+
+        // Single entry point for vibration — replaces direct navigator.vibrate
+        // calls so that pattern + on/off state are respected uniformly.
+        function vibrate() {
+            if (!VIBRATE_ON || !navigator.vibrate) return;
+            navigator.vibrate(VIBRATE_PATTERNS[getVibratePattern()] || 30);
+        }
+        window.vibrate = vibrate;
+
+        // Returns true if notifications of the given type should ping the
+        // current user (sound + vibration). DB rows are still inserted —
+        // this only gates the local cue.
+        function shouldCueNotif(type) {
+            const t = (type || 'system');
+            const prefs = getNotifPrefs();
+            return prefs[t] !== false;
+        }
+        window.shouldCueNotif = shouldCueNotif;
+
         function playNotifSound() {
             if (!SOUND_ON) return;
             try {
@@ -10467,14 +10655,13 @@
             document.getElementById('s-seller').classList.add('on');
             document.getElementById('bottomNav').classList.add('hidden');
             document.getElementById('fab').classList.add('hidden');
-            document.getElementById('backbtn').classList.remove('hidden');
-            document.getElementById('backbtn').classList.add('flex');
-
-            // Update topbar
-            const logoEl = document.getElementById('headerLogo');
-            const titleEl = document.getElementById('toptitle');
-            if (logoEl) logoEl.style.display = 'none';
-            if (titleEl) { titleEl.style.display = 'block'; titleEl.textContent = seller.name; }
+            document.getElementById('backbtn').classList.add('hidden');
+            // Bug 2: the global #topbar (fixed, z-50, glass) was overlapping
+            // the seller's product images on scroll. This screen has its own
+            // gradient header with a back button and the seller name already,
+            // so the global topbar is redundant — hide it. goBack() restores
+            // it because navTo re-shows it for any normal tab destination.
+            document.getElementById('topbar')?.classList.add('hidden');
 
             renderSellerProfile(seller);
             window.scrollTo({ top: 0, behavior: 'instant' });
@@ -10624,14 +10811,18 @@
             const imgHtml = p.img
                 ? `<img src="${p.img}" class="w-full h-full object-cover" alt="${p.t}"/>`
                 : prodPlaceholder(p, imgHeight);
+            // UUIDs from Supabase are strings — must be quoted in inline
+            // onclick handlers, otherwise `openProduct(abc-def-123)` parses
+            // as identifier-minus and the click silently throws.
+            const pidAttr = typeof p.id === 'string' ? `'${String(p.id).replace(/'/g, "\\'")}'` : p.id;
 
             return `
   <div class="mi cursor-pointer" style="${i % 2 === 1 ? 'margin-top:' + offset + 'px' : ''}">
     <div class="bg-surface-container-lowest rounded-xl overflow-hidden amb active:scale-[.97] transition-transform"
-         onclick="openProduct(${p.id})">
+         onclick="openProduct(${pidAttr})">
       <div class="relative w-full" style="height:${imgHeight}px;overflow:hidden">
         ${imgHtml}
-        <button onclick="event.stopPropagation();toggleFav(${p.id})"
+        <button onclick="event.stopPropagation();toggleFav(${pidAttr})"
                 class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full"
                 style="background:rgba(252,249,244,.88);backdrop-filter:blur(4px)">
           <span class="material-symbols-outlined fi" style="font-size:15px;color:${isFav ? '#f99188' : '#3d4949'}">favorite</span>
@@ -10647,7 +10838,7 @@
         </div>
         <div class="flex items-center justify-between mt-1.5">
           <p class="font-label text-on-surface-variant" style="font-size:9px">${p.l} · ${p.r}★</p>
-          <button onclick="event.stopPropagation();startOrder(${p.id})"
+          <button onclick="event.stopPropagation();startOrder(${pidAttr})"
                   class="flex items-center gap-1 px-2 py-1 rounded-full cta active:scale-90"
                   style="font-size:9px;font-family:'Manrope',sans-serif;font-weight:700">
             Achte
@@ -11283,7 +11474,12 @@
                     });
                     if (NOTIFS.length > 50) NOTIFS.length = 50;
                     updateNotifBadge();
-                    if (typeof playNotifSound === 'function') playNotifSound();
+                    // Bug 4: only cue sound + vibration if the user opted in
+                    // for this notification type.
+                    if (shouldCueNotif(n.type)) {
+                        if (typeof playNotifSound === 'function') playNotifSound();
+                        if (typeof vibrate === 'function') vibrate();
+                    }
                     // Re-render sheet if open
                     const sheet = document.getElementById('notifSheet');
                     if (sheet && sheet.classList.contains('on')) renderNotifs('all');
