@@ -11339,25 +11339,114 @@
         if (!db) { toast('Supabase pa konekte'); return; }
         showAuthLoader('Ap kreye kont...');
         try {
+            // emailRedirectTo: the link in the confirmation email returns the
+            // user to the current origin (Vercel prod or dev). Without this,
+            // Supabase falls back to its dashboard "Site URL" config which
+            // is often unset → the confirmation link 404s or the email is
+            // silently dropped.
+            const redirectTo = window.location.origin + window.location.pathname;
             const { data, error } = await db.auth.signUp({
                 email, password,
-                options: { data: { first_name: firstName, last_name: lastName, role: 'buyer' } }
+                options: {
+                    data: { first_name: firstName, last_name: lastName, role: 'buyer' },
+                    emailRedirectTo: redirectTo,
+                }
             });
             if (error) {
                 hideAuthLoader();
-                if (error.message.includes('already registered')) toast('Imèl sa a deja anrejistre. Eseye konekte.');
-                else if (error.message.includes('password')) toast('Modpas twò fèb. 6 karaktè minimòm.');
-                else toast('Erè: ' + error.message);
+                const msg = (error.message || '').toLowerCase();
+                if (msg.includes('already registered') || msg.includes('already been registered')) {
+                    toast('Imèl sa a deja anrejistre. Eseye konekte.');
+                } else if (msg.includes('password')) {
+                    toast('Modpas twò fèb. 6 karaktè minimòm.');
+                } else if (msg.includes('rate limit') || msg.includes('over_email_send_rate_limit') || error.status === 429) {
+                    toast('Twòp imèl voye nan dènye èdtan an — eseye ankò nan kèk minit.');
+                } else {
+                    toast('Erè: ' + error.message);
+                }
                 return;
             }
+            hideAuthLoader();
             if (data.user && !data.session) {
-                // Email confirmation required
-                hideAuthLoader();
-                toast('Tcheke imèl ou pou konfime kont ou!');
+                // Email confirmation required — show a rich panel with
+                // resend + spam folder hint instead of just a toast.
+                showSignupCheckInbox(email);
             }
             // If auto-confirmed, onAuthStateChange handles the rest
         } catch(e) { hideAuthLoader(); toast('Erè koneksyon.'); }
     }
+
+    // Post-signup: shows a persistent banner above the auth form telling
+    // the user to check their inbox (including spam) with a "resend" CTA.
+    // Reuses the auth screen — no new sheet needed.
+    function showSignupCheckInbox(email) {
+        const wrap = document.getElementById('emailAuthForm');
+        if (!wrap) { toast('Tcheke imèl ou pou konfime kont ou!'); return; }
+        const safeEmail = String(email).replace(/[<>"']/g, '');
+        let banner = document.getElementById('signupInboxBanner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'signupInboxBanner';
+            wrap.parentNode.insertBefore(banner, wrap);
+        }
+        banner.className = 'bg-surface-container-lowest rounded-2xl p-5 amb mb-3';
+        banner.innerHTML = `
+            <div class="flex items-start gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center" style="background:rgba(0,102,111,.12)">
+                    <span class="material-symbols-outlined fi text-primary" style="font-size:22px">mark_email_read</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-headline font-extrabold text-base text-on-surface tracking-tight">Tcheke imèl ou</h3>
+                    <p class="font-body text-sm text-on-surface-variant mt-0.5">Nou voye yon lyen konfimasyon sou <strong class="text-on-surface" id="signupInboxEmail">${safeEmail}</strong></p>
+                    <p class="font-label text-xs text-on-surface-variant mt-1.5">Pa wè li? Tcheke dosye <strong>Spam</strong> oswa <strong>Promotions</strong>.</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="resendSignupConfirmation()" id="resendConfBtn" class="flex-1 py-2.5 rounded-xl font-label font-bold text-sm active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">
+                    <span class="material-symbols-outlined align-middle mr-1" style="font-size:14px">forward_to_inbox</span>
+                    Renvoye imèl konfimasyon
+                </button>
+                <button onclick="document.getElementById('signupInboxBanner')?.remove();" class="px-3 py-2.5 rounded-xl font-label font-bold text-sm bg-surface-container text-on-surface-variant active:scale-95">Fèmen</button>
+            </div>`;
+        A._lastSignupEmail = email;
+    }
+    window.showSignupCheckInbox = showSignupCheckInbox;
+
+    async function resendSignupConfirmation() {
+        const email = A._lastSignupEmail
+            || document.getElementById('authEmail')?.value?.trim()
+            || document.getElementById('signupInboxEmail')?.textContent?.trim();
+        if (!email) { toast('Pa gen imèl pou renvoye'); return; }
+        if (!db) { toast('Supabase pa konekte'); return; }
+        const btn = document.getElementById('resendConfBtn');
+        if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+        try {
+            const redirectTo = window.location.origin + window.location.pathname;
+            const { error } = await db.auth.resend({
+                type: 'signup',
+                email,
+                options: { emailRedirectTo: redirectTo },
+            });
+            if (error) {
+                const msg = (error.message || '').toLowerCase();
+                if (msg.includes('rate limit') || msg.includes('over_email_send_rate_limit') || error.status === 429) {
+                    toast('Tann kèk minit avan ou demande yon lòt imèl.');
+                } else {
+                    toast('Erè: ' + error.message);
+                }
+            } else {
+                toast('Imèl konfimasyon voye ankò ✓');
+            }
+        } catch (e) {
+            toast('Erè koneksyon');
+        } finally {
+            if (btn) {
+                // Disable for 30s to discourage spam-clicking past the rate limit
+                setTimeout(() => { btn.disabled = false; btn.style.opacity = '1'; }, 30000);
+            }
+        }
+    }
+    window.resendSignupConfirmation = resendSignupConfirmation;
 
     async function supabaseEmailLogin(email, password) {
         if (!db) { toast('Supabase pa konekte'); return; }
