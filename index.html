@@ -9586,10 +9586,11 @@
                 attributionControl: false,
             });
 
-            // Tiles OpenStreetMap (gratuit, pas de clé)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            // Tiles LocationIQ — tout kat la rete andan app la
+            L.tileLayer('https://{s}-tiles.locationiq.com/v3/streets/r/{z}/{x}/{y}.png?key=' + LOCATIONIQ_KEY, {
                 maxZoom: 18,
-                opacity: 0.85,
+                subdomains: 'abc',
+                attribution: '© LocationIQ',
             }).addTo(MAP.leaflet);
 
             // Clic sur carte = pin personnalisé
@@ -10060,7 +10061,6 @@
                 zoneLabel = zone ? zone.label : null;
             } catch (_e) { zoneLabel = null; }
 
-            const mapsUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=15/${coords.lat}/${coords.lng}`;
             const tm = new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
 
             // Message spécial type "location" — JSON-encoded for DB persistence
@@ -10073,7 +10073,6 @@
                 type: 'location',
                 coords,
                 zone: zoneLabel,
-                mapsUrl,
                 tm,
                 t: dbContent,
             });
@@ -10109,10 +10108,9 @@
                 try {
                     const payload = JSON.parse(raw.slice(5));
                     const coords = { lat: payload.lat, lng: payload.lng };
-                    const mapsUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=15/${coords.lat}/${coords.lng}`;
                     // payload.zone = nouvo fòma; payload.nearest = ansyen mesaj.
                     const zone = payload.zone || (payload.nearest && payload.nearest.name) || null;
-                    return { type: 'location', coords, zone, mapsUrl };
+                    return { type: 'location', coords, zone };
                 } catch(e) { /* fall through */ }
             }
             if (raw.startsWith('[VOICE]')) {
@@ -10125,39 +10123,60 @@
         }
 
         // Afficher un message location dans le chat
+        // Louvri yon lokalizasyon pataje sou kat la — andan app la (LocationIQ).
+        function openSharedLocation(lat, lng) {
+            lat = +lat; lng = +lng;
+            if (!isFinite(lat) || !isFinite(lng)) { toast('Lokalizasyon pa valab'); return; }
+            openSheet('mapSheet');
+            initLeafletMap();
+            let tries = 0;
+            const apply = () => {
+                tries++;
+                if (!MAP.leaflet) { if (tries < 40) setTimeout(apply, 150); return; }
+                MAP.leaflet.invalidateSize();
+                MAP.leaflet.setView([lat, lng], 16);
+                placeCustomPin(lat, lng);
+            };
+            apply();
+        }
+        window.openSharedLocation = openSharedLocation;
+
         function locationBubble(m) {
-            const mapsUrl = m.mapsUrl || `https://www.openstreetmap.org/?mlat=${m.coords.lat}&mlon=${m.coords.lng}#map=15/${m.coords.lat}/${m.coords.lng}`;
+            const lat = +m.coords.lat, lng = +m.coords.lng;
             const align = m.s === false ? 'justify-start' : 'justify-end';
             const corner = m.s === false ? 'rounded-bl-[.25rem]' : 'rounded-br-[.25rem]';
             const title = m.s === false ? 'Lokalisasyon kliyan' : 'Lokalisasyon mwen';
+            // Aperçu kat la — imaj estatik LocationIQ (rete andan app la).
+            const staticMap = 'https://maps.locationiq.com/v3/staticmap?key=' + LOCATIONIQ_KEY
+                + '&center=' + lat + ',' + lng + '&zoom=15&size=520x180&format=png'
+                + '&markers=icon:large-red-cute|' + lat + ',' + lng;
             return `
   <div class="flex ${align}">
     <div class="max-w-[80%] rounded-[1.25rem] ${corner} overflow-hidden amb" style="background:#fff;border:1.5px solid rgba(0,102,111,.15)">
-      <!-- Mini map preview -->
-      <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">
-        <div style="height:100px;background:linear-gradient(135deg,#e8f4f4,#d4ede8);display:flex;align-items:center;justify-content:center;position:relative">
-          <svg width="100%" height="100%" style="position:absolute;inset:0;opacity:.1" viewBox="0 0 200 100">
-            <path d="M0 50 Q50 20 100 50 Q150 80 200 50" stroke="#00666f" stroke-width="2" fill="none"/>
-            <path d="M0 70 Q60 40 120 60 Q160 75 200 65" stroke="#00818c" stroke-width="1.5" fill="none"/>
-          </svg>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1">
-            <div style="width:28px;height:28px;border-radius:50% 50% 50% 0;background:#00666f;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,102,111,.3)"></div>
-            <span style="font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;color:#00666f;margin-top:4px">Wè sou Map</span>
+      <!-- Aperçu kat LocationIQ -->
+      <div onclick="openSharedLocation(${lat},${lng})" style="cursor:pointer">
+        <img src="${staticMap}" alt="Kat lokalizasyon" style="width:100%;height:120px;object-fit:cover;display:block"
+             onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div style="height:120px;background:linear-gradient(135deg,#e8f4f4,#d4ede8);display:none;align-items:center;justify-content:center">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <span class="material-symbols-outlined" style="font-size:28px;color:#00666f">map</span>
+            <span style="font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;color:#00666f">Tape pou wè sou kat</span>
           </div>
         </div>
-      </a>
+      </div>
       <!-- Info -->
       <div class="p-3">
         <p class="font-headline font-bold text-[13px] text-on-surface">${title}</p>
-        <p class="font-label text-[10px] text-on-surface-variant mt-0.5">${(+m.coords.lat).toFixed(6)}, ${(+m.coords.lng).toFixed(6)}</p>
+        <p class="font-label text-[10px] text-on-surface-variant mt-0.5">${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
         ${m.zone ? `
         <div class="flex items-center gap-1.5 mt-2 p-2 rounded-lg" style="background:rgba(0,102,111,.06)">
           <span class="material-symbols-outlined fi text-primary" style="font-size:12px">where_to_vote</span>
           <p class="font-label text-[10px] font-bold text-primary">${m.zone}</p>
         </div>` : ''}
-        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-full" style="background:#00666f;color:#fff;font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;text-decoration:none">
-          <span class="material-symbols-outlined" style="font-size:12px">directions</span> Ouvè Map
-        </a>
+        <button onclick="openSharedLocation(${lat},${lng})" class="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-full"
+          style="background:#00666f;color:#fff;font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;border:none;cursor:pointer">
+          <span class="material-symbols-outlined" style="font-size:12px">map</span> Wè sou kat la
+        </button>
         <p class="font-label text-[10px] text-on-surface-variant mt-1.5 text-right">${m.tm || ''}</p>
       </div>
     </div>
