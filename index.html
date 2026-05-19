@@ -2485,7 +2485,7 @@
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Voye Lokalisasyon</h3>
-                <p class="font-body text-xs text-on-surface-variant mt-0.5">Chwazi yon pwen kolekte oswa voye GPS ou</p>
+                <p class="font-body text-xs text-on-surface-variant mt-0.5">Chèche yon adrès, voye GPS ou oswa kalkile direksyon</p>
             </div>
             <button onclick="closeSheets()"
                 class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container active:bg-surface-container-high">
@@ -2561,11 +2561,6 @@
             <span class="material-symbols-outlined fi text-primary" style="font-size:18px">route</span>
             <p class="font-label text-xs font-bold text-primary" id="geoRouteText"></p>
         </div>
-
-        <!-- Pick-up points -->
-        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Pwen Kolekte
-            Ofisyèl</p>
-        <div class="space-y-2 mb-4" id="mapPickupList"></div>
 
         <!-- Live Tracking toggle -->
         <div class="flex items-center gap-3 p-4 rounded-xl mb-4" style="background:rgba(0,102,111,.06)">
@@ -9524,14 +9519,6 @@
         //  MODULE 1 — MAPS (Leaflet.js — zéro clé API)
         // ══════════════════════════════════════════════════════════
 
-        // Pick-up points avec coordonnées GPS réelles (Haïti)
-        const PICKUP_COORDS = [
-            { id: "dg-pv", name: "Digicel Pétion-Ville", addr: "Rue Panamericaine", lat: 18.5134, lng: -72.2855, dist: null },
-            { id: "ep-d33", name: "Épicerie Delmas 33", addr: "Angle Rue Fragneau", lat: 18.5441, lng: -72.3269, dist: null },
-            { id: "pu-d48", name: "Pick-up Delmas 48", addr: "Delmas 48", lat: 18.5521, lng: -72.3205, dist: null },
-            { id: "nt-tab", name: "Mini Market Tabarre", addr: "Route Nationale 1", lat: 18.5680, lng: -72.2980, dist: null },
-        ];
-
         // État Maps
         let MAP = {
             leaflet: null,    // instance Leaflet
@@ -9548,7 +9535,6 @@
         // Ouvrir le sheet map
         function openMapSheet() {
             openSheet('mapSheet');
-            renderPickupList();
             initLeafletMap();
         }
 
@@ -9599,26 +9585,6 @@
                 opacity: 0.85,
             }).addTo(MAP.leaflet);
 
-            // Style markers pick-up
-            const pkIcon = L.divIcon({
-                className: '',
-                html: `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:#00666f;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,102,111,.4)"></div>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 32],
-            });
-
-            // Placer les markers pick-up
-            PICKUP_COORDS.forEach(pk => {
-                const marker = L.marker([pk.lat, pk.lng], { icon: pkIcon })
-                    .addTo(MAP.leaflet)
-                    .on('click', () => selectPickupOnMap(pk));
-
-                L.popup({ offset: [0, -30], closeButton: false })
-                    .setContent(`<div style="font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;color:#1c1c19;padding:4px 8px">${pk.name}</div>`)
-                    .openOn(MAP.leaflet);
-                MAP.leaflet.closePopup();
-            });
-
             // Clic sur carte = pin personnalisé
             MAP.leaflet.on('click', (e) => {
                 const { lat, lng } = e.latlng;
@@ -9626,6 +9592,20 @@
             });
 
             setTimeout(() => MAP.leaflet.invalidateSize(), 300);
+        }
+
+        // Reverse-geocode yon pin (debounce) pou montre non zòn nan
+        // olye senp kowòdone — pa gen pwen kolekte fiks ankò.
+        let _pinGeoTimer = null;
+        function _pinReverseLabel(lat, lng) {
+            clearTimeout(_pinGeoTimer);
+            _pinGeoTimer = setTimeout(async () => {
+                try {
+                    const zone = await reverseGeocode(lat, lng);
+                    const mc = document.getElementById('mapCoords');
+                    if (mc && zone && zone.label) mc.textContent = zone.label;
+                } catch (_e) { /* kenbe kowòdone yo */ }
+            }, 600);
         }
 
         function placeCustomPin(lat, lng) {
@@ -9641,24 +9621,12 @@
             MAP.selectedPin = L.marker([lat, lng], { icon: userIcon }).addTo(MAP.leaflet);
             MAP.userCoords = { lat: lat.toFixed(6), lng: lng.toFixed(6) };
 
-            // Calculer distances vers pick-ups
-            PICKUP_COORDS.forEach(pk => {
-                pk.dist = haversine(lat, lng, pk.lat, pk.lng);
-            });
-
             document.getElementById('mapCoords').textContent =
                 `Pin: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
             document.getElementById('sendLocBtn').disabled = false;
             document.getElementById('sendLocBtn').style.background = 'linear-gradient(180deg,#00666f,#00818c)';
             document.getElementById('sendLocBtn').style.color = '#fff';
-
-            renderPickupList();  // Mettre à jour les distances
-        }
-
-        function selectPickupOnMap(pk) {
-            placeCustomPin(pk.lat, pk.lng);
-            MAP.leaflet.setView([pk.lat, pk.lng], 15);
-            document.getElementById('mapCoords').textContent = `${pk.name} — ${pk.addr}`;
+            _pinReverseLabel(lat, lng);
         }
 
         // ══════════════════════════════════════════════════════════
@@ -9846,38 +9814,6 @@
         window.geoForwardSearch = geoForwardSearch;
         window.selectGeoResult = selectGeoResult;
         window.geoDirections = geoDirections;
-
-        // Haversine distance (km)
-        function haversine(lat1, lng1, lat2, lng2) {
-            const R = 6371;
-            const dL = (lat2 - lat1) * Math.PI / 180;
-            const dG = (lng2 - lng1) * Math.PI / 180;
-            const a = Math.sin(dL / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dG / 2) ** 2;
-            return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
-        }
-
-        // Liste pick-ups avec distances
-        function renderPickupList() {
-            const sorted = [...PICKUP_COORDS].sort((a, b) =>
-                (a.dist !== null ? parseFloat(a.dist) : 99) - (b.dist !== null ? parseFloat(b.dist) : 99)
-            );
-
-            document.getElementById('mapPickupList').innerHTML = sorted.map(pk => `
-  <div class="flex items-center gap-3 p-3.5 rounded-xl cursor-pointer active:bg-surface-container-low transition-colors"
-       style="background:#f6f3ee"
-       onclick="selectPickupOnMap(${JSON.stringify(pk).replace(/"/g, '&quot;')})">
-    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.1)">
-      <span class="material-symbols-outlined fi text-primary" style="font-size:16px">location_on</span>
-    </div>
-    <div class="flex-1 min-w-0">
-      <p class="font-headline font-bold text-[13px] text-on-surface truncate">${pk.name}</p>
-      <p class="font-label text-[10px] text-on-surface-variant">${pk.addr}</p>
-    </div>
-    ${pk.dist !== null
-                    ? `<span class="font-label text-[11px] font-bold text-primary flex-shrink-0">${pk.dist} km</span>`
-                    : `<span class="font-label text-[10px] text-on-surface-variant flex-shrink-0">—</span>`}
-  </div>`).join('');
-        }
 
         // Obtenir GPS réel via navigator.geolocation
         function sendGPSLocation() {
