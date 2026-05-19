@@ -2568,7 +2568,7 @@
                 style="font-size:20px">two_wheeler</span>
             <div class="flex-1">
                 <p class="font-headline font-bold text-sm text-on-surface">Live Tracking Kousye</p>
-                <p class="font-label text-xs text-on-surface-variant">Suiv livrezon an an tan reyèl</p>
+                <p class="font-label text-xs text-on-surface-variant">Pataje pozisyon — sèlman pou yon livrezon an kou</p>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" id="liveTrackToggle" class="sr-only peer"
@@ -9529,6 +9529,13 @@
             routeLayer: null,    // polyline direksyon sou kat la
             liveTrack: false,
             liveInterval: null,
+            trackChannel: null,    // Supabase broadcast channel pou yon livrezon
+            trackOrderId: null,    // kòmand k ap swiv la
+            meTrackMarker: null,   // makè pozisyon mwen pandan swivi
+            peerMarker: null,      // makè lòt pati a (vandè/achtè)
+            trackLine: null,       // liy ant de pozisyon yo
+            myTrackPos: null,
+            peerTrackPos: null,
             zoom: 13,
         };
 
@@ -9579,10 +9586,11 @@
                 attributionControl: false,
             });
 
-            // Tiles OpenStreetMap (gratuit, pas de clé)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            // Tiles LocationIQ — tout kat la rete andan app la
+            L.tileLayer('https://{s}-tiles.locationiq.com/v3/streets/r/{z}/{x}/{y}.png?key=' + LOCATIONIQ_KEY, {
                 maxZoom: 18,
-                opacity: 0.85,
+                subdomains: 'abc',
+                attribution: '© LocationIQ',
             }).addTo(MAP.leaflet);
 
             // Clic sur carte = pin personnalisé
@@ -9627,6 +9635,37 @@
             document.getElementById('sendLocBtn').style.background = 'linear-gradient(180deg,#00666f,#00818c)';
             document.getElementById('sendLocBtn').style.color = '#fff';
             _pinReverseLabel(lat, lng);
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  Limit itilizasyon Map — 3 aksyon / jou pou chak itilizatè
+        //  (Live Tracking egzante — li pa konte nan limit sa a)
+        // ══════════════════════════════════════════════════════════
+        const MAP_DAILY_LIMIT = 3;
+        function _mapQuota() {
+            const today = new Date().toISOString().slice(0, 10);
+            let q;
+            try { q = JSON.parse(localStorage.getItem('aym_map_quota') || 'null'); }
+            catch (_) { q = null; }
+            if (!q || q.date !== today) q = { date: today, count: 0 };
+            return q;
+        }
+        function mapQuotaLeft() {
+            return Math.max(0, MAP_DAILY_LIMIT - _mapQuota().count);
+        }
+        // Konsome yon inite. Retounen true si aksyon an pèmèt.
+        function mapQuotaConsume() {
+            const q = _mapQuota();
+            if (q.count >= MAP_DAILY_LIMIT) {
+                toast('Ou rive nan limit ' + MAP_DAILY_LIMIT + ' itilizasyon Map pou jodi a');
+                return false;
+            }
+            q.count++;
+            try { localStorage.setItem('aym_map_quota', JSON.stringify(q)); } catch (_) { }
+            const left = MAP_DAILY_LIMIT - q.count;
+            toast('Itilizasyon Map: ' + q.count + '/' + MAP_DAILY_LIMIT
+                + (left ? ' — rete ' + left : ' — limit jodi a fini'));
+            return true;
         }
 
         // ══════════════════════════════════════════════════════════
@@ -9687,6 +9726,7 @@
             const box = document.getElementById('geoSuggestions');
             if (!box) return;
             if (q.length < 3) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+            if (mapQuotaLeft() <= 0) { box.classList.add('hidden'); box.innerHTML = ''; return; }
             clearTimeout(_geoAcTimer);
             _geoAcTimer = setTimeout(async () => {
                 const now = Date.now();
@@ -9718,6 +9758,7 @@
         function selectGeoResult(i) {
             const r = _geoResults[i];
             if (!r) return;
+            if (!mapQuotaConsume()) return;
             _applyGeoPick(+r.lat, +r.lon, r.display_name);
             toast('Adrès chwazi');
         }
@@ -9726,6 +9767,7 @@
         async function geoForwardSearch(q) {
             q = (q || '').trim();
             if (q.length < 3) { toast('Ekri pi plis pou chèche'); return; }
+            if (!mapQuotaConsume()) return;
             const box = document.getElementById('geoSuggestions');
             if (box) box.classList.add('hidden');
             _geoSpin(true);
@@ -9780,6 +9822,7 @@
             if (!to) { toast('Chwazi yon pwen sou kat la anvan'); return; }
             const fLat = +from.lat, fLng = +from.lng, tLat = +to.lat, tLng = +to.lng;
             if (fLat === tLat && fLng === tLng) { toast('Pwen yo nan menm kote'); return; }
+            if (!mapQuotaConsume()) return;
             const btn = document.getElementById('geoDirBtn');
             const orig = btn ? btn.innerHTML : null;
             if (btn) {
@@ -9884,30 +9927,133 @@
         function mapZoomOut() { MAP.leaflet?.setZoom(Math.max((MAP.leaflet.getZoom() || 13) - 1, 9)); }
 
         // Live Tracking toggle
-        function toggleLiveTrack(on) {
-            const bg = document.getElementById('trackToggleBg');
-            bg.style.background = on ? '#00666f' : '#e5e2dd';
-            MAP.liveTrack = on;
-
-            if (on) {
-                toast('Live tracking aktive — GPS ap aktyalize chak 10s');
-                MAP.liveInterval = setInterval(() => {
-                    if (!navigator.geolocation || !MAP.leaflet) return;
-                    navigator.geolocation.getCurrentPosition(pos => {
-                        const { latitude: lat, longitude: lng } = pos.coords;
-                        if (MAP.userMarker) MAP.userMarker.setLatLng([lat, lng]);
-                        placeCustomPin(lat, lng);
-                    });
-                }, 10000);
-            } else {
-                clearInterval(MAP.liveInterval);
-                toast('Live tracking dezaktive');
-            }
+        // ══════════════════════════════════════════════════════════
+        //  Live Tracking livrezon — vandè ↔ achtè an tan reyèl
+        //  Sèvi ak Supabase Realtime broadcast (pa gen tab/migrasyon).
+        //  Egzante de limit 3/jou a.
+        // ══════════════════════════════════════════════════════════
+        function _distKm(a, b) {
+            const R = 6371, r = x => x * Math.PI / 180;
+            const dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
+            const s = Math.sin(dLat / 2) ** 2
+                + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2;
+            return 2 * R * Math.asin(Math.sqrt(s));
         }
+        function _trackMarker(key, lat, lng, color) {
+            if (!MAP.leaflet) return;
+            if (MAP[key]) { MAP[key].setLatLng([lat, lng]); return; }
+            const icon = L.divIcon({
+                className: '',
+                html: `<div style="width:18px;height:18px;border-radius:50%;background:${color};border:3px solid #fff;box-shadow:0 0 0 5px ${color}33"></div>`,
+                iconSize: [18, 18], iconAnchor: [9, 9],
+            });
+            MAP[key] = L.marker([lat, lng], { icon }).addTo(MAP.leaflet);
+        }
+        function _updateTrackLine() {
+            if (!MAP.leaflet || !MAP.myTrackPos || !MAP.peerTrackPos) return;
+            const a = MAP.myTrackPos, b = MAP.peerTrackPos;
+            const pts = [[a.lat, a.lng], [b.lat, b.lng]];
+            if (MAP.trackLine) MAP.trackLine.setLatLngs(pts);
+            else MAP.trackLine = L.polyline(pts, {
+                color: '#00666f', weight: 3, dashArray: '6,6', opacity: .85,
+            }).addTo(MAP.leaflet);
+            try { MAP.leaflet.fitBounds(MAP.trackLine.getBounds(), { padding: [40, 40], maxZoom: 16 }); }
+            catch (_) { }
+            const km = _distKm(a, b);
+            const txt = document.getElementById('geoRouteText');
+            const info = document.getElementById('geoRouteInfo');
+            if (txt) txt.textContent = 'Livrezon — ' + km.toFixed(1) + ' km ant nou'
+                + (b.name ? ' · ' + b.name : '');
+            if (info) { info.classList.remove('hidden'); info.classList.add('flex'); }
+        }
+        function renderPeerPos(payload) {
+            if (!payload || !MAP.leaflet) return;
+            MAP.peerTrackPos = { lat: payload.lat, lng: payload.lng, name: payload.name };
+            _trackMarker('peerMarker', payload.lat, payload.lng, '#f99188');
+            _updateTrackLine();
+        }
+        function _broadcastMyPos() {
+            if (!navigator.geolocation || !MAP.trackChannel) return;
+            navigator.geolocation.getCurrentPosition(pos => {
+                const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                MAP.myTrackPos = { lat, lng };
+                _trackMarker('meTrackMarker', lat, lng, '#00666f');
+                MAP.trackChannel.send({
+                    type: 'broadcast', event: 'pos',
+                    payload: { lat, lng, role: A.user?.role || 'user', name: A.user?.name || 'Itilizatè', ts: Date.now() },
+                });
+                _updateTrackLine();
+            }, _err => { /* kenbe dènye pozisyon konnen an */ },
+               { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 });
+        }
+        async function startLiveTracking() {
+            if (!navigator.geolocation) { toast('GPS pa disponib sou aparèy ou'); return false; }
+            if (!db || !A.user?.uid) { toast('Konekte pou swiv livrezon an'); return false; }
+            const peer = (A.chatSellerId && A.chatSellerId !== A.user.uid)
+                ? A.chatSellerId
+                : (A.chatOtherId && A.chatOtherId !== A.user.uid ? A.chatOtherId : null);
+            if (!peer) { toast('Louvri yon chat ak lòt pati a pou aktive swivi a'); return false; }
+            // Live tracking sèlman pou yon kòmand an kou.
+            let order = null;
+            try {
+                const { data } = await db.from('orders')
+                    .select('id, status')
+                    .or('and(buyer_id.eq.' + A.user.uid + ',seller_id.eq.' + peer + '),'
+                        + 'and(buyer_id.eq.' + peer + ',seller_id.eq.' + A.user.uid + ')')
+                    .in('status', ['payment_verified', 'ready_for_pickup', 'picked_up'])
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                order = data && data[0];
+            } catch (e) { console.warn('[LiveTrack]', e.message); }
+            if (!order) { toast('Pa gen yon livrezon an kou pou swiv'); return false; }
+            MAP.trackOrderId = order.id;
+            MAP.trackChannel = db.channel('track:' + order.id, { config: { broadcast: { self: false } } });
+            MAP.trackChannel
+                .on('broadcast', { event: 'pos' }, ({ payload }) => renderPeerPos(payload))
+                .subscribe();
+            _broadcastMyPos();
+            MAP.liveInterval = setInterval(_broadcastMyPos, 10000);
+            toast('Swivi livrezon aktive — pozisyon ap pataje chak 10s');
+            return true;
+        }
+        function stopLiveTracking() {
+            if (MAP.liveInterval) { clearInterval(MAP.liveInterval); MAP.liveInterval = null; }
+            if (MAP.trackChannel) { try { db.removeChannel(MAP.trackChannel); } catch (_) { } MAP.trackChannel = null; }
+            ['peerMarker', 'meTrackMarker', 'trackLine'].forEach(k => {
+                if (MAP[k]) { try { MAP[k].remove(); } catch (_) { } MAP[k] = null; }
+            });
+            MAP.myTrackPos = null; MAP.peerTrackPos = null; MAP.trackOrderId = null;
+            const info = document.getElementById('geoRouteInfo');
+            if (info) { info.classList.add('hidden'); info.classList.remove('flex'); }
+        }
+        async function toggleLiveTrack(on) {
+            const bg = document.getElementById('trackToggleBg');
+            const toggle = document.getElementById('liveTrackToggle');
+            if (on) {
+                const ok = await startLiveTracking();
+                if (!ok) {
+                    if (toggle) toggle.checked = false;
+                    if (bg) bg.style.background = '#e5e2dd';
+                    MAP.liveTrack = false;
+                    return;
+                }
+                MAP.liveTrack = true;
+                if (bg) bg.style.background = '#00666f';
+            } else {
+                stopLiveTracking();
+                MAP.liveTrack = false;
+                if (bg) bg.style.background = '#e5e2dd';
+                toast('Swivi livrezon dezaktive');
+            }
+            // Refrechi bil pozisyon yo nan chat la pou badj "AN DIRÈK" parèt/disparèt.
+            if (A.chatId && typeof renderChatMsgs === 'function') renderChatMsgs(A.chatId);
+        }
+        window.toggleLiveTrack = toggleLiveTrack;
 
         // Envoyer la localisation dans le chat
         async function sendLocationToChat() {
             if (!MAP.userCoords || !A.chatId) return;
+            if (!mapQuotaConsume()) return;
             closeSheets();
 
             const coords = MAP.userCoords;
@@ -9917,7 +10063,6 @@
                 zoneLabel = zone ? zone.label : null;
             } catch (_e) { zoneLabel = null; }
 
-            const mapsUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=15/${coords.lat}/${coords.lng}`;
             const tm = new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
 
             // Message spécial type "location" — JSON-encoded for DB persistence
@@ -9930,7 +10075,6 @@
                 type: 'location',
                 coords,
                 zone: zoneLabel,
-                mapsUrl,
                 tm,
                 t: dbContent,
             });
@@ -9966,10 +10110,9 @@
                 try {
                     const payload = JSON.parse(raw.slice(5));
                     const coords = { lat: payload.lat, lng: payload.lng };
-                    const mapsUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=15/${coords.lat}/${coords.lng}`;
                     // payload.zone = nouvo fòma; payload.nearest = ansyen mesaj.
                     const zone = payload.zone || (payload.nearest && payload.nearest.name) || null;
-                    return { type: 'location', coords, zone, mapsUrl };
+                    return { type: 'location', coords, zone };
                 } catch(e) { /* fall through */ }
             }
             if (raw.startsWith('[VOICE]')) {
@@ -9982,39 +10125,73 @@
         }
 
         // Afficher un message location dans le chat
+        // Louvri yon lokalizasyon pataje sou kat la — andan app la (LocationIQ).
+        function openSharedLocation(lat, lng) {
+            lat = +lat; lng = +lng;
+            if (!isFinite(lat) || !isFinite(lng)) { toast('Lokalizasyon pa valab'); return; }
+            openSheet('mapSheet');
+            initLeafletMap();
+            let tries = 0;
+            const apply = () => {
+                tries++;
+                if (!MAP.leaflet) { if (tries < 40) setTimeout(apply, 150); return; }
+                MAP.leaflet.invalidateSize();
+                if (MAP.liveTrack) {
+                    // Tracking an kou — kite makè k ap bouje yo kontwole vi a.
+                    _updateTrackLine();
+                    return;
+                }
+                MAP.leaflet.setView([lat, lng], 16);
+                placeCustomPin(lat, lng);
+            };
+            apply();
+        }
+        window.openSharedLocation = openSharedLocation;
+
         function locationBubble(m) {
-            const mapsUrl = m.mapsUrl || `https://www.openstreetmap.org/?mlat=${m.coords.lat}&mlon=${m.coords.lng}#map=15/${m.coords.lat}/${m.coords.lng}`;
+            const lat = +m.coords.lat, lng = +m.coords.lng;
             const align = m.s === false ? 'justify-start' : 'justify-end';
             const corner = m.s === false ? 'rounded-bl-[.25rem]' : 'rounded-br-[.25rem]';
             const title = m.s === false ? 'Lokalisasyon kliyan' : 'Lokalisasyon mwen';
+            // Aperçu kat la — imaj estatik LocationIQ (rete andan app la).
+            const staticMap = 'https://maps.locationiq.com/v3/staticmap?key=' + LOCATIONIQ_KEY
+                + '&center=' + lat + ',' + lng + '&zoom=15&size=520x180&format=png'
+                + '&markers=icon:large-red-cute|' + lat + ',' + lng;
+            // Badj "AN DIRÈK" lè Live Tracking aktive — tape pou wè kat k ap bouje a.
+            const liveBadge = MAP.liveTrack
+                ? `<div style="position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:4px;background:rgba(225,29,29,.95);padding:3px 8px;border-radius:999px;box-shadow:0 1px 4px rgba(0,0,0,.3)">
+                     <span class="sp-dot" style="width:7px;height:7px;border-radius:50%;background:#fff"></span>
+                     <span style="font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;color:#fff;letter-spacing:.04em">AN DIRÈK</span>
+                   </div>`
+                : '';
             return `
   <div class="flex ${align}">
     <div class="max-w-[80%] rounded-[1.25rem] ${corner} overflow-hidden amb" style="background:#fff;border:1.5px solid rgba(0,102,111,.15)">
-      <!-- Mini map preview -->
-      <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer">
-        <div style="height:100px;background:linear-gradient(135deg,#e8f4f4,#d4ede8);display:flex;align-items:center;justify-content:center;position:relative">
-          <svg width="100%" height="100%" style="position:absolute;inset:0;opacity:.1" viewBox="0 0 200 100">
-            <path d="M0 50 Q50 20 100 50 Q150 80 200 50" stroke="#00666f" stroke-width="2" fill="none"/>
-            <path d="M0 70 Q60 40 120 60 Q160 75 200 65" stroke="#00818c" stroke-width="1.5" fill="none"/>
-          </svg>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;z-index:1">
-            <div style="width:28px;height:28px;border-radius:50% 50% 50% 0;background:#00666f;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 2px 8px rgba(0,102,111,.3)"></div>
-            <span style="font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;color:#00666f;margin-top:4px">Wè sou Map</span>
+      <!-- Aperçu kat LocationIQ -->
+      <div onclick="openSharedLocation(${lat},${lng})" style="cursor:pointer;position:relative">
+        ${liveBadge}
+        <img src="${staticMap}" alt="Kat lokalizasyon" style="width:100%;height:120px;object-fit:cover;display:block"
+             onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div style="height:120px;background:linear-gradient(135deg,#e8f4f4,#d4ede8);display:none;align-items:center;justify-content:center">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <span class="material-symbols-outlined" style="font-size:28px;color:#00666f">map</span>
+            <span style="font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;color:#00666f">Tape pou wè sou kat</span>
           </div>
         </div>
-      </a>
+      </div>
       <!-- Info -->
       <div class="p-3">
         <p class="font-headline font-bold text-[13px] text-on-surface">${title}</p>
-        <p class="font-label text-[10px] text-on-surface-variant mt-0.5">${(+m.coords.lat).toFixed(6)}, ${(+m.coords.lng).toFixed(6)}</p>
+        <p class="font-label text-[10px] text-on-surface-variant mt-0.5">${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
         ${m.zone ? `
         <div class="flex items-center gap-1.5 mt-2 p-2 rounded-lg" style="background:rgba(0,102,111,.06)">
           <span class="material-symbols-outlined fi text-primary" style="font-size:12px">where_to_vote</span>
           <p class="font-label text-[10px] font-bold text-primary">${m.zone}</p>
         </div>` : ''}
-        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-full" style="background:#00666f;color:#fff;font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;text-decoration:none">
-          <span class="material-symbols-outlined" style="font-size:12px">directions</span> Ouvè Map
-        </a>
+        <button onclick="openSharedLocation(${lat},${lng})" class="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-full"
+          style="background:#00666f;color:#fff;font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;border:none;cursor:pointer">
+          <span class="material-symbols-outlined" style="font-size:12px">${MAP.liveTrack ? 'my_location' : 'map'}</span> ${MAP.liveTrack ? 'Swiv an dirèk' : 'Wè sou kat la'}
+        </button>
         <p class="font-label text-[10px] text-on-surface-variant mt-1.5 text-right">${m.tm || ''}</p>
       </div>
     </div>
