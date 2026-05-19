@@ -1521,13 +1521,14 @@
                         <p
                             class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">
                             Kote</p>
-                        <select id="fLoc" class="si">
-                            <option>Pétion-Ville</option>
-                            <option>Delmas</option>
-                            <option>Centre PAP</option>
-                            <option>Carrefour</option>
-                            <option>Tabarre</option>
-                        </select>
+                        <div class="flex items-stretch gap-2">
+                            <input id="fLoc" class="si flex-1" readonly placeholder="Detekte zòn ou"/>
+                            <button type="button" id="fLocBtn" onclick="detectPubZone()"
+                                class="flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform"
+                                style="background:rgba(0,102,111,.08);color:#00666f;width:46px">
+                                <span class="material-symbols-outlined" style="font-size:20px">my_location</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div>
@@ -4729,7 +4730,9 @@
             // applied — every product looked like there was only one
             // unit available regardless of what the seller typed.
             const stock = Math.max(1, parseInt(document.getElementById("fStock")?.value, 10) || 1);
-            const loc = document.getElementById("fLoc")?.value?.trim() || '';
+            const _pubZone = A.pickupZone || _lastGeocode();
+            const loc = (document.getElementById("fLoc")?.value?.trim())
+                || (_pubZone && _pubZone.label) || '';
             if (price <= 0) { toast("Mete yon pri valid"); return; }
 
             // ── Flash Deal / Discount ──
@@ -8057,9 +8060,19 @@
                 }
             }
             renderPickupZone();
+            _syncPubZoneField();
             if (A.tab === 'profile' && typeof renderProfile === 'function') renderProfile();
         }
         window.applyPickupZone = applyPickupZone;
+
+        // Ranpli chan "Kote" nan fòm pibliye a ak zòn GPS detekte a.
+        function _syncPubZoneField() {
+            const fl = document.getElementById('fLoc');
+            if (!fl) return;
+            const z = A.pickupZone || _lastGeocode();
+            if (z && z.label) fl.value = z.label;
+        }
+        window._syncPubZoneField = _syncPubZoneField;
 
         // Montre zòn kolekte aktyèl la nan #pickupList.
         function renderPickupZone() {
@@ -8132,6 +8145,13 @@
         window.openPickupPicker = openPickupPicker;
         window.detectPickupLocation = detectPickupLocation;
         window.detectOrderZone = detectOrderZone;
+        function detectPubZone() {
+            _withGeoZone('fLocBtn', 'Ap chèche…', zone => {
+                applyPickupZone(zone);
+                toast('Zòn ou: ' + zone.label);
+            });
+        }
+        window.detectPubZone = detectPubZone;
 
         function markAllRead() {
             NOTIFS.forEach(n => n.read = true);
@@ -9638,10 +9658,13 @@
         }
 
         // ══════════════════════════════════════════════════════════
-        //  Limit itilizasyon Map — 3 aksyon / jou pou chak itilizatè
+        //  Limit itilizasyon Map pa jou — 10 pou vandè, 3 pou lòt yo
         //  (Live Tracking egzante — li pa konte nan limit sa a)
         // ══════════════════════════════════════════════════════════
-        const MAP_DAILY_LIMIT = 3;
+        function _mapLimit() {
+            // Vandè bezwen voye pozisyon plis souvan bay achtè yo.
+            return (A.user && A.user.role === 'seller') ? 10 : 3;
+        }
         function _mapQuota() {
             const today = new Date().toISOString().slice(0, 10);
             let q;
@@ -9651,19 +9674,20 @@
             return q;
         }
         function mapQuotaLeft() {
-            return Math.max(0, MAP_DAILY_LIMIT - _mapQuota().count);
+            return Math.max(0, _mapLimit() - _mapQuota().count);
         }
         // Konsome yon inite. Retounen true si aksyon an pèmèt.
         function mapQuotaConsume() {
+            const limit = _mapLimit();
             const q = _mapQuota();
-            if (q.count >= MAP_DAILY_LIMIT) {
-                toast('Ou rive nan limit ' + MAP_DAILY_LIMIT + ' itilizasyon Map pou jodi a');
+            if (q.count >= limit) {
+                toast('Ou rive nan limit ' + limit + ' itilizasyon Map pou jodi a');
                 return false;
             }
             q.count++;
             try { localStorage.setItem('aym_map_quota', JSON.stringify(q)); } catch (_) { }
-            const left = MAP_DAILY_LIMIT - q.count;
-            toast('Itilizasyon Map: ' + q.count + '/' + MAP_DAILY_LIMIT
+            const left = limit - q.count;
+            toast('Itilizasyon Map: ' + q.count + '/' + limit
                 + (left ? ' — rete ' + left : ' — limit jodi a fini'));
             return true;
         }
@@ -11591,6 +11615,7 @@
                 lng: profile.geo_lng ?? null,
             };
             try { localStorage.setItem('aym_geozone', JSON.stringify(A.pickupZone)); } catch (_) { }
+            if (typeof _syncPubZoneField === 'function') _syncPubZoneField();
         }
         localStorage.setItem('aym_user', JSON.stringify(A.user));
         // Anyone with a valid Supabase session has already used the app
