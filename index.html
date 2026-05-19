@@ -10045,6 +10045,8 @@
                 if (bg) bg.style.background = '#e5e2dd';
                 toast('Swivi livrezon dezaktive');
             }
+            // Refrechi bil pozisyon yo nan chat la pou badj "AN DIRÈK" parèt/disparèt.
+            if (A.chatId && typeof renderChatMsgs === 'function') renderChatMsgs(A.chatId);
         }
         window.toggleLiveTrack = toggleLiveTrack;
 
@@ -10134,6 +10136,11 @@
                 tries++;
                 if (!MAP.leaflet) { if (tries < 40) setTimeout(apply, 150); return; }
                 MAP.leaflet.invalidateSize();
+                if (MAP.liveTrack) {
+                    // Tracking an kou — kite makè k ap bouje yo kontwole vi a.
+                    _updateTrackLine();
+                    return;
+                }
                 MAP.leaflet.setView([lat, lng], 16);
                 placeCustomPin(lat, lng);
             };
@@ -10150,11 +10157,19 @@
             const staticMap = 'https://maps.locationiq.com/v3/staticmap?key=' + LOCATIONIQ_KEY
                 + '&center=' + lat + ',' + lng + '&zoom=15&size=520x180&format=png'
                 + '&markers=icon:large-red-cute|' + lat + ',' + lng;
+            // Badj "AN DIRÈK" lè Live Tracking aktive — tape pou wè kat k ap bouje a.
+            const liveBadge = MAP.liveTrack
+                ? `<div style="position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:4px;background:rgba(225,29,29,.95);padding:3px 8px;border-radius:999px;box-shadow:0 1px 4px rgba(0,0,0,.3)">
+                     <span class="sp-dot" style="width:7px;height:7px;border-radius:50%;background:#fff"></span>
+                     <span style="font-family:'Manrope',sans-serif;font-size:9px;font-weight:800;color:#fff;letter-spacing:.04em">AN DIRÈK</span>
+                   </div>`
+                : '';
             return `
   <div class="flex ${align}">
     <div class="max-w-[80%] rounded-[1.25rem] ${corner} overflow-hidden amb" style="background:#fff;border:1.5px solid rgba(0,102,111,.15)">
       <!-- Aperçu kat LocationIQ -->
-      <div onclick="openSharedLocation(${lat},${lng})" style="cursor:pointer">
+      <div onclick="openSharedLocation(${lat},${lng})" style="cursor:pointer;position:relative">
+        ${liveBadge}
         <img src="${staticMap}" alt="Kat lokalizasyon" style="width:100%;height:120px;object-fit:cover;display:block"
              onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"/>
         <div style="height:120px;background:linear-gradient(135deg,#e8f4f4,#d4ede8);display:none;align-items:center;justify-content:center">
@@ -10175,7 +10190,7 @@
         </div>` : ''}
         <button onclick="openSharedLocation(${lat},${lng})" class="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-full"
           style="background:#00666f;color:#fff;font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;border:none;cursor:pointer">
-          <span class="material-symbols-outlined" style="font-size:12px">map</span> Wè sou kat la
+          <span class="material-symbols-outlined" style="font-size:12px">${MAP.liveTrack ? 'my_location' : 'map'}</span> ${MAP.liveTrack ? 'Swiv an dirèk' : 'Wè sou kat la'}
         </button>
         <p class="font-label text-[10px] text-on-surface-variant mt-1.5 text-right">${m.tm || ''}</p>
       </div>
