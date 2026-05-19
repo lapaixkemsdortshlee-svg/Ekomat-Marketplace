@@ -3215,13 +3215,13 @@
     <!-- ══ PICKUP POINT PICKER SHEET ══ -->
     <div class="sheet" id="pickupSheet">
         <div class="handle"></div>
-        <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-1">Pwen Kolekte</h3>
-        <p class="font-body text-sm text-on-surface-variant mb-4">Chwazi zòn ou prefere pou al chèche pwodwi ou yo.</p>
+        <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-1">Zòn Kolekte</h3>
+        <p class="font-body text-sm text-on-surface-variant mb-4">Detekte zòn GPS reyèl ou pou kòmand ou yo.</p>
         <button onclick="detectPickupLocation()" id="pickupGpsBtn"
             class="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl amb active:scale-[.99] transition-transform"
             style="background:rgba(0,102,111,.08);color:#00666f">
             <span class="material-symbols-outlined fi" style="font-size:18px">my_location</span>
-            <span class="font-label text-sm font-bold">Detekte pozisyon mwen</span>
+            <span class="font-label text-sm font-bold">Detekte zòn mwen</span>
         </button>
         <div id="pickupList" class="space-y-2 mb-4"></div>
         <button onclick="closeSheets()"
@@ -3478,12 +3478,9 @@
 
         const PROMPTS = { mode: ["Twal kalite", "Pou okasyon espesyal", "Livrezon PAP", "Foto otantik"], beaute: ["Pwodwi natirèl", "Swen po", "Rezilta vizib", "Orijinal"], cosmetique: ["Engredyan natirèl", "Orijin garanti", "Tout kalite po", "Livrezon rapid"], electronique: ["An bon eta", "Garanti", "Chajè enkli", "Livrezon PAP"], gaming: ["Pwofesyonèl", "RGB", "Gamer", "Pèfòmans"], accessoire: ["Pyes inik", "Kado pafè", "Koulè fidèl", "Vandè verifye"], artisanat: ["Atizana ayisyen", "Fèt alamen", "Motif tradisyonèl", "Kado pafè"], maison: ["Dézay modèn", "Dekorasyon lokal", "Kalite premium", "Fèt avèk swen"], bebe: ["Sekirize", "Materyèl dou", "Kado nesans", "Sètifye"] };
 
-        const PICKUPS = [
-            { id: "dg", ic: "location_on", n: "Estasyon Digicel Pétion-Ville", a: "Rue Panamericaine", lat: 18.5137, lng: -72.2856 },
-            { id: "ep", ic: "storefront",  n: "Epikri Delmas 33",              a: "Angle Rue Fragneau Ville", lat: 18.5461, lng: -72.3012 },
-            { id: "pu", ic: "hail",        n: "Pick-up Delmas 48",             a: "Delmas 48, Carrefour",     lat: 18.5521, lng: -72.2972 },
-            { id: "tb", ic: "store",       n: "Mini Market Tabarre",           a: "Route Nationale 1",        lat: 18.5680, lng: -72.2720 },
-        ];
+        // Zòn kolekte detekte an dirèk via LocationIQ reverse geocoding —
+        // ranplase ansyen lis 4 pwen fiks la.
+        const LOCATIONIQ_KEY = 'pk.b51355ffccd59ca2e04bca945d4e2c56';
 
         // ── All data fetched from Supabase — no mock users/data ──
         const DEMO_USERS = {};
@@ -3504,7 +3501,7 @@
         // ══════════════════════════════════════════════════════════
         let A = {
             user: null, isAuth: false, tab: "feed", stack: [],
-            curProd: null, chatId: null, selPay: "moncash", selPickup: "dg",
+            curProd: null, chatId: null, selPay: "moncash", pickupZone: null,
             favs: new Set(), msgs: {},
             prof: JSON.parse(localStorage.getItem("aym_v3") || "{}"),
             otpPhone: "", otpTimer: null,
@@ -4692,15 +4689,10 @@
             const t = document.getElementById("fTitle").value.trim();
             if (!t) { toast("Ranpli non pwodwi a"); return; }
             if (uploadedPhotos.length === 0) { toast("Ajoute omwen 1 foto"); document.getElementById("fileInput").click(); return; }
-            // Bug M — pickup is OBLIGATORY for sellers. Look at
-            // user.defaultPickup specifically (not A.selPickup, which is
-            // pre-seeded to 'dg' for the buyer checkout flow). Sellers
-            // must have *explicitly* picked their default before we'll
-            // accept a publish, so a product can't end up with no real
-            // collection point on file. Buyers don't hit this path; they
-            // pick at checkout time.
-            if (!(A.user && A.user.defaultPickup)) {
-                toast('Chwazi yon Pwen Kolekte anvan ou pibliye');
+            // Zòn kolekte OBLIGATWA pou vandè — detekte zòn GPS la anvan
+            // pibliye pou pwodwi a toujou gen yon zòn reyèl sou li.
+            if (!(A.pickupZone || _lastGeocode())) {
+                toast('Detekte zòn kolekte ou anvan ou pibliye');
                 if (typeof openPickupPicker === 'function') openPickupPicker();
                 return;
             }
@@ -4867,6 +4859,7 @@
             const p = A.curProd;
             if (!p) { toast('Chwazi yon pwodwi dabò'); return; }
             const sub = p.p, fee = Math.round(sub * .03), total = sub + fee;
+            const zone = A.pickupZone || _lastGeocode();
             document.getElementById("orderSheetContent").innerHTML = `
     <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-1">Kòmande</p>
     <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-4">${p.t}</h3>
@@ -4905,20 +4898,29 @@
       </div>
       <p class="font-label text-[10px] text-on-surface-variant mt-2 text-center">Sèl metòd peman aksepte — Sekirize pa Digicel</p>
     </div>
-    <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Pwen Kolekte (Pick-up)</p>
+    <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Zòn Kolekte</p>
     <div class="space-y-2 mb-4">
-      ${PICKUPS.map((pk, i) => `
-      <label class="block cursor-pointer">
-        <input type="radio" name="pk" class="sr-only peer" ${i === 0 ? 'checked' : ''} onchange="A.selPickup='${pk.id}'"/>
-        <div class="flex items-center gap-3 p-3.5 rounded-xl bg-surface-container-lowest peer-checked:bg-[rgba(0,102,111,.07)]">
-          <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">${pk.ic}</span>
-          <div class="flex-1">
-            <p class="font-headline font-bold text-[13px] text-on-surface">${pk.n}</p>
-            <p class="font-label text-xs text-on-surface-variant">${pk.a}</p>
-          </div>
-          <span class="material-symbols-outlined fi text-primary opacity-0 peer-checked:opacity-100" style="font-size:16px">check_circle</span>
-        </div>
-      </label>`).join('')}
+      ${zone && zone.label
+        ? `<div class="flex items-center gap-3 p-3.5 rounded-xl bg-surface-container-lowest" style="border:1.5px solid #00666f">
+             <span class="material-symbols-outlined fi text-primary" style="font-size:18px">where_to_vote</span>
+             <div class="flex-1">
+               <p class="font-headline font-bold text-[13px] text-on-surface">${zone.label}</p>
+               <p class="font-label text-xs text-on-surface-variant">Zòn kolekte ou</p>
+             </div>
+             <span class="material-symbols-outlined fi text-primary" style="font-size:16px">check_circle</span>
+           </div>`
+        : `<div class="flex items-center gap-3 p-3.5 rounded-xl bg-surface-container-lowest">
+             <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">location_searching</span>
+             <div class="flex-1">
+               <p class="font-label text-xs text-on-surface-variant">Poko gen zòn — peze bouton an anba</p>
+             </div>
+           </div>`}
+      <button id="orderZoneBtn" onclick="detectOrderZone()"
+        class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl active:scale-[.99] transition-transform"
+        style="background:rgba(0,102,111,.08);color:#00666f">
+        <span class="material-symbols-outlined fi" style="font-size:18px">my_location</span>
+        <span class="font-label text-sm font-bold">Detekte zòn mwen</span>
+      </button>
     </div>
     <div class="flex items-start gap-3 p-4 rounded-xl mb-4" style="background:rgba(0,102,111,.06)">
       <span class="material-symbols-outlined fi text-primary flex-shrink-0" style="font-size:16px">shield</span>
@@ -5209,12 +5211,13 @@
             const p = A.curProd;
             if (!p) { toast('Erè: pa gen pwodwi seleksyone'); return; }
             if (!A.isAuth || !A.user?.uid) { toast('Konekte pou kòmande'); return; }
-            const pickup = PICKUPS.find(pk => pk.id === A.selPickup) || PICKUPS[0];
+            const zone = A.pickupZone || _lastGeocode();
+            const pickupLabel = (zone && zone.label) ? zone.label : 'Zòn pa presize';
 
             // Delivery OTP (6 digits) — buyer shows this to seller at pickup
             const otp = generateDeliveryOTP();
             A.currentOTP = otp;
-            A.currentOrder = { product: p, pickup, payMethod: A.selPay };
+            A.currentOrder = { product: p, pickup: { n: pickupLabel }, payMethod: A.selPay };
 
             const feePct = (APP_SETTINGS.fee_percent || 3) / 100;
             const unitPrice = p.p;
@@ -5246,7 +5249,7 @@
                         net_amount: netAmount,
                         status: 'awaiting_payment',
                         payment_method: 'MONCASH',
-                        pickup_location: pickup.n,
+                        pickup_location: pickupLabel,
                         otp_code: otp,
                     }).select().single();
                     if (ordErr) { console.warn('[Order insert]', ordErr.message); toast('Erè: ' + ordErr.message); return; }
@@ -5537,18 +5540,15 @@
                 items.push({ i: "group", l: "Kliyan Abonnen", s: (A.followers || 0) + " abonnen", a: "openFollowersScreen()" });
             }
             items.push({ i: "favorite", l: "Favori Mwen", s: A.favs.size + " pwodwi", a: "toast('Favori yo')" });
-            // Bug M — show whichever pickup the user has explicitly set;
-            // for sellers with none yet, surface the requirement instead
-            // of pretending the buyer-default 'dg' is theirs.
-            const explicitPickupId = A.user?.defaultPickup;
-            if (explicitPickupId) {
-                const cur = PICKUPS.find(pk => pk.id === explicitPickupId) || PICKUPS[0];
-                items.push({ i: "location_on", l: "Pwen Kolekte", s: cur.n, a: "openPickupPicker()" });
+            // Zòn kolekte detekte via GPS — montre li si li egziste,
+            // sinon mande vandè a detekte zòn li.
+            const _z = A.pickupZone || _lastGeocode();
+            if (_z && _z.label) {
+                items.push({ i: "location_on", l: "Zòn Kolekte", s: _z.label, a: "openPickupPicker()" });
             } else if (u.role === 'seller') {
-                items.push({ i: "location_on", l: "Pwen Kolekte", s: "Obligatwa — chwazi yon!", a: "openPickupPicker()" });
+                items.push({ i: "location_on", l: "Zòn Kolekte", s: "Obligatwa — detekte zòn ou!", a: "openPickupPicker()" });
             } else {
-                const cur = PICKUPS.find(pk => pk.id === A.selPickup) || PICKUPS[0];
-                items.push({ i: "location_on", l: "Pwen Kolekte", s: cur.n, a: "openPickupPicker()" });
+                items.push({ i: "location_on", l: "Zòn Kolekte", s: "Detekte zòn ou", a: "openPickupPicker()" });
             }
             if (u.role === 'buyer') {
                 items.push({ i: "store", l: "Vin yon Vandè", s: "Soumèt ID ou", a: "openSheet('verifySheet')" });
@@ -5850,7 +5850,8 @@
             if (sellerId === 'unknown' || !sellerId) { toast('Vandè envalid pou atik sa yo'); return; }
             if (sellerId === A.user.uid) { toast('Ou pa ka kòmande nan pwòp boutik ou'); return; }
 
-            const pickup = PICKUPS.find(pk => pk.id === A.selPickup) || PICKUPS[0];
+            const _zone = A.pickupZone || _lastGeocode();
+            const pickupLabel = (_zone && _zone.label) ? _zone.label : 'Zòn pa presize';
             const feePct = (APP_SETTINGS.fee_percent || 3) / 100;
             const otp = (typeof generateDeliveryOTP === 'function') ? generateDeliveryOTP() : String(Math.floor(100000 + Math.random() * 900000));
 
@@ -5878,7 +5879,7 @@
                         net_amount: netAmount,
                         status: 'awaiting_payment',
                         payment_method: 'MONCASH',
-                        pickup_location: pickup.n,
+                        pickup_location: pickupLabel,
                         otp_code: otp,
                     }).select().single();
                     if (error) { failed.push({ p, msg: error.message }); continue; }
@@ -7956,122 +7957,156 @@
         }
         window.setupAdminFab = setupAdminFab;
 
-        // ── Pwen Kolekte picker ──
-        let _userGeo = null;
-        function haversineKm(a, b) {
-            const R = 6371, toR = x => x * Math.PI / 180;
-            const dLat = toR(b.lat - a.lat), dLng = toR(b.lng - a.lng);
-            const s = Math.sin(dLat / 2) ** 2
-                + Math.cos(toR(a.lat)) * Math.cos(toR(b.lat)) * Math.sin(dLng / 2) ** 2;
-            return 2 * R * Math.asin(Math.sqrt(s));
+        // ── Zòn Kolekte — reverse geocoding via LocationIQ ──
+
+        // Dènye zòn detekte — sove nan localStorage pou fallback san rezo.
+        function _lastGeocode() {
+            try { return JSON.parse(localStorage.getItem('aym_geozone') || 'null'); }
+            catch (_) { return null; }
         }
-        function renderPickupList() {
-            const list = document.getElementById('pickupList');
-            if (!list) return;
-            const current = (A.user && A.user.defaultPickup) || A.selPickup || PICKUPS[0].id;
-            // Optionally sort by distance from detected user position
-            let items = PICKUPS.map(pk => ({
-                ...pk,
-                km: _userGeo && pk.lat != null ? haversineKm(_userGeo, pk) : null,
-            }));
-            if (_userGeo) items.sort((a, b) => (a.km ?? 9999) - (b.km ?? 9999));
-            list.innerHTML = items.map(pk => {
-                const active = pk.id === current;
-                const distLabel = pk.km != null
-                    ? `<p class="font-label text-[10px] text-primary font-bold mt-0.5">${pk.km.toFixed(1)} km</p>`
-                    : '';
-                return `<button onclick="setPickupZone('${pk.id}')"
-                    class="w-full flex items-center gap-3 p-3.5 rounded-xl amb text-left active:scale-[.99] transition-transform"
-                    style="background:${active ? 'rgba(0,102,111,.08)' : 'var(--surface-container-lowest, #fff)'};border:1.5px solid ${active ? '#00666f' : 'rgba(188,201,200,.25)'}">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style="background:${active ? '#00666f' : 'rgba(0,102,111,.08)'}">
-                        <span class="material-symbols-outlined" style="font-size:20px;color:${active ? '#fff' : '#00666f'}">${pk.ic}</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="font-headline font-bold text-sm text-on-surface truncate">${pk.n}</p>
-                        <p class="font-label text-xs text-on-surface-variant truncate">${pk.a}</p>
-                        ${distLabel}
-                    </div>
-                    ${active ? '<span class="material-symbols-outlined text-primary" style="font-size:20px">check_circle</span>' : ''}
-                </button>`;
-            }).join('');
+        // Fallback: dènye zòn konnen, sinon kowòdone GPS brit.
+        function _geoFallback(lat, lng) {
+            const cached = _lastGeocode();
+            if (cached && cached.label) return cached;
+            return {
+                label: `${(+lat).toFixed(4)}, ${(+lng).toFixed(4)}`,
+                neighborhood: '', city: '', lat, lng, raw: null,
+            };
         }
-        function openPickupPicker() {
-            renderPickupList();
-            openSheet('pickupSheet');
-        }
-        function detectPickupLocation() {
-            if (!navigator.geolocation) { toast('GPS pa disponib sou aparèy ou'); return; }
-            const btn = document.getElementById('pickupGpsBtn');
-            const origHTML = btn ? btn.innerHTML : null;
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="font-label text-sm font-bold">Ap chèche pozisyon…</span>';
+
+        // Throttle: plan gratis LocationIQ la pèmèt 2 req/s — n ap kenbe
+        // yon sèl apèl chak 1,5 s pou nou pa janm depase limit la.
+        let _geoThrottleAt = 0;
+        async function reverseGeocode(lat, lng) {
+            const now = Date.now();
+            if (now - _geoThrottleAt < 1500) {
+                toast('Twòp demann — tann kèk segond');
+                return _geoFallback(lat, lng);
             }
-            navigator.geolocation.getCurrentPosition(pos => {
-                _userGeo = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                // Auto-select the closest pickup so its name surfaces in
-                // settings + everywhere else without forcing the user to
-                // tap a second time. Filter out rows that have no
-                // coordinates (data gap), and only swap if we don't
-                // already have a stickier explicit choice on the user.
-                const ranked = PICKUPS
-                    .filter(pk => pk.lat != null && pk.lng != null)
-                    .map(pk => ({ pk, km: haversineKm(_userGeo, pk) }))
-                    .sort((a, b) => a.km - b.km);
-                const closest = ranked[0];
-                if (closest && typeof setPickupZone === 'function') {
-                    setPickupZone(closest.pk.id);
-                    toast('Pwen Kolekte: ' + closest.pk.n + ' (' + closest.km.toFixed(1) + ' km)');
-                } else {
-                    renderPickupList();
-                    toast('Pozisyon detekte — triyè pa distans');
-                }
-                if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
-                // Persist geo so pickup sort works immediately next session.
-                if (db && A.user?.uid) {
+            _geoThrottleAt = now;
+            const url = 'https://us1.locationiq.com/v1/reverse'
+                + '?key=' + encodeURIComponent(LOCATIONIQ_KEY)
+                + '&lat=' + lat + '&lon=' + lng
+                + '&format=json&accept-language=fr&zoom=16&addressdetails=1';
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 8000);
+            try {
+                const res = await fetch(url, { signal: ctrl.signal });
+                clearTimeout(timer);
+                if (res.status === 401) { toast('Konfigirasyon zòn pa konplè'); return _geoFallback(lat, lng); }
+                if (res.status === 429) { toast('Twòp demann — tann kèk segond'); return _geoFallback(lat, lng); }
+                if (!res.ok) return _geoFallback(lat, lng);
+                const data = await res.json();
+                const ad = data.address || {};
+                const neighborhood = ad.neighbourhood || ad.suburb || ad.quarter || ad.city_district || '';
+                const city = ad.city || ad.town || ad.village || ad.county || '';
+                let label = [neighborhood, city].filter(Boolean).join(', ');
+                if (!label && data.display_name) label = data.display_name.split(',').slice(0, 2).join(',').trim();
+                if (!label && city) label = 'Zòn pre ' + city;
+                if (!label) label = `${(+lat).toFixed(4)}, ${(+lng).toFixed(4)}`;
+                const result = { label, neighborhood, city, lat, lng, raw: data };
+                try { localStorage.setItem('aym_geozone', JSON.stringify({ label, neighborhood, city, lat, lng })); } catch (_) { }
+                return result;
+            } catch (_e) {
+                clearTimeout(timer);
+                return _geoFallback(lat, lng);
+            }
+        }
+        window.reverseGeocode = reverseGeocode;
+
+        // Aplike yon zòn detekte: state, profil, persistans Supabase.
+        function applyPickupZone(zone) {
+            if (!zone || !zone.label) return;
+            A.pickupZone = { label: zone.label, lat: zone.lat, lng: zone.lng };
+            if (A.user) {
+                A.user.pickupZone = zone.label;
+                try { localStorage.setItem('aym_user', JSON.stringify(A.user)); } catch (_) { }
+                if (db && A.user.uid) {
                     db.from('profiles').update({
-                        geo_lat: _userGeo.lat,
-                        geo_lng: _userGeo.lng,
+                        location: zone.label,
+                        geo_lat: zone.lat,
+                        geo_lng: zone.lng,
                         geo_updated_at: new Date().toISOString(),
                     }).eq('id', A.user.uid)
-                      .then(({ error }) => { if (error) console.warn('[Geo persist]', error.message); });
+                      .then(({ error }) => { if (error) console.warn('[Zone]', error.message); });
                 }
-            }, _err => {
-                toast('Pa ka jwenn pozisyon ou');
-                if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+            }
+            renderPickupZone();
+            if (A.tab === 'profile' && typeof renderProfile === 'function') renderProfile();
+        }
+        window.applyPickupZone = applyPickupZone;
+
+        // Montre zòn kolekte aktyèl la nan #pickupList.
+        function renderPickupZone() {
+            const el = document.getElementById('pickupList');
+            if (!el) return;
+            const z = A.pickupZone || _lastGeocode();
+            if (!z || !z.label) {
+                el.innerHTML = `<div class="p-4 rounded-xl text-center" style="background:var(--surface-container-lowest,#fff);border:1.5px solid rgba(188,201,200,.25)">
+                    <span class="material-symbols-outlined text-on-surface-variant" style="font-size:28px">location_searching</span>
+                    <p class="font-label text-xs text-on-surface-variant mt-1">Poko gen zòn detekte. Peze bouton an anwo.</p>
+                </div>`;
+                return;
+            }
+            el.innerHTML = `<div class="flex items-center gap-3 p-3.5 rounded-xl" style="background:rgba(0,102,111,.08);border:1.5px solid #00666f">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#00666f">
+                    <span class="material-symbols-outlined" style="font-size:20px;color:#fff">where_to_vote</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant">Zòn ou</p>
+                    <p class="font-headline font-bold text-sm text-on-surface truncate">${z.label}</p>
+                </div>
+                <span class="material-symbols-outlined text-primary" style="font-size:20px">check_circle</span>
+            </div>`;
+        }
+        function openPickupPicker() {
+            renderPickupZone();
+            openSheet('pickupSheet');
+        }
+
+        // Nwayo pataje: pran pozisyon GPS la, jeyokode l, jere erè yo.
+        function _withGeoZone(btnId, busyLabel, onZone) {
+            if (!navigator.geolocation) { toast('GPS pa disponib sou aparèy ou'); return; }
+            const btn = document.getElementById(btnId);
+            const orig = btn ? btn.innerHTML : null;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<span class="font-label text-sm font-bold">${busyLabel}</span>`;
+            }
+            const restore = () => { if (btn) { btn.disabled = false; btn.innerHTML = orig; } };
+            navigator.geolocation.getCurrentPosition(async pos => {
+                let zone;
+                try { zone = await reverseGeocode(pos.coords.latitude, pos.coords.longitude); }
+                catch (_e) { zone = _geoFallback(pos.coords.latitude, pos.coords.longitude); }
+                restore();
+                if (zone) onZone(zone);
+            }, err => {
+                const msgs = {
+                    1: 'Aksè GPS refize — aktive pèmisyon lokal',
+                    2: 'GPS pa disponib kounye a',
+                    3: 'Demann GPS depase tan limit',
+                };
+                toast(msgs[err.code] || 'Pa ka jwenn pozisyon ou');
+                restore();
             }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+        }
+
+        function detectPickupLocation() {
+            _withGeoZone('pickupGpsBtn', 'Ap chèche zòn ou…', zone => {
+                applyPickupZone(zone);
+                toast('Zòn ou: ' + zone.label);
+            });
+        }
+        function detectOrderZone() {
+            _withGeoZone('orderZoneBtn', 'Ap chèche zòn ou…', zone => {
+                applyPickupZone(zone);
+                toast('Zòn ou: ' + zone.label);
+                if (typeof renderOrderSheet === 'function' && A.curProd) renderOrderSheet();
+            });
         }
         window.openPickupPicker = openPickupPicker;
         window.detectPickupLocation = detectPickupLocation;
-
-        function setPickupZone(id) {
-            const pk = PICKUPS.find(p => p.id === id);
-            if (!pk) return;
-            A.selPickup = id;
-            if (A.user) {
-                A.user.defaultPickup = id;
-                try { localStorage.setItem('aym_user', JSON.stringify(A.user)); } catch (_) { }
-                if (db && A.user.uid) {
-                    // Persist both the pickup ID and its human-readable location
-                    // so the backend can reason about it later.
-                    const patch = { location: pk.n, pickup_point_id: id };
-                    if (_userGeo) {
-                        patch.geo_lat = _userGeo.lat;
-                        patch.geo_lng = _userGeo.lng;
-                        patch.geo_updated_at = new Date().toISOString();
-                    }
-                    db.from('profiles').update(patch)
-                        .eq('id', A.user.uid)
-                        .then(({ error }) => { if (error) console.warn('[Pickup]', error.message); });
-                }
-            }
-            toast('Pwen Kolekte: ' + pk.n);
-            closeSheets();
-            // Refresh profile menu to show new subtitle
-            if (A.tab === 'profile' && typeof renderProfile === 'function') renderProfile();
-        }
-        window.setPickupZone = setPickupZone;
+        window.detectOrderZone = detectOrderZone;
 
         function markAllRead() {
             NOTIFS.forEach(n => n.read = true);
@@ -8784,7 +8819,8 @@
         function showOrderOTP(productId) {
             const p = PRODUCTS.find(x => x.id === productId);
             A.currentOTP = A.currentOTP || generateDeliveryOTP();
-            A.currentOrder = { product: p, pickup: PICKUPS[0] };
+            const _z = A.pickupZone || _lastGeocode();
+            A.currentOrder = { product: p, pickup: { n: (_z && _z.label) ? _z.label : 'Zòn kolekte' } };
             showOTPSheet();
         }
 
@@ -9715,20 +9751,22 @@
         }
 
         // Envoyer la localisation dans le chat
-        function sendLocationToChat() {
+        async function sendLocationToChat() {
             if (!MAP.userCoords || !A.chatId) return;
             closeSheets();
 
             const coords = MAP.userCoords;
-            const nearest = [...PICKUP_COORDS]
-                .map(pk => ({ ...pk, d: parseFloat(haversine(coords.lat, coords.lng, pk.lat, pk.lng)) }))
-                .sort((a, b) => a.d - b.d)[0];
+            let zoneLabel = null;
+            try {
+                const zone = await reverseGeocode(+coords.lat, +coords.lng);
+                zoneLabel = zone ? zone.label : null;
+            } catch (_e) { zoneLabel = null; }
 
             const mapsUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=15/${coords.lat}/${coords.lng}`;
             const tm = new Date().toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
 
             // Message spécial type "location" — JSON-encoded for DB persistence
-            const locPayload = { kind: 'location', lat: coords.lat, lng: coords.lng, nearest: nearest ? { name: nearest.name, d: nearest.d } : null };
+            const locPayload = { kind: 'location', lat: coords.lat, lng: coords.lng, zone: zoneLabel };
             const dbContent = '[LOC]' + JSON.stringify(locPayload);
 
             if (!A.msgs[A.chatId]) A.msgs[A.chatId] = [];
@@ -9736,7 +9774,7 @@
                 s: true,
                 type: 'location',
                 coords,
-                nearest,
+                zone: zoneLabel,
                 mapsUrl,
                 tm,
                 t: dbContent,
@@ -9774,7 +9812,9 @@
                     const payload = JSON.parse(raw.slice(5));
                     const coords = { lat: payload.lat, lng: payload.lng };
                     const mapsUrl = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=15/${coords.lat}/${coords.lng}`;
-                    return { type: 'location', coords, nearest: payload.nearest || null, mapsUrl };
+                    // payload.zone = nouvo fòma; payload.nearest = ansyen mesaj.
+                    const zone = payload.zone || (payload.nearest && payload.nearest.name) || null;
+                    return { type: 'location', coords, zone, mapsUrl };
                 } catch(e) { /* fall through */ }
             }
             if (raw.startsWith('[VOICE]')) {
@@ -9812,10 +9852,10 @@
       <div class="p-3">
         <p class="font-headline font-bold text-[13px] text-on-surface">${title}</p>
         <p class="font-label text-[10px] text-on-surface-variant mt-0.5">${(+m.coords.lat).toFixed(6)}, ${(+m.coords.lng).toFixed(6)}</p>
-        ${m.nearest ? `
+        ${m.zone ? `
         <div class="flex items-center gap-1.5 mt-2 p-2 rounded-lg" style="background:rgba(0,102,111,.06)">
-          <span class="material-symbols-outlined fi text-primary" style="font-size:12px">storefront</span>
-          <p class="font-label text-[10px] font-bold text-primary">${m.nearest.name} — ${m.nearest.d} km</p>
+          <span class="material-symbols-outlined fi text-primary" style="font-size:12px">where_to_vote</span>
+          <p class="font-label text-[10px] font-bold text-primary">${m.zone}</p>
         </div>` : ''}
         <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 mt-2 px-3 py-1.5 rounded-full" style="background:#00666f;color:#fff;font-family:'Manrope',sans-serif;font-size:10px;font-weight:700;text-decoration:none">
           <span class="material-symbols-outlined" style="font-size:12px">directions</span> Ouvè Map
@@ -11210,6 +11250,16 @@
             reviewCount: profile?.review_count ?? cachedSelf?.reviewCount ?? 0,
         };
         A.isAuth = true;
+        // Hydrate detected pickup zone from the profile so a logged-in
+        // user keeps their zone across devices.
+        if (profile && profile.location) {
+            A.pickupZone = {
+                label: profile.location,
+                lat: profile.geo_lat ?? null,
+                lng: profile.geo_lng ?? null,
+            };
+            try { localStorage.setItem('aym_geozone', JSON.stringify(A.pickupZone)); } catch (_) { }
+        }
         localStorage.setItem('aym_user', JSON.stringify(A.user));
         // Anyone with a valid Supabase session has already used the app
         // (signed up at some point), so the onboarding intro is no longer
