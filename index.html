@@ -10227,21 +10227,24 @@
             }, 900);
         }
 
-        function submitTicket() {
+        async function submitTicket() {
             const type = document.getElementById('ticketType').value;
             const msg = document.getElementById('ticketMsg').value.trim();
             if (!msg) { toast('Ekri mesaj ou anvan'); return; }
+            if (!db || !A.user?.uid) { toast('Konekte pou voye yon tiket'); return; }
             const ticketId = 'TK-' + Math.floor(Math.random() * 9000 + 1000);
 
-            if (db && A.user?.uid) {
-                db.from('profiles').select('id').eq('role', 'admin').then(({ data: admins }) => {
-                    (admins || []).forEach(a => db.from('notifications').insert({
-                        user_id: a.id, type: 'system', icon: 'rate_review',
-                        title: 'Tiket sipò: ' + ticketId,
-                        body: (A.user.name || 'Yon itilizatè') + ' (' + type + '): ' + msg.slice(0, 120),
-                        color: '#97422b',
-                    }));
-                });
+            // notifyAdmins surfaces the error — previously a fire-and-forget
+            // .forEach() insert hid RLS rejections behind a fake success.
+            const err = await notifyAdmins({
+                type: 'system', icon: 'rate_review',
+                title: 'Tiket sipò: ' + ticketId,
+                body: (A.user.name || 'Yon itilizatè') + ' (' + type + '): ' + msg.slice(0, 120),
+                color: '#97422b',
+            });
+            if (err) {
+                toast('Erè: tiket pa rive jwenn Admin. Eseye ankò.');
+                return;
             }
 
             closeSheets();
@@ -10393,27 +10396,26 @@
         async function submitFeedback() {
             var msg = document.getElementById('feedbackMsg')?.value?.trim();
             if (!feedbackRating) { toast('Chwazi yon nòt anvan'); return; }
-            closeSheets();
+            if (!db || !A.user?.uid) { toast('Konekte pou voye feedback'); return; }
             toast('Ap voye feedback…');
-            if (db && A.user?.uid) {
-                var body = '★'.repeat(feedbackRating) + (msg ? ' — ' + msg : '');
-                var { data: admins } = await db.from('profiles').select('id').eq('role', 'admin').limit(5);
-                if (admins && admins.length) {
-                    var notifs = admins.map(function(a) {
-                        return {
-                            user_id: a.id, type: 'system', icon: 'rate_review',
-                            title: 'Nouvo Feedback',
-                            body: (A.user.name || 'Yon itilizatè') + ': ' + body,
-                            color: '#f59e0b'
-                        };
-                    });
-                    db.from('notifications').insert(notifs)
-                        .then(function(r) { if (r.error) console.warn('[Feedback]', r.error.message); });
-                }
+            var body = '★'.repeat(feedbackRating) + (msg ? ' — ' + msg : '');
+            // Route through notifyAdmins so the error surfaces — a silent
+            // .then() previously hid RLS rejections and showed a fake success.
+            var err = await notifyAdmins({
+                type: 'system', icon: 'rate_review',
+                title: 'Nouvo Feedback',
+                body: (A.user.name || 'Yon itilizatè') + ': ' + body,
+                color: '#f59e0b',
+            });
+            if (err) {
+                toast('Erè: feedback pa rive jwenn Admin. Eseye ankò.');
+                return;
             }
+            closeSheets();
             toast('Mèsi pou feedback ou! ' + '★'.repeat(feedbackRating));
             playNotifSound();
-            document.getElementById('feedbackMsg').value = '';
+            const fmEl = document.getElementById('feedbackMsg');
+            if (fmEl) fmEl.value = '';
             feedbackRating = 0;
         }
 

@@ -150,9 +150,13 @@ CREATE POLICY "followers_delete_own" ON public.followers
 CREATE POLICY "notifications_select_own" ON public.notifications
     FOR SELECT USING (auth.uid() = user_id);
 
--- System/admin can insert notifications for any user
-CREATE POLICY "notifications_insert" ON public.notifications
-    FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_admin());
+-- Any authenticated user can insert a notification for any user. The app
+-- relies on client-side cross-user notification writes: buyer -> seller on
+-- a new order, user -> admin for feedback/support tickets, chat pings, etc.
+-- Restricting INSERT to (auth.uid() = user_id OR is_admin()) silently broke
+-- all of these. Kept in sync with migration-2026-07.sql.
+CREATE POLICY "notifications_insert_any" ON public.notifications
+    FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
 CREATE POLICY "notifications_update_own" ON public.notifications
     FOR UPDATE USING (auth.uid() = user_id);
