@@ -4369,8 +4369,8 @@
           <p class="font-headline font-extrabold text-primary" style="font-size:.8125rem">${fp(p.p)}</p>
           ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.5625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
         </div>
-        <div class="flex items-center justify-between mt-1.5">
-          <p class="font-label text-on-surface-variant" style="font-size:9px">${p.l}</p>
+        <div class="flex items-center justify-between gap-1 mt-1.5">
+          <p class="font-label text-on-surface-variant truncate flex-1 min-w-0" style="font-size:9px">${p.l || 'Zòn pa presize'}</p>
           <button onclick="event.stopPropagation();startOrder(${spid})"
                   class="flex items-center gap-1 px-2 py-1 rounded-full cta active:scale-90"
                   style="font-size:9px;font-family:'Manrope',sans-serif;font-weight:700">
@@ -4430,7 +4430,11 @@
           <p class="font-headline font-extrabold text-primary" style="font-size:.875rem">${fp(p.p)} HTG</p>
           ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1.5" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
         </div>
-        <p class="font-label text-on-surface-variant mt-0.5" style="font-size:10px">${p.l} · ${p.r}★</p>
+        <div class="flex items-center gap-1 mt-1 min-w-0">
+          <span class="material-symbols-outlined text-on-surface-variant flex-shrink-0" style="font-size:11px">location_on</span>
+          <p class="font-label text-on-surface-variant truncate" style="font-size:10px">${p.l || 'Zòn pa presize'}</p>
+          <span class="font-label text-on-surface-variant flex-shrink-0" style="font-size:10px">· ${p.r || 0}★</span>
+        </div>
       </div>
     </div>
   </div>`;
