@@ -1523,10 +1523,10 @@
                             Kote</p>
                         <div class="flex items-stretch gap-2">
                             <input id="fLoc" class="si flex-1" readonly placeholder="Detekte zòn ou"/>
-                            <button type="button" id="fLocBtn" onclick="detectPubZone()"
-                                class="flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-transform"
-                                style="background:rgba(0,102,111,.08);color:#00666f;width:46px">
-                                <span class="material-symbols-outlined" style="font-size:20px">my_location</span>
+                            <button type="button" id="fLocBtn" onclick="detectPubZone()" aria-label="Detekte zòn"
+                                class="flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95 transition-all"
+                                style="width:48px;color:#fff;background:linear-gradient(155deg,#00939e,#00666f);box-shadow:0 4px 12px rgba(0,102,111,.32),inset 0 1px 0 rgba(255,255,255,.22)">
+                                <span class="material-symbols-outlined" style="font-size:21px">my_location</span>
                             </button>
                         </div>
                     </div>
@@ -8109,7 +8109,9 @@
             const orig = btn ? btn.innerHTML : null;
             if (btn) {
                 btn.disabled = true;
-                btn.innerHTML = `<span class="font-label text-sm font-bold">${busyLabel}</span>`;
+                // Spinner ikòn — pa kouvri ti bouton ikòn yo ak tèks.
+                btn.innerHTML = '<span class="material-symbols-outlined sp" style="font-size:20px">progress_activity</span>'
+                    + (busyLabel ? '<span class="font-label text-sm font-bold ml-1.5">' + busyLabel + '</span>' : '');
             }
             const restore = () => { if (btn) { btn.disabled = false; btn.innerHTML = orig; } };
             navigator.geolocation.getCurrentPosition(async pos => {
@@ -8146,7 +8148,8 @@
         window.detectPickupLocation = detectPickupLocation;
         window.detectOrderZone = detectOrderZone;
         function detectPubZone() {
-            _withGeoZone('fLocBtn', 'Ap chèche…', zone => {
+            // Bouton ikòn — pa gen tèks busy, jis spinner la.
+            _withGeoZone('fLocBtn', '', zone => {
                 applyPickupZone(zone);
                 toast('Zòn ou: ' + zone.label);
             });
