@@ -2862,6 +2862,41 @@
         </div>
     </div>
 
+    <!-- ══ REFERRAL SHEET — envit yon zanmi ══ -->
+    <div class="sheet" id="referralSheet">
+        <div class="handle"></div>
+        <div class="text-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 amb" style="background:rgba(151,66,43,.08)">
+                <span class="material-symbols-outlined fi" style="font-size:26px;color:#97422b">card_giftcard</span>
+            </div>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Envit yon zanmi</h3>
+            <p class="font-body text-sm text-on-surface-variant mt-1 leading-relaxed">
+                Lè zanmi w lan kreye kont epi fè premye kòmand li, l ap jwenn yon rabè <strong>10%</strong>.
+            </p>
+        </div>
+        <div id="referralCodeBox" class="p-4 rounded-xl text-center mb-4" style="background:rgba(0,102,111,.08);border:1.5px solid #00666f">
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-1">Kòd refè ou</p>
+            <p id="referralCode" class="font-headline font-extrabold text-2xl text-primary" style="letter-spacing:.1em">…</p>
+        </div>
+        <div class="space-y-2 mb-4">
+            <button id="referralCopyBtn" onclick="referralCopy()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">
+                <span class="material-symbols-outlined" style="font-size:18px">content_copy</span>
+                Kopye lyen envitasyon an
+            </button>
+            <button id="referralWhatsBtn" onclick="referralShareWhats()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:#25D366;color:#fff">
+                <span class="material-symbols-outlined" style="font-size:18px">chat</span>
+                Pataje sou WhatsApp
+            </button>
+            <button id="referralSmsBtn" onclick="referralShareSms()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">
+                <span class="material-symbols-outlined" style="font-size:18px">sms</span>
+                Voye pa SMS
+            </button>
+        </div>
+        <button onclick="closeSheets()" class="w-full py-3.5 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:#e5e2dd;color:#1c1c19">
+            Fèmen
+        </button>
+    </div>
+
     <!-- ══ ADDRESSES SHEET — manage saved addresses (kay, biwo, …) ══ -->
     <div class="sheet" id="addressesSheet">
         <div class="handle"></div>
@@ -5194,13 +5229,19 @@
         // ══════════════════════════════════════════════════════════
         function startOrder(id) {
             A.curProd = PRODUCTS.find(x => x.id === id) || A.curProd;
+            // Reset pwomosyon ki tap kondi (sou yon lòt pwodwi) — pa pèmèt
+            // rabè a kontinye sou yon nouvo kòmand san validasyon.
+            A._promoCode = null;
+            A._promoDiscount = 0;
             openSheet("orderSheet"); renderOrderSheet();
         }
 
         function renderOrderSheet() {
             const p = A.curProd;
             if (!p) { toast('Chwazi yon pwodwi dabò'); return; }
-            const sub = p.p, fee = Math.round(sub * .03), total = sub + fee;
+            const sub = p.p, fee = Math.round(sub * .03);
+            const promoDiscount = Math.max(0, Math.min(sub + fee, A._promoDiscount || 0));
+            const total = sub + fee - promoDiscount;
             const zone = A.pickupZone || _lastGeocode();
             document.getElementById("orderSheetContent").innerHTML = `
     <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-1">Kòmande</p>
@@ -5280,9 +5321,23 @@
         <span class="font-bold text-on-surface">Pwoteksyon Escrow :</span> Lajan bloke jouk ou konfime resepsyon. Litig posib nan 7 jou.
       </p>
     </div>
+    <!-- Kòd pwomosyon -->
+    <div class="rounded-xl p-3 mb-3" style="background:rgba(0,102,111,.04);border:1px solid rgba(0,102,111,.15)">
+      <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">Kòd pwomosyon (opsyonèl)</p>
+      <div class="flex gap-2">
+        <input id="orderPromoInput" class="si flex-1" style="text-transform:uppercase" placeholder="EGZ: AYIM-XXXXXX"
+               value="${A._promoCode || ''}"/>
+        <button id="orderPromoBtn" onclick="orderApplyPromo()" class="px-3 py-2 rounded-xl font-label font-bold text-xs active:scale-95"
+                style="background:#00666f;color:#fff">
+          ${A._promoCode ? 'Chanje' : 'Aplike'}
+        </button>
+      </div>
+      ${A._promoCode ? `<p class="font-label text-[11px] text-primary font-bold mt-1.5">✓ ${A._promoCode} — rabè ${fp(promoDiscount)} HTG</p>` : ''}
+    </div>
     <div class="space-y-2 mb-4">
       <div class="flex justify-between font-body text-sm text-on-surface-variant"><span>Sou-total</span><span class="font-bold">${fp(sub)} HTG</span></div>
       <div class="flex justify-between font-body text-sm text-on-surface-variant"><span>Frè sèvis (3%)</span><span class="font-bold">${fp(fee)} HTG</span></div>
+      ${promoDiscount > 0 ? `<div class="flex justify-between font-body text-sm" style="color:#065f46"><span>Rabè (${A._promoCode})</span><span class="font-bold">− ${fp(promoDiscount)} HTG</span></div>` : ''}
       <div class="flex justify-between items-center"><span class="font-headline font-bold text-lg">Total</span><span class="font-headline font-extrabold text-2xl text-primary">${fp(total)} HTG</span></div>
     </div>
     <button onclick="confirmOrder()" class="w-full py-4 rounded-xl cta font-headline font-extrabold text-base active:scale-[.98] flex items-center justify-center gap-2 amb">
@@ -5576,8 +5631,13 @@
             const feePct = (APP_SETTINGS.fee_percent || 3) / 100;
             const unitPrice = p.p;
             const feeAmount = Math.round(unitPrice * feePct);
-            const totalAmount = unitPrice;             // buyer pays sticker price
-            const netAmount = unitPrice - feeAmount;   // seller receives price minus fee
+            // Rabè pwomosyon: AyitiMarket asime depans la — vandè a toujou
+            // resevwa nan netAmount li te dwe resevwa a; sèl bilye achtè a
+            // ki bese.
+            const promoDiscount = Math.max(0, Math.min(unitPrice + feeAmount, A._promoDiscount || 0));
+            const promoCode = A._promoCode || null;
+            const totalAmount = Math.max(0, unitPrice - promoDiscount);
+            const netAmount = unitPrice - feeAmount;   // seller payout unchanged
             const sellerName = p.sellerName || p.seller || 'Vandè';
 
             if (!p.sellerId) {
@@ -5605,9 +5665,17 @@
                         payment_method: 'MONCASH',
                         pickup_location: pickupLabel,
                         otp_code: otp,
+                        admin_note: promoCode ? '[Promo: ' + promoCode + ' -' + promoDiscount + ' HTG]' : null,
                     }).select().single();
                     if (ordErr) { console.warn('[Order insert]', ordErr.message); toast('Erè: ' + ordErr.message); return; }
                     newOrder = data;
+                    // Anrejistre redenmsyon (best-effort) — pa bloke kòmand
+                    // la si li echwe (admin ka rekonsilye).
+                    if (promoCode && promoDiscount > 0) {
+                        applyPromoToOrder(promoCode, newOrder.id, promoDiscount);
+                    }
+                    A._promoCode = null;
+                    A._promoDiscount = 0;
 
                     // Decrement stock optimistically (released back if order cancelled)
                     if (typeof p.s === 'number' && p.s > 0) {
@@ -5912,6 +5980,12 @@
                 i: "home_pin", l: "Adrès mwen",
                 s: _addrCount ? (_addrCount + ' adrès anrejistre') : 'Ajoute adrès kay, biwo…',
                 a: "openAddressesSheet()",
+            });
+            // Refer-a-friend
+            items.push({
+                i: "card_giftcard", l: "Envit yon zanmi",
+                s: "10% rabè pou ou + zanmi w",
+                a: "openReferralSheet()",
             });
             if (u.role === 'buyer') {
                 items.push({ i: "store", l: "Vin yon Vandè", s: "Soumèt ID ou", a: "openSheet('verifySheet')" });
@@ -8809,6 +8883,215 @@
             toast('Adrès anrejistre');
         }
         window.addrSave = addrSave;
+
+        // ── Kòd pwomosyon + refer-a-friend ──────────────────────────
+        // State: A._promoCode + A._promoDiscount kenbe sa achtè aplike
+        // anvan li konfime kòmand la. Validasyon se yon SELECT senp;
+        // anrejistreman redenmsyon fèt apre kòmand kreye ak siksè.
+        const _normalizePromoCode = (s) => String(s || '').trim().toUpperCase();
+
+        function _calcPromoDiscount(promo, total) {
+            const v = Number(promo.discount_value) || 0;
+            if (promo.discount_type === 'percent') {
+                return Math.min(total, Math.round(total * (v / 100)));
+            }
+            return Math.min(total, Math.round(v));
+        }
+
+        async function validatePromoCode(code, total) {
+            const c = _normalizePromoCode(code);
+            if (!c) return { ok: false, reason: 'Antre yon kòd' };
+            if (!db || !A.user?.uid) return { ok: false, reason: 'Konekte pou aplike kòd' };
+            try {
+                const { data: promo, error } = await db.from('promo_codes')
+                    .select('*').eq('code', c).eq('active', true).maybeSingle();
+                if (error) return { ok: false, reason: error.message };
+                if (!promo) return { ok: false, reason: 'Kòd pa egziste oswa pa aktif' };
+                if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
+                    return { ok: false, reason: 'Kòd la ekspire' };
+                }
+                if (promo.max_uses != null && promo.used_count >= promo.max_uses) {
+                    return { ok: false, reason: 'Kòd la rive nan limit itilizasyon li' };
+                }
+                if (promo.scope === 'referral' && promo.referrer_id === A.user.uid) {
+                    return { ok: false, reason: 'Ou pa ka itilize pwòp kòd refè ou' };
+                }
+                // Anpeche reyitilize pa menm itilizatè a.
+                const { data: prior } = await db.from('promo_redemptions')
+                    .select('id').eq('code', c).eq('user_id', A.user.uid).limit(1);
+                if (prior && prior.length) return { ok: false, reason: 'Ou deja itilize kòd sa a' };
+
+                const discount = _calcPromoDiscount(promo, total);
+                if (discount <= 0) return { ok: false, reason: 'Kòd la pa aplikab sou total sa a' };
+                return { ok: true, promo, discount };
+            } catch (e) {
+                return { ok: false, reason: (e && e.message) || 'Erè rezo' };
+            }
+        }
+        window.validatePromoCode = validatePromoCode;
+
+        // Anrejistre redenmsyon apre kòmand kreye. Pa bloke flux la sou
+        // erè — admin ka rekonsilye apre.
+        async function applyPromoToOrder(code, orderId, discountAmount) {
+            const c = _normalizePromoCode(code);
+            if (!c || !db || !A.user?.uid) return;
+            try {
+                await db.from('promo_redemptions').insert({
+                    code: c, user_id: A.user.uid,
+                    order_id: orderId || null,
+                    discount_amount: discountAmount || 0,
+                });
+                // `used_count` monte otomatikman via trigger SQL la
+                // (trg_promo_inc_used) — pa gen RPC ki bezwen rele isit.
+            } catch (e) { console.warn('[applyPromoToOrder]', e && e.message); }
+        }
+        window.applyPromoToOrder = applyPromoToOrder;
+
+        // Jenere kòd refè inik pou itilizatè aktyèl la — `AYIM-XXXXXX` —
+        // sove l sou profil + kreye yon ranje nan promo_codes.
+        async function myReferralCode() {
+            if (!db || !A.user?.uid) return null;
+            try {
+                const { data: prof } = await db.from('profiles')
+                    .select('referral_code').eq('id', A.user.uid).maybeSingle();
+                if (prof && prof.referral_code) return prof.referral_code;
+            } catch (_) { /* annilo */ }
+            // Jenere yon kòd 6 karaktè baz36.
+            let code = '';
+            do {
+                code = 'AYIM-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+                const { data: clash } = await db.from('promo_codes')
+                    .select('id').eq('code', code).limit(1);
+                if (!clash || !clash.length) break;
+            } while (true);
+            try {
+                await db.from('profiles').update({ referral_code: code })
+                    .eq('id', A.user.uid);
+                await db.from('promo_codes').insert({
+                    code, discount_type: 'percent', discount_value: 10,
+                    scope: 'referral', referrer_id: A.user.uid, active: true,
+                });
+            } catch (e) {
+                console.warn('[myReferralCode]', e && e.message);
+                return null;
+            }
+            return code;
+        }
+        window.myReferralCode = myReferralCode;
+
+        function generateReferralLink(code) {
+            const base = window.location.origin + window.location.pathname;
+            return base + '?ref=' + encodeURIComponent(code);
+        }
+        window.generateReferralLink = generateReferralLink;
+
+        // Lè yon nouvo itilizatè enskri ak ?ref=CODE, lye yo ak referrer.
+        // Aplike yon kòd nan sheet kòmand la, mete ajou totals + re-rann.
+        async function orderApplyPromo() {
+            const code = document.getElementById('orderPromoInput')?.value;
+            const c = _normalizePromoCode(code);
+            if (!c) {
+                A._promoCode = null; A._promoDiscount = 0;
+                if (A.curProd && typeof renderOrderSheet === 'function') renderOrderSheet();
+                return;
+            }
+            const p = A.curProd;
+            if (!p) return;
+            const sub = p.p, fee = Math.round(sub * .03);
+            const total = sub + fee;
+            const btn = document.getElementById('orderPromoBtn');
+            const orig = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined sp" style="font-size:14px">progress_activity</span>';
+            }
+            const res = await validatePromoCode(c, total);
+            if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+            if (!res.ok) {
+                A._promoCode = null; A._promoDiscount = 0;
+                toast(res.reason || 'Kòd pa valab');
+                if (typeof renderOrderSheet === 'function') renderOrderSheet();
+                return;
+            }
+            A._promoCode = c;
+            A._promoDiscount = res.discount;
+            toast('Rabè aplike: ' + fp(res.discount) + ' HTG');
+            if (typeof renderOrderSheet === 'function') renderOrderSheet();
+        }
+        window.orderApplyPromo = orderApplyPromo;
+
+        async function linkReferralOnSignup(code) {
+            const c = _normalizePromoCode(code);
+            if (!c || !db || !A.user?.uid) return;
+            try {
+                const { data: promo } = await db.from('promo_codes')
+                    .select('referrer_id, scope').eq('code', c).eq('active', true).maybeSingle();
+                if (!promo || promo.scope !== 'referral' || !promo.referrer_id) return;
+                if (promo.referrer_id === A.user.uid) return;
+                await db.from('profiles').update({ referred_by: promo.referrer_id })
+                    .eq('id', A.user.uid).is('referred_by', null);
+            } catch (e) { console.warn('[linkReferralOnSignup]', e && e.message); }
+        }
+        window.linkReferralOnSignup = linkReferralOnSignup;
+
+        // ── UI refè ─────────────────────────────────────────────────
+        function _referralShareText(code) {
+            const link = generateReferralLink(code);
+            return 'Mwen envite ou sou AyitiMarket! Sèvi ak kòd ' + code
+                + ' pou jwenn 10% rabè sou premye kòmand ou: ' + link;
+        }
+
+        async function openReferralSheet() {
+            openSheet('referralSheet');
+            const codeEl = document.getElementById('referralCode');
+            if (codeEl) codeEl.textContent = 'Ap jenere…';
+            const code = await myReferralCode();
+            if (codeEl) codeEl.textContent = code || '—';
+            if (!code) toast('Pa ka jenere kòd refè ou — eseye ankò');
+        }
+        window.openReferralSheet = openReferralSheet;
+
+        async function referralCopy() {
+            const code = document.getElementById('referralCode')?.textContent;
+            if (!code || code === '—') return;
+            const text = _referralShareText(code);
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    toast('Lyen kopye!');
+                } else {
+                    const ta = document.createElement('textarea');
+                    ta.value = text; document.body.appendChild(ta); ta.select();
+                    document.execCommand('copy'); document.body.removeChild(ta);
+                    toast('Lyen kopye!');
+                }
+            } catch (e) { toast('Pa ka kopye — chwazi tèks la manyèlman'); }
+        }
+        window.referralCopy = referralCopy;
+
+        function referralShareWhats() {
+            const code = document.getElementById('referralCode')?.textContent;
+            if (!code || code === '—') return;
+            window.open('https://wa.me/?text=' + encodeURIComponent(_referralShareText(code)), '_blank');
+        }
+        window.referralShareWhats = referralShareWhats;
+
+        function referralShareSms() {
+            const code = document.getElementById('referralCode')?.textContent;
+            if (!code || code === '—') return;
+            window.location.href = 'sms:?body=' + encodeURIComponent(_referralShareText(code));
+        }
+        window.referralShareSms = referralShareSms;
+
+        // Pran ?ref= sou URL la (lè vizitè a rive nan app la) epi sove l —
+        // l ap pa aktif jiskaske enskripsyon konplete.
+        (function _captureReferralFromUrl() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const ref = params.get('ref');
+                if (ref) localStorage.setItem('aym_pending_ref', ref);
+            } catch (_) { /* annilo */ }
+        })();
 
         // Retounen adrès default itilizatè a (oswa premye a), oswa null.
         function defaultAddress() {
@@ -12708,6 +12991,15 @@
         if (typeof loadMyAddresses === 'function') {
             loadMyAddresses().catch(() => { /* annilo */ });
         }
+        // Si yon ?ref= te kaptire anvan enskripsyon, lye li ak referrer la.
+        try {
+            const pendingRef = localStorage.getItem('aym_pending_ref');
+            if (pendingRef && typeof linkReferralOnSignup === 'function') {
+                linkReferralOnSignup(pendingRef).finally(() => {
+                    try { localStorage.removeItem('aym_pending_ref'); } catch (_) { }
+                });
+            }
+        } catch (_) { /* annilo */ }
         localStorage.setItem('aym_user', JSON.stringify(A.user));
         // Anyone with a valid Supabase session has already used the app
         // (signed up at some point), so the onboarding intro is no longer
