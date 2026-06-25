@@ -21,6 +21,11 @@ jobs:
       - name: Install npm deps
         run: npm install --no-audit --no-fund
 
+      # `npm audit` flag CVE nan devDeps yo. `|| true` evite blokay sou
+      # CVE ki pa kritik; CI rapò yo toujou parèt nan log la.
+      - name: npm audit (info-only)
+        run: npm audit --audit-level=high || true
+
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
