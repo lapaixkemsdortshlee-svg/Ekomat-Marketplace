@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="ht">
 
 <head>
     <meta charset="utf-8" />
@@ -902,10 +902,58 @@
             border-radius: 50%;
             animation: spin .8s linear infinite;
         }
+
+        /* ── Aksesiblite (a11y / WCAG AA) ──────────────────────────── */
+        /* Anbo klavye, montre yon ring vizib sou kontwòl ki gen fokis.
+           `:focus-visible` egzante peze sourit ki pa bezwen wè ring nan. */
+        :focus { outline: none; }
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        [role="button"]:focus-visible,
+        [tabindex]:focus-visible {
+            outline: 3px solid #00666f;
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+
+        /* Respekte preferans itilizatè a — dezaktive animasyon ki pa
+           esansyèl pou moun ki gen vètij oswa sensiblite mouvman. */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .001ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* "Sote sou kontni an" — kache jiskaske klavye fokis sou li. */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 8px;
+            z-index: 9999;
+            background: #00666f;
+            color: #fcf9f4;
+            padding: 10px 16px;
+            border-radius: 0 0 10px 10px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            text-decoration: none;
+            transition: top .15s ease;
+        }
+        .skip-link:focus { top: 0; }
     </style>
 </head>
 
 <body class="pb-24 selection:bg-[#8cf2ff] selection:text-[#001f23]">
+
+    <!-- A11y: pèmèt itilizatè klavye yo sote nav la rive nan kontni an -->
+    <a class="skip-link" href="#main-app">Sote sou kontni an</a>
 
     <!-- ══════════════════════════════════════════════════════
      STATUS BAR
@@ -957,6 +1005,8 @@
 
 
 
+    <!-- Wrapper sèvi kòm sib skip-link la (#main-app) — pa chanje layout -->
+    <div id="main-app">
     <!-- ══════════════════════════════════════════════════════
      SCREEN 0.5 — ONBOARDING (Lazy-mounted iframe, first visit only)
 ══════════════════════════════════════════════════════ -->
@@ -1291,7 +1341,7 @@
 
             <!-- BÒ GÒCH — Back btn + Wordmark + role badge -->
             <div class="flex items-center gap-1.5 min-w-0">
-                <button id="backbtn" onclick="goBack()"
+                <button id="backbtn" onclick="goBack()" aria-label="Retounen"
                     class="hidden w-9 h-9 items-center justify-center rounded-full bg-surface-container-low active:bg-surface-container transition-colors">
                     <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">arrow_back</span>
                 </button>
@@ -1703,7 +1753,7 @@
         <!-- Chat Header Premium -->
         <div class="fixed top-0 w-full z-50 glass" style="border-bottom:1px solid rgba(188,201,200,.08)">
             <div class="flex items-center gap-3 px-4 pt-8 pb-3">
-                <button onclick="goBack()"
+                <button onclick="goBack()" aria-label="Retounen"
                     class="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container-low active:bg-surface-container">
                     <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">arrow_back</span>
                 </button>
@@ -1745,13 +1795,13 @@
                         oninput="toggleVoiceBtn(this.value)" />
                 </div>
                 <!-- Voice button (visible si input vide) -->
-                <button id="voiceBtn" onclick="startVoiceRecord()"
+                <button id="voiceBtn" onclick="startVoiceRecord()" aria-label="Anrejistre nòt vokal"
                     class="w-10 h-10 flex items-center justify-center rounded-full active:scale-90 transition-all flex-shrink-0"
                     style="background:rgba(0,102,111,.06)">
                     <span class="material-symbols-outlined text-primary" style="font-size:20px" id="voiceIco">mic</span>
                 </button>
                 <!-- Send button (visible si input non-vide) -->
-                <button id="sendBtn" onclick="sendMsg()"
+                <button id="sendBtn" onclick="sendMsg()" aria-label="Voye mesaj"
                     class="hidden w-10 h-10 flex items-center justify-center rounded-full cta active:scale-90 transition-transform flex-shrink-0 amb">
                     <span class="material-symbols-outlined fi text-white" style="font-size:18px">send</span>
                 </button>
@@ -4347,10 +4397,10 @@
       <div id="detailCarousel" class="w-full flex overflow-x-auto snap-x snap-mandatory noscroll" style="height:340px;background:#f0ede8">${carouselHTML}</div>
       ${dotsHTML}
       ${chevronsHTML}
-      <button onclick="goBack()" class="absolute top-10 left-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
+      <button onclick="goBack()" aria-label="Retounen" class="absolute top-10 left-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
         <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">arrow_back</span>
       </button>
-      <button onclick="toggleFav(${dpid})" class="absolute top-10 right-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
+      <button onclick="toggleFav(${dpid})" aria-label="${A.favs.has(p.id) ? 'Retire nan favori' : 'Ajoute nan favori'}" aria-pressed="${A.favs.has(p.id) ? 'true' : 'false'}" class="absolute top-10 right-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
         <span class="material-symbols-outlined fi" style="font-size:17px;color:${A.favs.has(p.id) ? '#f99188' : '#3d4949'}">favorite</span>
       </button>
     </div>
@@ -4762,6 +4812,8 @@
         ${imgHtml}
         ${oosOverlay}
         <button onclick="event.stopPropagation();toggleFav(${pid})"
+                aria-label="${fav ? 'Retire nan favori' : 'Ajoute nan favori'}"
+                aria-pressed="${fav ? 'true' : 'false'}"
                 class="absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center rounded-full"
                 style="background:rgba(252,249,244,.88);backdrop-filter:blur(4px)"
                 id="fav${p.id}">
@@ -13945,6 +13997,7 @@
 
     console.log('%c[AyitiMarket] Module Supabase v5.0 — Production', 'color:#00666f;font-weight:bold');
     </script>
+    </div><!-- /#main-app -->
 </body>
 
 </html>
