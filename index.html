@@ -2784,6 +2784,11 @@
             </p>
         </div>
         <div class="bg-surface-container-low rounded-xl p-4 mb-3" id="adminConfPayInfo"></div>
+        <!-- Verifikasyon otomatik MonCash — montre rezilta adaptè a -->
+        <div class="rounded-xl p-3 mb-3" id="adminConfPayVerifyBox"
+            style="background:rgba(101,124,71,.06);border:1px solid rgba(101,124,71,.18)">
+            <p class="font-label text-[11px] text-on-surface-variant">Tcheke MonCash…</p>
+        </div>
         <div class="bg-surface-container-low rounded-xl p-3 mb-4">
             <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1">Nòt admin (opsyonèl)</p>
             <textarea id="adminConfPayNote" class="si w-full" rows="2" placeholder="ex: Ref MonCash valide, lajan rive sou kont la"></textarea>
@@ -7474,6 +7479,7 @@
             const o = await fetchOrder(orderId);
             if (!o) { toast('Komand pa jwenn'); return; }
             A._adminConfPayOrder = o;
+            A._adminConfPayVerify = null;
             const info = document.getElementById('adminConfPayInfo');
             const noteEl = document.getElementById('adminConfPayNote');
             if (noteEl) noteEl.value = '';
@@ -7490,35 +7496,103 @@
                 `;
             }
             openSheet('adminConfirmPaymentSheet');
+            // Lanse verifikasyon adaptè MonCash la otomatikman.
+            _renderAdminVerifyBox({ loading: true });
+            const v = await moncashVerifyTransaction({
+                ref: o.moncash_ref, expectedAmount: o.total_amount || 0, orderId: o.id,
+            });
+            A._adminConfPayVerify = v;
+            _renderAdminVerifyBox(v);
         }
         window.openAdminConfirmPayment = openAdminConfirmPayment;
+
+        // Trase rezilta verifikasyon MonCash nan sheet admin lan.
+        function _renderAdminVerifyBox(v) {
+            const box = document.getElementById('adminConfPayVerifyBox');
+            if (!box) return;
+            if (v && v.loading) {
+                box.style.background = 'rgba(101,124,71,.06)';
+                box.style.borderColor = 'rgba(101,124,71,.18)';
+                box.innerHTML = `<div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined sp" style="font-size:16px;color:#065f46">progress_activity</span>
+                    <p class="font-label text-[11px] text-on-surface-variant">Tcheke MonCash…</p>
+                </div>`;
+                return;
+            }
+            const matched = v && v.matched;
+            const icon = matched ? 'verified' : 'warning';
+            const color = matched ? '#065f46' : '#92400e';
+            const bg = matched ? 'rgba(101,124,71,.08)' : 'rgba(254,243,199,.6)';
+            const bd = matched ? 'rgba(101,124,71,.28)' : 'rgba(146,64,14,.32)';
+            const headline = matched
+                ? 'Verifikasyon adaptè a: ref jwenn ak montan koresponn'
+                : 'Verifikasyon adaptè a: pa fin matche';
+            box.style.background = bg;
+            box.style.borderColor = bd;
+            box.innerHTML = `<div class="flex items-start gap-2">
+                <span class="material-symbols-outlined flex-shrink-0" style="font-size:16px;color:${color}">${icon}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="font-label text-[11px] font-bold" style="color:${color}">${headline}</p>
+                    <p class="font-label text-[10px] text-on-surface-variant mt-0.5">
+                        ${v && v.refFound ? 'Ref jwenn' : 'Ref pa jwenn'} ·
+                        ${v && v.amountMatches ? 'Montan koresponn' : 'Montan pa koresponn'}
+                        ${v && v.simulated ? ' · <em>(senile — adaptè poko konekte)</em>' : ''}
+                    </p>
+                    ${v && v.reason ? `<p class="font-label text-[10px] text-on-surface-variant mt-0.5">${v.reason}</p>` : ''}
+                </div>
+            </div>`;
+        }
 
         async function submitAdminConfirmPayment() {
             const o = A._adminConfPayOrder;
             if (!o) { toast('Pa gen komand chwazi'); return; }
             const noteEl = document.getElementById('adminConfPayNote');
-            const note = (noteEl?.value || '').trim() || null;
+            const adminNote = (noteEl?.value || '').trim();
             const btn = document.getElementById('adminConfPayBtn');
             if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+
+            // Re-verifye defansif lè admin klike, nan ka kote sheet la rete
+            // louvri lontan oswa verifikasyon premye a te echwe.
+            let v = A._adminConfPayVerify;
+            if (!v) {
+                try {
+                    v = await moncashVerifyTransaction({
+                        ref: o.moncash_ref, expectedAmount: o.total_amount || 0, orderId: o.id,
+                    });
+                } catch (e) { console.warn('[verify on submit]', e.message); }
+            }
+            // Konstwi yon nòt admin ki gen tras verifikasyon an pou odit.
+            const verifyTag = v
+                ? '[Verify: ' + (v.matched ? 'OK' : 'MISMATCH')
+                    + (v.simulated ? ' · simule' : '')
+                    + (v.amount != null ? ' · ' + v.amount + ' HTG' : '')
+                    + ']'
+                : '[Verify: skipped]';
+            const verifierTag = A.user && A.user.uid ? ' [by:' + A.user.uid.slice(0, 8) + ']' : '';
+            const fullNote = [adminNote, verifyTag + verifierTag].filter(Boolean).join(' · ');
+
             const { error } = await db.rpc('advance_order_status', {
                 p_order_id: o.id, p_to_status: 'payment_verified',
-                p_moncash_ref: null, p_admin_note: note,
+                p_moncash_ref: null, p_admin_note: fullNote || null,
             });
             if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
             if (error) { toast('Erè: ' + error.message); return; }
             closeSheets();
             A._adminConfPayOrder = null;
-            toast('Peman konfime — eskwo aktive');
-            // Notify both parties via the centralized helper
+            A._adminConfPayVerify = null;
+            toast(v && !v.matched
+                ? 'Peman konfime manyèlman (adaptè pa t matche) — eskwo aktive'
+                : 'Peman konfime — eskwo aktive');
+            // Notify both parties via the centralized helper.
             notify(o.seller_id, {
                 type: 'order', icon: 'verified',
-                title: 'Eskwo aktive',
-                body: 'Lajan pou "' + (o.product_title || 'komand') + '" bloke nan eskwo. Prepare pwodwi a.',
+                title: 'Peman kliyan an konfime',
+                body: 'Lajan pou "' + (o.product_title || 'kòmand') + '" bloke nan eskwo. Prepare pwodwi a.',
                 color: '#1e40af',
             });
             notify(o.buyer_id, {
                 type: 'order', icon: 'verified',
-                title: 'Peman verifye',
+                title: 'Peman ou konfime',
                 body: 'Lajan ou bloke nan eskwo. Vandè ap prepare pwodwi a.',
                 color: '#1e40af',
             });
@@ -8901,13 +8975,63 @@
             // TODO: POST to Digicel MonCash merchant API with bearer token
             return { ok: true, simulated: true, transaction_id: 'stub_' + Date.now() };
         }
-        async function moncashVerifyReceipt(moncashRef, expectedAmount) {
-            console.info('[MonCash verify STUB]', { moncashRef, expectedAmount });
-            // TODO: Look up the transaction on MonCash and confirm amount/sender
-            return { ok: true, simulated: true };
-        }
         window.moncashSendPayout = moncashSendPayout;
-        window.moncashVerifyReceipt = moncashVerifyReceipt;
+
+        // Verifikasyon yon tranzaksyon MonCash — entèfas konplè, kò se yon
+        // stub. Lè kle Digicel la rive, ranplase blòk fetch la ak vrè
+        // POST sou MerchantAPI Digicel; rès la (validasyon, valè retounen)
+        // pa bezwen chanje.
+        //
+        // Retounen: {
+        //   ok:           reken adaptè a kapab reponn
+        //   matched:      tout bagay matche (ok ak fò pou konfime)
+        //   refFound:     tranzaksyon an egziste sou MonCash
+        //   amountMatches: montan an menm ak sa ki nan kòmand la
+        //   amount:       montan reyèl rapòte pa MonCash
+        //   reason:       eksplikasyon (an Kreyòl)
+        //   simulated:    vre tan adaptè a poko branche sou vrè API a
+        // }
+        async function moncashVerifyTransaction({ ref, expectedAmount, orderId } = {}) {
+            const out = {
+                ok: false, matched: false, refFound: false, amountMatches: false,
+                amount: null, ref: ref || null,
+                reason: '', simulated: true,
+            };
+            if (!ref || String(ref).trim().length < 6) {
+                out.reason = 'Ref MonCash twò kout oswa vid';
+                return out;
+            }
+            if (!/^[A-Za-z0-9._\-]{6,40}$/.test(String(ref).trim())) {
+                out.reason = 'Fòma ref MonCash pa valid';
+                return out;
+            }
+            console.info('[MonCash verify STUB]', { ref, expectedAmount, orderId });
+            // TODO: real call →
+            //   const res = await fetch('https://moncash.digicelhaiti.com/...', {
+            //       method:'POST', headers:{ Authorization:'Bearer '+token },
+            //       body: JSON.stringify({ transactionId: ref })
+            //   });
+            //   const tx = await res.json();
+            //   out.refFound = !!tx;
+            //   out.amount = tx?.amount ?? null;
+            //   out.amountMatches = out.amount === expectedAmount;
+            //   out.matched = out.refFound && out.amountMatches;
+            //   out.ok = true; out.simulated = false;
+            //   out.reason = out.matched ? 'OK' : 'Mismatch';
+            //   return out;
+            //
+            // STUB: simulate a successful lookup matching the expected amount
+            // so the UI flow can be tested end-to-end. Admin still has the
+            // final say via the explicit "Konfime" CTA.
+            out.ok = true;
+            out.refFound = true;
+            out.amount = expectedAmount || null;
+            out.amountMatches = true;
+            out.matched = true;
+            out.reason = 'Senile — adaptè a poko konekte sou API Digicel';
+            return out;
+        }
+        window.moncashVerifyTransaction = moncashVerifyTransaction;
 
         async function fetchOrder(orderId) {
             if (!db) return null;
@@ -8953,8 +9077,15 @@
             const refEl = document.getElementById('escPayRef');
             if (!order || !refEl) return;
             const ref = refEl.value.trim();
-            if (ref.length < 4) { toast('Antre referans tranzaksyon MonCash ou'); return; }
             if (!db) { toast('Pa gen koneksyon'); return; }
+
+            // Validasyon fòma — menm règ ak adaptè verifikasyon an pou
+            // tout ref ki rive bò admin lan deja gen yon fòma valid.
+            if (ref.length < 6) { toast('Ref MonCash twò kout (omwen 6 karaktè)'); return; }
+            if (!/^[A-Za-z0-9._\-]{6,40}$/.test(ref)) {
+                toast('Fòma ref MonCash pa valid (lèt/chif/.-_ sèlman)');
+                return;
+            }
 
             // If this escrow sheet was opened for a multi-order group (cart
             // checkout for a single seller), advance every row with the same
@@ -8962,6 +9093,17 @@
             const groupIds = Array.isArray(A._escrowGroupIds) && A._escrowGroupIds.length > 1
                 ? A._escrowGroupIds.slice()
                 : [order.id];
+
+            // Anpeche menm ref MonCash sèvi ankò pou yon lòt kòmand.
+            try {
+                const { data: dupRows } = await db.from('orders')
+                    .select('id, buyer_id, status').eq('moncash_ref', ref).limit(20);
+                const conflicts = (dupRows || []).filter(r => !groupIds.includes(r.id));
+                if (conflicts.length > 0) {
+                    toast('Ref sa a deja itilize pou yon lòt kòmand');
+                    return;
+                }
+            } catch (e) { console.warn('[submitPaymentRef dup]', e.message); }
 
             const failures = [];
             for (const oid of groupIds) {
@@ -8983,14 +9125,13 @@
             toast(failures.length > 0
                 ? 'Peman deklare (' + (groupIds.length - failures.length) + '/' + groupIds.length + ')'
                 : 'Peman deklare — admin ap verifye');
-            // Notify admin(s) once for the whole group
-            db.from('profiles').select('id').eq('role', 'admin').then(({ data: admins }) => {
-                (admins || []).forEach(a => db.from('notifications').insert({
-                    user_id: a.id, type: 'order', icon: 'task',
-                    title: 'Peman pou verifye',
-                    body: (A.user.name || 'Yon achtè') + ' voye lajan pou ' + (order.product_title || 'yon komand') + '. Ref: ' + ref,
-                    color: '#97422b',
-                }));
+            // Notify admin(s) once for the whole group via the centralized helper.
+            notifyAdmins({
+                type: 'order', icon: 'task',
+                title: 'Peman pou verifye',
+                body: (A.user.name || 'Yon achtè') + ' voye lajan pou '
+                    + (order.product_title || 'yon kòmand') + '. Ref: ' + ref,
+                color: '#97422b',
             });
             if (typeof renderOrderScreen === 'function') renderOrderScreen();
         }
