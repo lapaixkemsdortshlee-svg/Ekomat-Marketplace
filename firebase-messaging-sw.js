@@ -11,12 +11,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js');
 
 const FIREBASE_CONFIG = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyAF_byJDhzM6sPMPbexfofWI-9TJbFuw5k',
+  authDomain: 'ayitimarket-19c78.firebaseapp.com',
+  projectId: 'ayitimarket-19c78',
+  storageBucket: 'ayitimarket-19c78.firebasestorage.app',
+  messagingSenderId: '372041211822',
+  appId: '1:372041211822:web:68bfbf9ed33b9adbf5f23f',
+  measurementId: 'G-QJG6ZGJR70',
 };
 
 if (FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId) {
