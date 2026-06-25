@@ -2810,6 +2810,44 @@
         </div>
     </div>
 
+    <!-- ══ DISPUTE SHEET — Buyer (or seller) opens a dispute ══ -->
+    <div class="sheet" id="disputeSheet">
+        <div class="handle"></div>
+        <div class="text-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 amb" style="background:#991b1b">
+                <span class="material-symbols-outlined fi text-white" style="font-size:26px">report</span>
+            </div>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Pwoteste kòmand sa a</h3>
+            <p class="font-body text-sm text-on-surface-variant mt-1 leading-relaxed">
+                Yon admin ap egzamine litij ou epi pran yon desizyon.
+            </p>
+        </div>
+        <div class="bg-surface-container-low rounded-xl p-4 mb-3" id="disputeInfo"></div>
+        <div class="mb-3">
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Rezon</p>
+            <div class="space-y-2" id="disputeReasons"></div>
+        </div>
+        <div class="bg-surface-container-low rounded-xl p-3 mb-4">
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1">Detay (omwen 10 karaktè)</p>
+            <textarea id="disputeDetails" class="si w-full" rows="3" placeholder="Eksplike ki sa ki rive…"></textarea>
+        </div>
+        <div class="flex items-start gap-2 p-3 rounded-xl mb-4" style="background:rgba(153,27,27,.06)">
+            <span class="material-symbols-outlined" style="font-size:16px;color:#991b1b">info</span>
+            <p class="font-label text-[11px] text-on-surface-variant leading-relaxed">
+                Apre w soumèt, lajan ou bloke nan eskwo a rete jiskaske admin pran yon desizyon (libere bay vandè a oswa ranbouse w).
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closeSheets()" class="px-4 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant">
+                Anile
+            </button>
+            <button id="disputeSubmitBtn" onclick="submitDispute()" class="flex-1 py-3 rounded-xl font-label font-bold text-sm active:scale-95 flex items-center justify-center gap-2" style="background:#991b1b;color:#fcf9f4">
+                <span class="material-symbols-outlined" style="font-size:18px">report</span>
+                Soumèt litij
+            </button>
+        </div>
+    </div>
+
     <!-- ══ RATING SHEET — Buyer rates seller after delivery ══ -->
     <div class="sheet" id="ratingSheet">
         <div class="handle"></div>
@@ -5174,10 +5212,11 @@
                         Wè kòd OTP mwen
                     </button>`);
                 }
-                if (['ready_for_pickup','otp_confirmed','released'].includes(order.status)) {
+                if (['payment_verified','ready_for_pickup','picked_up','otp_confirmed','released'].includes(order.status)) {
                     buttons.push(`<button onclick="openDispute('${id}')"
-                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95 bg-surface-container text-on-surface-variant">
-                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoblèm
+                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                        style="background:rgba(153,27,27,.08);color:#991b1b">
+                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoteste
                     </button>`);
                 }
                 if (['otp_confirmed','released','completed','delivered'].includes(order.status) && !order._rated) {
@@ -5205,10 +5244,11 @@
                         Antre kòd OTP achtè
                     </button>`);
                 }
-                if (['ready_for_pickup','otp_confirmed'].includes(order.status)) {
+                if (['payment_verified','ready_for_pickup','picked_up','otp_confirmed'].includes(order.status)) {
                     buttons.push(`<button onclick="openDispute('${id}')"
-                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95 bg-surface-container text-on-surface-variant">
-                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoblèm
+                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                        style="background:rgba(153,27,27,.08);color:#991b1b">
+                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoteste
                     </button>`);
                 }
             }
@@ -9394,28 +9434,104 @@
         }
         window.showBuyerOTP = showBuyerOTP;
 
-        // ─ Dispute (buyer or seller) ──────────────────────────────
+        // ─ Dispute (buyer or seller) — bottom sheet ak rezon + detay ─
+        const _DISPUTE_REASONS = [
+            { id: 'not_received', label: 'Pa janm resevwa pwodwi a', icon: 'inventory_2' },
+            { id: 'wrong_item',   label: 'Pa pwodwi ki te kòmande a', icon: 'swap_horiz' },
+            { id: 'damaged',      label: 'Pwodwi a domaje oswa kase', icon: 'broken_image' },
+            { id: 'quality',      label: 'Kalite pa koresponn ak deskripsyon', icon: 'rule' },
+            { id: 'other',        label: 'Lòt — eksplike anba a', icon: 'more_horiz' },
+        ];
+        const _DISPUTE_REASON_LABELS = _DISPUTE_REASONS.reduce(
+            (m, r) => { m[r.id] = r.label; return m; }, {});
+
         async function openDispute(orderId) {
             if (!db) return;
-            const reason = prompt('Dekri pwoblèm nan (admin ap wè li):');
-            if (!reason || reason.trim().length < 5) { toast('Antre yon deskripsyon plis detay'); return; }
-            const { error } = await db.rpc('advance_order_status', {
-                p_order_id: orderId, p_to_status: 'disputed',
-                p_moncash_ref: null, p_admin_note: reason.trim(),
-            });
-            if (error) { toast('Erè: ' + error.message); return; }
-            toast('Litij ouvri — admin ap kontakte w');
-            db.from('profiles').select('id').eq('role', 'admin').then(({ data: admins }) => {
-                (admins || []).forEach(a => db.from('notifications').insert({
-                    user_id: a.id, type: 'order', icon: 'report',
-                    title: 'Nouvo litij',
-                    body: (A.user.name || 'Yon itilizatè') + ': ' + reason.trim().slice(0, 100),
-                    color: '#991b1b',
-                }));
-            });
-            if (typeof renderOrderScreen === 'function') renderOrderScreen();
+            const o = await fetchOrder(orderId);
+            if (!o) { toast('Kòmand pa jwenn'); return; }
+            A._disputeOrder = o;
+            A._disputeReason = _DISPUTE_REASONS[0].id;
+
+            const info = document.getElementById('disputeInfo');
+            if (info) {
+                info.innerHTML = `
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <p class="font-headline font-bold text-sm flex-1">${o.product_title || 'Pwodwi'}</p>
+                        <span class="font-label text-[10px] text-on-surface-variant">#${(o.id || '').slice(0, 8)}</span>
+                    </div>
+                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Achtè:</strong> ${o.buyer_name || '—'}</p>
+                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Vandè:</strong> ${o.seller_name || '—'}</p>
+                    <p class="font-label text-[11px] mt-2"><strong>Total:</strong> <span class="font-headline font-extrabold text-base text-primary">${fp(o.total_amount || 0)} HTG</span></p>
+                `;
+            }
+            const list = document.getElementById('disputeReasons');
+            if (list) {
+                list.innerHTML = _DISPUTE_REASONS.map((r, i) => `
+                    <label class="block cursor-pointer">
+                        <input type="radio" name="disputeReason" value="${r.id}" class="sr-only peer" ${i === 0 ? 'checked' : ''}
+                               onchange="A._disputeReason='${r.id}'"/>
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-lowest peer-checked:bg-[rgba(153,27,27,.08)]"
+                             style="border:1.5px solid transparent">
+                            <span class="material-symbols-outlined fi" style="font-size:18px;color:#991b1b">${r.icon}</span>
+                            <p class="font-label text-sm text-on-surface flex-1">${r.label}</p>
+                            <span class="material-symbols-outlined fi opacity-0 peer-checked:opacity-100" style="font-size:16px;color:#991b1b">check_circle</span>
+                        </div>
+                    </label>
+                `).join('');
+            }
+            const details = document.getElementById('disputeDetails');
+            if (details) details.value = '';
+            openSheet('disputeSheet');
         }
         window.openDispute = openDispute;
+
+        async function submitDispute() {
+            const o = A._disputeOrder;
+            if (!o) { toast('Pa gen kòmand chwazi'); return; }
+            const reasonId = A._disputeReason || 'other';
+            const details = (document.getElementById('disputeDetails')?.value || '').trim();
+            if (details.length < 10) { toast('Bay omwen 10 karaktè eksplikasyon'); return; }
+
+            const reasonLabel = _DISPUTE_REASON_LABELS[reasonId] || reasonId;
+            const openerTag = (A.user && A.user.role === 'seller') ? 'Vandè' : 'Achtè';
+            // Make en sòt admin_note an gen ase enfo pou admin pran desizyon
+            // san li bezwen lòt rechèch (rezon + ki sa ki ekri + ki moun).
+            const adminNote = '[Dispute: ' + reasonLabel + ' · pa ' + openerTag + '] ' + details;
+
+            const btn = document.getElementById('disputeSubmitBtn');
+            if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+            const { error } = await db.rpc('advance_order_status', {
+                p_order_id: o.id, p_to_status: 'disputed',
+                p_moncash_ref: null, p_admin_note: adminNote,
+            });
+            if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+            if (error) { toast('Erè: ' + error.message); return; }
+
+            closeSheets();
+            A._disputeOrder = null;
+            A._disputeReason = null;
+            toast('Litij ouvri — admin ap kontakte w');
+
+            notifyAdmins({
+                type: 'order', icon: 'report',
+                title: 'Nouvo litij',
+                body: openerTag + ' "' + (A.user.name || 'Yon itilizatè') + '" pwoteste — '
+                    + reasonLabel + ': ' + details.slice(0, 100),
+                color: '#991b1b',
+            });
+            const opener = A.user && A.user.uid;
+            const other = opener === o.buyer_id ? o.seller_id : o.buyer_id;
+            if (other && other !== opener) {
+                notify(other, {
+                    type: 'order', icon: 'report',
+                    title: 'Yon litij ouvri sou kòmand sa a',
+                    body: 'Admin ap egzamine: ' + reasonLabel,
+                    color: '#991b1b',
+                });
+            }
+            if (typeof renderOrderScreen === 'function') renderOrderScreen();
+        }
+        window.submitDispute = submitDispute;
 
         // ─ Buyer: rate seller after delivery ──────────────────────
         let _ratingState = { orderId: null, sellerId: null, productId: null, stars: 0 };
