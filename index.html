@@ -1444,6 +1444,13 @@
                 <button
                     class="cchip flex-shrink-0 px-4 py-2 rounded-full font-label font-semibold text-[12px] bg-surface-container-highest text-on-surface active:scale-95"
                     onclick="filterFeed(this,'artisanat')">Atizana</button>
+                <button id="feedFilterBtn" onclick="openFilterSheet()"
+                    class="flex-shrink-0 px-3 py-2 rounded-full font-label font-bold text-[12px] active:scale-95 flex items-center gap-1"
+                    style="background:rgba(0,102,111,.08);color:#00666f">
+                    <span class="material-symbols-outlined" style="font-size:14px">filter_alt</span>
+                    <span>Filtè</span>
+                    <span id="feedFilterBadge" class="hidden ml-1 px-1.5 py-0.5 rounded-full font-bold" style="background:#00666f;color:#fff;font-size:9px"></span>
+                </button>
             </div>
             <!-- Announcement banner -->
             <div id="feedAnnounceBanner" class="hidden mb-3"></div>
@@ -2223,8 +2230,53 @@
                 <!-- filled dynamically by renderVsCats() -->
             </div>
 
-            <button id="vsCatsBtn" onclick="vsGoStep(4)"
+            <button id="vsCatsBtn" onclick="vsGoStep('phone')"
                 class="w-full py-4 rounded-xl font-headline font-extrabold text-sm active:scale-95 transition-all cta">
+                Kontinye <span class="material-symbols-outlined align-middle" style="font-size:18px">arrow_forward</span>
+            </button>
+        </div>
+
+        <!-- Étape 'phone' : Verifikasyon nimewo telefòn ak OTP SMS -->
+        <div id="vs-stepphone" class="hidden">
+            <div class="flex items-center gap-3 mb-4">
+                <button onclick="vsGoStep('cats')"
+                    class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:bg-surface-container-high flex-shrink-0">
+                    <span class="material-symbols-outlined text-on-surface-variant" style="font-size:16px">arrow_back</span>
+                </button>
+                <div>
+                    <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant">Sekirite</p>
+                    <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">Verifye nimewo telefòn ou</h3>
+                </div>
+            </div>
+            <p class="font-body text-sm text-on-surface-variant mb-4 leading-relaxed">
+                N ap voye yon kòd 6 chif sou SMS. Sa garanti se ou ki gen kont sa a — obligatwa pou verifikasyon vandè.
+            </p>
+
+            <div class="mb-3">
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">Nimewo telefòn (fòma entènasyonal)</p>
+                <input id="vsPhoneInput" type="tel" class="si w-full" placeholder="+509 3X XX XXXX" autocomplete="tel"/>
+            </div>
+
+            <button id="vsSendOtpBtn" onclick="vsSendOtp()" class="w-full py-3 rounded-xl font-headline font-bold text-sm active:scale-95 mb-4 cta">
+                <span class="material-symbols-outlined align-middle mr-1" style="font-size:16px">sms</span>
+                Voye kòd verifikasyon
+            </button>
+
+            <div id="vsOtpBox" class="hidden">
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">Kòd 6 chif</p>
+                <input id="vsOtpInput" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                    class="si w-full text-center" style="letter-spacing:.5em;font-size:1.25rem;font-weight:700" placeholder="------"/>
+                <button id="vsVerifyOtpBtn" onclick="vsVerifyOtp()" class="w-full py-3 mt-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:#065f46;color:#fcf9f4">
+                    <span class="material-symbols-outlined align-middle mr-1" style="font-size:16px">check_circle</span>
+                    Verifye kòd la
+                </button>
+            </div>
+
+            <div id="vsPhoneStatus" class="hidden text-center mt-4 p-3 rounded-xl" style="background:rgba(101,124,71,.08);border:1px solid rgba(101,124,71,.25)"></div>
+
+            <button id="vsPhoneNextBtn" onclick="vsGoStep(4)" disabled
+                class="w-full py-4 mt-4 rounded-xl font-headline font-extrabold text-sm active:scale-95 transition-all"
+                style="background:#e5e2dd;color:#6d7979">
                 Kontinye <span class="material-symbols-outlined align-middle" style="font-size:18px">arrow_forward</span>
             </button>
         </div>
@@ -2806,6 +2858,97 @@
             <button id="adminConfPayBtn" onclick="submitAdminConfirmPayment()" class="flex-1 py-3 rounded-xl font-label font-bold text-sm active:scale-95 flex items-center justify-center gap-2" style="background:#065f46;color:#fcf9f4">
                 <span class="material-symbols-outlined" style="font-size:18px">check_circle</span>
                 Wi, peman resevwa — Konfime
+            </button>
+        </div>
+    </div>
+
+    <!-- ══ FEED FILTER SHEET — pri, nòt, an stòk, triye ══ -->
+    <div class="sheet" id="filterSheet">
+        <div class="handle"></div>
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Filtè pwodwi</h3>
+                <p class="font-body text-xs text-on-surface-variant mt-0.5">Rafine sa w wè nan feed la</p>
+            </div>
+            <button onclick="resetFeedFilters()" class="px-3 py-2 rounded-full bg-surface-container active:bg-surface-container-high font-label text-xs font-bold text-on-surface-variant">
+                Reset
+            </button>
+        </div>
+        <div class="space-y-4 mb-5">
+            <div>
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Pri (HTG)</p>
+                <div class="flex items-center gap-2">
+                    <input id="fltPriceMin" type="number" inputmode="numeric" class="si flex-1" placeholder="Min"/>
+                    <span class="text-on-surface-variant">—</span>
+                    <input id="fltPriceMax" type="number" inputmode="numeric" class="si flex-1" placeholder="Maks"/>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant">Nòt minimòm</p>
+                    <span id="fltRatingLbl" class="font-label text-xs font-bold text-primary">0★</span>
+                </div>
+                <input id="fltRating" type="range" min="0" max="5" step="0.5" value="0" class="w-full"
+                    oninput="document.getElementById('fltRatingLbl').textContent = (+this.value).toFixed(1) + '★'"/>
+            </div>
+            <label class="flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest cursor-pointer">
+                <div>
+                    <p class="font-headline font-bold text-sm text-on-surface">An stòk sèlman</p>
+                    <p class="font-label text-xs text-on-surface-variant">Kache pwodwi ki epuize</p>
+                </div>
+                <input type="checkbox" id="fltInStock" class="w-5 h-5 rounded accent-[#00666f]"/>
+            </label>
+            <div>
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Triye pa</p>
+                <select id="fltSort" class="si w-full">
+                    <option value="popular">Pi popilè</option>
+                    <option value="new">Pi nouvo</option>
+                    <option value="price_asc">Pri: pi ba an premye</option>
+                    <option value="price_desc">Pri: pi wo an premye</option>
+                    <option value="rating">Nòt pi wo</option>
+                </select>
+            </div>
+        </div>
+        <button onclick="applyFeedFiltersFromSheet()" class="w-full py-4 rounded-xl cta font-headline font-extrabold text-sm active:scale-95">
+            <span class="material-symbols-outlined align-middle mr-1" style="font-size:18px">filter_alt</span>
+            Aplike filtè yo
+        </button>
+    </div>
+
+    <!-- ══ DISPUTE SHEET — Buyer (or seller) opens a dispute ══ -->
+    <div class="sheet" id="disputeSheet">
+        <div class="handle"></div>
+        <div class="text-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 amb" style="background:#991b1b">
+                <span class="material-symbols-outlined fi text-white" style="font-size:26px">report</span>
+            </div>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Pwoteste kòmand sa a</h3>
+            <p class="font-body text-sm text-on-surface-variant mt-1 leading-relaxed">
+                Yon admin ap egzamine litij ou epi pran yon desizyon.
+            </p>
+        </div>
+        <div class="bg-surface-container-low rounded-xl p-4 mb-3" id="disputeInfo"></div>
+        <div class="mb-3">
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Rezon</p>
+            <div class="space-y-2" id="disputeReasons"></div>
+        </div>
+        <div class="bg-surface-container-low rounded-xl p-3 mb-4">
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1">Detay (omwen 10 karaktè)</p>
+            <textarea id="disputeDetails" class="si w-full" rows="3" placeholder="Eksplike ki sa ki rive…"></textarea>
+        </div>
+        <div class="flex items-start gap-2 p-3 rounded-xl mb-4" style="background:rgba(153,27,27,.06)">
+            <span class="material-symbols-outlined" style="font-size:16px;color:#991b1b">info</span>
+            <p class="font-label text-[11px] text-on-surface-variant leading-relaxed">
+                Apre w soumèt, lajan ou bloke nan eskwo a rete jiskaske admin pran yon desizyon (libere bay vandè a oswa ranbouse w).
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closeSheets()" class="px-4 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant">
+                Anile
+            </button>
+            <button id="disputeSubmitBtn" onclick="submitDispute()" class="flex-1 py-3 rounded-xl font-label font-bold text-sm active:scale-95 flex items-center justify-center gap-2" style="background:#991b1b;color:#fcf9f4">
+                <span class="material-symbols-outlined" style="font-size:18px">report</span>
+                Soumèt litij
             </button>
         </div>
     </div>
@@ -4268,8 +4411,12 @@
                 g.innerHTML = emptyState('storefront', 'Pa gen pwodwi', 'Okenn pwodwi pa disponib nan kategori sa a.');
                 return;
             }
-            const scored = list.map(p => ({ ...p, score: scoreP(p) })).sort((a, b) => b.score - a.score);
-            g.innerHTML = scored.map((p, i) => feedCard(p, i)).join("");
+            const final = applyFeedFilters(list);
+            if (final.length === 0) {
+                g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.');
+                return;
+            }
+            g.innerHTML = final.map((p, i) => feedCard(p, i)).join("");
         }
 
         function renderFeedCards(g, products) {
@@ -4277,9 +4424,96 @@
                 g.innerHTML = emptyState('storefront', 'Pa gen pwodwi disponib', 'Okenn pwodwi pa pibliye ankò.');
                 return;
             }
-            const scored = products.map(p => ({ ...p, score: scoreP(p) })).sort((a, b) => b.score - a.score);
-            g.innerHTML = scored.map((p, i) => feedCard(p, i)).join("");
+            const final = applyFeedFilters(products);
+            if (final.length === 0) {
+                g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.');
+                return;
+            }
+            g.innerHTML = final.map((p, i) => feedCard(p, i)).join("");
         }
+
+        // ── Filtè feed (pri, nòt, an stòk, triye) — kliyan-kote sou PRODUCTS ──
+        A.filters = (function () {
+            try { return JSON.parse(localStorage.getItem('aym_filters') || 'null'); }
+            catch (_) { return null; }
+        })() || { priceMin: null, priceMax: null, minRating: 0, inStock: false, sort: 'popular' };
+
+        function _filterCount(f) {
+            let n = 0;
+            if (f.priceMin != null || f.priceMax != null) n++;
+            if ((f.minRating || 0) > 0) n++;
+            if (f.inStock) n++;
+            if (f.sort && f.sort !== 'popular') n++;
+            return n;
+        }
+        function _updateFilterBadge() {
+            const badge = document.getElementById('feedFilterBadge');
+            if (!badge) return;
+            const n = _filterCount(A.filters);
+            if (n > 0) { badge.classList.remove('hidden'); badge.textContent = n; }
+            else badge.classList.add('hidden');
+        }
+
+        function applyFeedFilters(list) {
+            const f = A.filters || {};
+            let out = (list || []).slice();
+            if (f.priceMin != null) out = out.filter(p => (p.p || 0) >= f.priceMin);
+            if (f.priceMax != null) out = out.filter(p => (p.p || 0) <= f.priceMax);
+            if ((f.minRating || 0) > 0) out = out.filter(p => (p.r || 0) >= f.minRating);
+            if (f.inStock) out = out.filter(p => (typeof p.s !== 'number') || p.s > 0);
+            if (f.sort === 'new') {
+                out.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            } else if (f.sort === 'price_asc') {
+                out.sort((a, b) => (a.p || 0) - (b.p || 0));
+            } else if (f.sort === 'price_desc') {
+                out.sort((a, b) => (b.p || 0) - (a.p || 0));
+            } else if (f.sort === 'rating') {
+                out.sort((a, b) => (b.r || 0) - (a.r || 0));
+            } else {
+                out = out.map(p => ({ ...p, score: scoreP(p) })).sort((a, b) => b.score - a.score);
+            }
+            return out;
+        }
+        window.applyFeedFilters = applyFeedFilters;
+
+        function loadFilterSheet() {
+            const f = A.filters;
+            const mn = document.getElementById('fltPriceMin'); if (mn) mn.value = f.priceMin ?? '';
+            const mx = document.getElementById('fltPriceMax'); if (mx) mx.value = f.priceMax ?? '';
+            const rt = document.getElementById('fltRating'); if (rt) rt.value = f.minRating || 0;
+            const lbl = document.getElementById('fltRatingLbl'); if (lbl) lbl.textContent = (+(f.minRating || 0)).toFixed(1) + '★';
+            const inS = document.getElementById('fltInStock'); if (inS) inS.checked = !!f.inStock;
+            const sr = document.getElementById('fltSort'); if (sr) sr.value = f.sort || 'popular';
+        }
+        function openFilterSheet() { openSheet('filterSheet'); loadFilterSheet(); }
+        function applyFeedFiltersFromSheet() {
+            const priceMin = parseFloat(document.getElementById('fltPriceMin')?.value);
+            const priceMax = parseFloat(document.getElementById('fltPriceMax')?.value);
+            const minRating = parseFloat(document.getElementById('fltRating')?.value) || 0;
+            const inStock = !!document.getElementById('fltInStock')?.checked;
+            const sort = document.getElementById('fltSort')?.value || 'popular';
+            A.filters = {
+                priceMin: isNaN(priceMin) ? null : priceMin,
+                priceMax: isNaN(priceMax) ? null : priceMax,
+                minRating, inStock, sort,
+            };
+            try { localStorage.setItem('aym_filters', JSON.stringify(A.filters)); } catch (_) { }
+            _updateFilterBadge();
+            closeSheets();
+            if (typeof renderFeed === 'function') renderFeed();
+        }
+        function resetFeedFilters() {
+            A.filters = { priceMin: null, priceMax: null, minRating: 0, inStock: false, sort: 'popular' };
+            try { localStorage.setItem('aym_filters', JSON.stringify(A.filters)); } catch (_) { }
+            loadFilterSheet();
+            _updateFilterBadge();
+        }
+        window.openFilterSheet = openFilterSheet;
+        window.loadFilterSheet = loadFilterSheet;
+        window.applyFeedFiltersFromSheet = applyFeedFiltersFromSheet;
+        window.resetFeedFilters = resetFeedFilters;
+        // Aktyalize badj la lè app la chaje pou itilizatè wè filtè pèsistan yo.
+        try { _updateFilterBadge(); } catch (_) { }
 
         // ── Skeleton loader helpers ──
         function skeletonFeedCards(n) {
@@ -5174,10 +5408,11 @@
                         Wè kòd OTP mwen
                     </button>`);
                 }
-                if (['ready_for_pickup','otp_confirmed','released'].includes(order.status)) {
+                if (['payment_verified','ready_for_pickup','picked_up','otp_confirmed','released'].includes(order.status)) {
                     buttons.push(`<button onclick="openDispute('${id}')"
-                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95 bg-surface-container text-on-surface-variant">
-                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoblèm
+                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                        style="background:rgba(153,27,27,.08);color:#991b1b">
+                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoteste
                     </button>`);
                 }
                 if (['otp_confirmed','released','completed','delivered'].includes(order.status) && !order._rated) {
@@ -5205,10 +5440,11 @@
                         Antre kòd OTP achtè
                     </button>`);
                 }
-                if (['ready_for_pickup','otp_confirmed'].includes(order.status)) {
+                if (['payment_verified','ready_for_pickup','picked_up','otp_confirmed'].includes(order.status)) {
                     buttons.push(`<button onclick="openDispute('${id}')"
-                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95 bg-surface-container text-on-surface-variant">
-                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoblèm
+                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                        style="background:rgba(153,27,27,.08);color:#991b1b">
+                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoteste
                     </button>`);
                 }
             }
@@ -7068,6 +7304,25 @@
                 btn.innerHTML = '<span class="material-symbols-outlined align-middle" style="font-size:15px;animation:spin .8s linear infinite">progress_activity</span> Soumèt...';
             }
 
+            // Telefòn dwe verifye via OTP — re-konfime kont pwofil la sou
+            // ka kote A.user.phoneVerified pa ajou.
+            try {
+                if (!A.user?.phoneVerified && db && A.user?.uid) {
+                    const { data } = await db.from('profiles')
+                        .select('phone, phone_verified').eq('id', A.user.uid).maybeSingle();
+                    if (data && data.phone_verified) {
+                        A.user.phoneVerified = true;
+                        A.user.phone = data.phone || A.user.phone;
+                    }
+                }
+            } catch (_) { /* annilo */ }
+            if (!A.user?.phoneVerified) {
+                toast('Verifye nimewo telefòn ou anvan ou soumèt');
+                if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+                if (typeof vsGoStep === 'function') vsGoStep('phone');
+                return;
+            }
+
             const newReq = {
                 uid: A.user?.uid || 'u_' + Date.now(),
                 name: A.user?.name || 'Utilisateur',
@@ -7126,6 +7381,24 @@
                     read: false,
                     color: '#00666f',
                 });
+                // Notifye admin yo (via FCM Phase 2 fan-out tou).
+                if (typeof notifyAdmins === 'function') {
+                    notifyAdmins({
+                        type: 'system', icon: 'badge',
+                        title: 'Nouvo demann verifikasyon',
+                        body: (A.user.name || 'Yon itilizatè') + ' soumèt ID + telefòn verifye.',
+                        color: '#00666f',
+                    });
+                }
+                // Notifye itilizatè a tou nan baz done a (FCM apre).
+                if (typeof notify === 'function' && A.user && A.user.uid) {
+                    notify(A.user.uid, {
+                        type: 'system', icon: 'hourglass_top',
+                        title: 'Demann verifikasyon resevwa',
+                        body: 'Admin ap egzamine. Repons nan maksimòm 24h.',
+                        color: '#00666f',
+                    });
+                }
 
                 closeSheets();
                 showSuccess(
@@ -7153,18 +7426,144 @@
             }
         }
 
-        // Intercept step 4 to render summary + extra step 'cats' (multi-select categories)
+        // Intercept step 4 to render summary + extra steps 'cats' (categories)
+        // and 'phone' (SMS OTP verification).
         const origVsGoStep = vsGoStep.toString();
         window.vsGoStep = function (n) {
-            const steps = [1, 2, 3, 4, 'cats'];
+            const steps = [1, 2, 3, 4, 'cats', 'phone'];
             steps.forEach(i => {
                 const el = document.getElementById('vs-step' + i);
                 if (el) el.classList.toggle('hidden', i !== n);
             });
             document.getElementById('verifySheet').scrollTop = 0;
             if (n === 'cats') renderVsCats();
+            if (n === 'phone') vsPreparePhoneStep();
             if (n === 4) updateVSSummary();
         };
+
+        // ─ Verifikasyon nimewo telefòn (SMS OTP via Supabase Phone Auth) ─
+        function _normalizePhone(raw) {
+            let p = String(raw || '').trim().replace(/[\s\-().]/g, '');
+            if (!p) return null;
+            if (p.startsWith('+')) return p;
+            if (p.startsWith('509')) return '+' + p;
+            if (/^[0-9]{8}$/.test(p)) return '+509' + p;
+            return null;
+        }
+
+        async function smsRequestOtp(rawPhone) {
+            const phone = _normalizePhone(rawPhone);
+            if (!phone) return { ok: false, reason: 'Fòma nimewo telefòn pa valid' };
+            if (!db || !db.auth) return { ok: false, reason: 'Pa gen koneksyon' };
+            try {
+                const { error } = await db.auth.signInWithOtp({
+                    phone, options: { channel: 'sms' },
+                });
+                if (error) {
+                    const msg = String(error.message || '');
+                    if (/provider/i.test(msg) || /not enabled/i.test(msg)
+                        || /unsupported/i.test(msg) || /sms.*disabled/i.test(msg)) {
+                        return { ok: false, reason: 'Konfigirasyon SMS pa konplè sou Supabase' };
+                    }
+                    return { ok: false, reason: msg };
+                }
+                return { ok: true, phone };
+            } catch (e) {
+                return { ok: false, reason: (e && e.message) || 'Erè rezo' };
+            }
+        }
+        window.smsRequestOtp = smsRequestOtp;
+
+        async function smsVerifyOtp(rawPhone, code) {
+            const phone = _normalizePhone(rawPhone);
+            if (!phone) return { ok: false, reason: 'Fòma nimewo telefòn pa valid' };
+            const token = String(code || '').trim();
+            if (!/^[0-9]{6}$/.test(token)) return { ok: false, reason: 'Kòd dwe gen 6 chif' };
+            if (!db || !db.auth) return { ok: false, reason: 'Pa gen koneksyon' };
+            try {
+                const { error } = await db.auth.verifyOtp({ phone, token, type: 'sms' });
+                if (error) return { ok: false, reason: error.message };
+                if (A.user && A.user.uid) {
+                    const { error: pErr } = await db.from('profiles').update({
+                        phone, phone_verified: true,
+                        phone_verified_at: new Date().toISOString(),
+                    }).eq('id', A.user.uid);
+                    if (pErr) console.warn('[phone profile]', pErr.message);
+                    A.user.phone = phone;
+                    A.user.phoneVerified = true;
+                    try { localStorage.setItem('aym_user', JSON.stringify(A.user)); } catch (_) { }
+                }
+                return { ok: true, phone };
+            } catch (e) {
+                return { ok: false, reason: (e && e.message) || 'Erè rezo' };
+            }
+        }
+        window.smsVerifyOtp = smsVerifyOtp;
+
+        function vsPreparePhoneStep() {
+            const input = document.getElementById('vsPhoneInput');
+            if (input && !input.value && A.user && A.user.phone) input.value = A.user.phone;
+            // Si telefòn deja verifye nan yon sesyon anvan, lese itilizatè kontinye.
+            if (A.user && A.user.phoneVerified) _vsMarkPhoneVerified(A.user.phone);
+            else {
+                const status = document.getElementById('vsPhoneStatus');
+                if (status) { status.classList.add('hidden'); status.innerHTML = ''; }
+                const next = document.getElementById('vsPhoneNextBtn');
+                if (next) { next.disabled = true; next.style.background = '#e5e2dd'; next.style.color = '#6d7979'; next.classList.remove('cta'); }
+                const otpBox = document.getElementById('vsOtpBox');
+                if (otpBox) otpBox.classList.add('hidden');
+                const otp = document.getElementById('vsOtpInput');
+                if (otp) otp.value = '';
+            }
+        }
+        function _vsMarkPhoneVerified(phone) {
+            const status = document.getElementById('vsPhoneStatus');
+            if (status) {
+                status.classList.remove('hidden');
+                status.innerHTML = '<span class="material-symbols-outlined align-middle" style="font-size:18px;color:#065f46">verified</span> <span class="font-label text-sm font-bold" style="color:#065f46">Telefòn ' + (phone || '') + ' verifye</span>';
+            }
+            const next = document.getElementById('vsPhoneNextBtn');
+            if (next) {
+                next.disabled = false;
+                next.style.background = '';
+                next.style.color = '';
+                next.classList.add('cta');
+            }
+        }
+
+        async function vsSendOtp() {
+            const phone = document.getElementById('vsPhoneInput')?.value;
+            const btn = document.getElementById('vsSendOtpBtn');
+            const orig = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined align-middle sp" style="font-size:16px">progress_activity</span> Ap voye…';
+            }
+            const res = await smsRequestOtp(phone);
+            if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+            if (!res.ok) { toast(res.reason || 'Erè'); return; }
+            const box = document.getElementById('vsOtpBox');
+            if (box) box.classList.remove('hidden');
+            toast('Kòd voye nan ' + res.phone);
+        }
+        window.vsSendOtp = vsSendOtp;
+
+        async function vsVerifyOtp() {
+            const phone = document.getElementById('vsPhoneInput')?.value;
+            const code = document.getElementById('vsOtpInput')?.value;
+            const btn = document.getElementById('vsVerifyOtpBtn');
+            const orig = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined align-middle sp" style="font-size:16px">progress_activity</span> Ap verifye…';
+            }
+            const res = await smsVerifyOtp(phone, code);
+            if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+            if (!res.ok) { toast(res.reason || 'Pa ka verifye'); return; }
+            _vsMarkPhoneVerified(res.phone);
+            toast('Telefòn verifye!');
+        }
+        window.vsVerifyOtp = vsVerifyOtp;
 
         // ── Seller category selection ──
         window.SELLER_CATS_MAP = [
@@ -9394,28 +9793,104 @@
         }
         window.showBuyerOTP = showBuyerOTP;
 
-        // ─ Dispute (buyer or seller) ──────────────────────────────
+        // ─ Dispute (buyer or seller) — bottom sheet ak rezon + detay ─
+        const _DISPUTE_REASONS = [
+            { id: 'not_received', label: 'Pa janm resevwa pwodwi a', icon: 'inventory_2' },
+            { id: 'wrong_item',   label: 'Pa pwodwi ki te kòmande a', icon: 'swap_horiz' },
+            { id: 'damaged',      label: 'Pwodwi a domaje oswa kase', icon: 'broken_image' },
+            { id: 'quality',      label: 'Kalite pa koresponn ak deskripsyon', icon: 'rule' },
+            { id: 'other',        label: 'Lòt — eksplike anba a', icon: 'more_horiz' },
+        ];
+        const _DISPUTE_REASON_LABELS = _DISPUTE_REASONS.reduce(
+            (m, r) => { m[r.id] = r.label; return m; }, {});
+
         async function openDispute(orderId) {
             if (!db) return;
-            const reason = prompt('Dekri pwoblèm nan (admin ap wè li):');
-            if (!reason || reason.trim().length < 5) { toast('Antre yon deskripsyon plis detay'); return; }
-            const { error } = await db.rpc('advance_order_status', {
-                p_order_id: orderId, p_to_status: 'disputed',
-                p_moncash_ref: null, p_admin_note: reason.trim(),
-            });
-            if (error) { toast('Erè: ' + error.message); return; }
-            toast('Litij ouvri — admin ap kontakte w');
-            db.from('profiles').select('id').eq('role', 'admin').then(({ data: admins }) => {
-                (admins || []).forEach(a => db.from('notifications').insert({
-                    user_id: a.id, type: 'order', icon: 'report',
-                    title: 'Nouvo litij',
-                    body: (A.user.name || 'Yon itilizatè') + ': ' + reason.trim().slice(0, 100),
-                    color: '#991b1b',
-                }));
-            });
-            if (typeof renderOrderScreen === 'function') renderOrderScreen();
+            const o = await fetchOrder(orderId);
+            if (!o) { toast('Kòmand pa jwenn'); return; }
+            A._disputeOrder = o;
+            A._disputeReason = _DISPUTE_REASONS[0].id;
+
+            const info = document.getElementById('disputeInfo');
+            if (info) {
+                info.innerHTML = `
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <p class="font-headline font-bold text-sm flex-1">${o.product_title || 'Pwodwi'}</p>
+                        <span class="font-label text-[10px] text-on-surface-variant">#${(o.id || '').slice(0, 8)}</span>
+                    </div>
+                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Achtè:</strong> ${o.buyer_name || '—'}</p>
+                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Vandè:</strong> ${o.seller_name || '—'}</p>
+                    <p class="font-label text-[11px] mt-2"><strong>Total:</strong> <span class="font-headline font-extrabold text-base text-primary">${fp(o.total_amount || 0)} HTG</span></p>
+                `;
+            }
+            const list = document.getElementById('disputeReasons');
+            if (list) {
+                list.innerHTML = _DISPUTE_REASONS.map((r, i) => `
+                    <label class="block cursor-pointer">
+                        <input type="radio" name="disputeReason" value="${r.id}" class="sr-only peer" ${i === 0 ? 'checked' : ''}
+                               onchange="A._disputeReason='${r.id}'"/>
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-lowest peer-checked:bg-[rgba(153,27,27,.08)]"
+                             style="border:1.5px solid transparent">
+                            <span class="material-symbols-outlined fi" style="font-size:18px;color:#991b1b">${r.icon}</span>
+                            <p class="font-label text-sm text-on-surface flex-1">${r.label}</p>
+                            <span class="material-symbols-outlined fi opacity-0 peer-checked:opacity-100" style="font-size:16px;color:#991b1b">check_circle</span>
+                        </div>
+                    </label>
+                `).join('');
+            }
+            const details = document.getElementById('disputeDetails');
+            if (details) details.value = '';
+            openSheet('disputeSheet');
         }
         window.openDispute = openDispute;
+
+        async function submitDispute() {
+            const o = A._disputeOrder;
+            if (!o) { toast('Pa gen kòmand chwazi'); return; }
+            const reasonId = A._disputeReason || 'other';
+            const details = (document.getElementById('disputeDetails')?.value || '').trim();
+            if (details.length < 10) { toast('Bay omwen 10 karaktè eksplikasyon'); return; }
+
+            const reasonLabel = _DISPUTE_REASON_LABELS[reasonId] || reasonId;
+            const openerTag = (A.user && A.user.role === 'seller') ? 'Vandè' : 'Achtè';
+            // Make en sòt admin_note an gen ase enfo pou admin pran desizyon
+            // san li bezwen lòt rechèch (rezon + ki sa ki ekri + ki moun).
+            const adminNote = '[Dispute: ' + reasonLabel + ' · pa ' + openerTag + '] ' + details;
+
+            const btn = document.getElementById('disputeSubmitBtn');
+            if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+            const { error } = await db.rpc('advance_order_status', {
+                p_order_id: o.id, p_to_status: 'disputed',
+                p_moncash_ref: null, p_admin_note: adminNote,
+            });
+            if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+            if (error) { toast('Erè: ' + error.message); return; }
+
+            closeSheets();
+            A._disputeOrder = null;
+            A._disputeReason = null;
+            toast('Litij ouvri — admin ap kontakte w');
+
+            notifyAdmins({
+                type: 'order', icon: 'report',
+                title: 'Nouvo litij',
+                body: openerTag + ' "' + (A.user.name || 'Yon itilizatè') + '" pwoteste — '
+                    + reasonLabel + ': ' + details.slice(0, 100),
+                color: '#991b1b',
+            });
+            const opener = A.user && A.user.uid;
+            const other = opener === o.buyer_id ? o.seller_id : o.buyer_id;
+            if (other && other !== opener) {
+                notify(other, {
+                    type: 'order', icon: 'report',
+                    title: 'Yon litij ouvri sou kòmand sa a',
+                    body: 'Admin ap egzamine: ' + reasonLabel,
+                    color: '#991b1b',
+                });
+            }
+            if (typeof renderOrderScreen === 'function') renderOrderScreen();
+        }
+        window.submitDispute = submitDispute;
 
         // ─ Buyer: rate seller after delivery ──────────────────────
         let _ratingState = { orderId: null, sellerId: null, productId: null, stars: 0 };
