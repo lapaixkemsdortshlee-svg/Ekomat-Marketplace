@@ -5112,10 +5112,76 @@
             }
         }
 
+        // ── Anti-fraud Phase 1 — verifikasyon vandè anvan pibliye ──
+        //
+        // Tcheke 3 regleman:
+        //   1. Min 3 foto pwodwi (anpeche kreyasyon vit ak yon sèl foto)
+        //   2. Min 24h depi kont kreye (anpeche enskri-pibliye-disparèt)
+        //   3. Maks 3 pwodwi/semèn pou vandè ki gen mwens ke 5 lavant
+        // Retounen { ok, reason, isNewSeller, pendingFirstThree }.
+        async function checkSellerEligibility(photoCount) {
+            if (!A.user?.uid || !db) return { ok: false, reason: 'Pa konekte' };
+            if (photoCount < 3) {
+                return { ok: false, reason: 'Ajoute omwen 3 foto pwodwi a (anpeche fwod katalòg)' };
+            }
+            try {
+                const { data: prof } = await db.from('profiles')
+                    .select('created_at, sales_count, verified_seller')
+                    .eq('id', A.user.uid).maybeSingle();
+                // 2) Min 24h kont
+                if (prof?.created_at) {
+                    const ageHrs = (Date.now() - new Date(prof.created_at).getTime()) / 3_600_000;
+                    if (ageHrs < 24) {
+                        const wait = Math.ceil(24 - ageHrs);
+                        return { ok: false, reason: 'Tann ' + wait + 'h ankò anvan ou pibliye premye pwodwi a (sekirite kont).' };
+                    }
+                }
+                const isNewSeller = (prof?.sales_count || 0) < 5;
+                // 3) Limit 3 pwodwi/semèn pou nouvo vandè
+                if (isNewSeller) {
+                    const since = new Date(Date.now() - 7 * 24 * 3_600_000).toISOString();
+                    const { count } = await db.from('products')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('seller_id', A.user.uid)
+                        .gte('created_at', since)
+                        .neq('status', 'archived');
+                    if ((count || 0) >= 3) {
+                        return { ok: false, reason: 'Ou rive nan limit 3 pwodwi/semèn pou nouvo vandè. Tann oswa fè plis lavant.' };
+                    }
+                }
+                return { ok: true, isNewSeller };
+            } catch (e) {
+                console.warn('[seller eligibility]', e && e.message);
+                return { ok: true, isNewSeller: false };  // pa bloke sou erè rezo
+            }
+        }
+        window.checkSellerEligibility = checkSellerEligibility;
+
+        // Premye 3 pwodwi yon vandè → pending_review (admin dwe apwouve).
+        async function initialProductStatus() {
+            if (!A.user?.uid || !db) return 'active';
+            try {
+                const { count } = await db.from('products')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('seller_id', A.user.uid)
+                    .in('status', ['active', 'sold', 'pending_review']);
+                return (count || 0) < 3 ? 'pending_review' : 'active';
+            } catch (_) { return 'active'; }
+        }
+        window.initialProductStatus = initialProductStatus;
+
         async function pubProduct() {
             const t = document.getElementById("fTitle").value.trim();
             if (!t) { toast("Ranpli non pwodwi a"); return; }
-            if (uploadedPhotos.length === 0) { toast("Ajoute omwen 1 foto"); document.getElementById("fileInput").click(); return; }
+            // Anti-fraud: min 3 foto + min 24h kont + limit/semèn
+            const elig = await checkSellerEligibility(uploadedPhotos.length);
+            if (!elig.ok) {
+                toast(elig.reason);
+                if (uploadedPhotos.length < 3) {
+                    document.getElementById("fileInput").click();
+                }
+                return;
+            }
             // Zòn kolekte OBLIGATWA pou vandè — detekte zòn GPS la anvan
             // pibliye pou pwodwi a toujou gen yon zòn reyèl sou li.
             if (!(A.pickupZone || _lastGeocode())) {
@@ -5180,6 +5246,9 @@
                 // Step 2: Insert product in Supabase
                 await sl(200);
                 addStep('inventory_2', 'Anrejistre pwodwi nan baz done...');
+                // Premye 3 pwodwi yon vandè ale nan 'pending_review' —
+                // admin dwe apwouve yo anvan yo parèt nan feed la.
+                const _initStatus = await initialProductStatus();
                 const { data: newProduct, error: insertErr } = await db.from('products').insert({
                     seller_id: A.user.uid,
                     title: t,
@@ -5190,11 +5259,25 @@
                     location: loc || null,
                     images: imageUrls,
                     stock: stock,
-                    status: 'active',
+                    status: _initStatus,
                 }).select('*').single();
 
                 if (insertErr) throw new Error(insertErr.message);
-                addStep('check_circle', 'Pwodwi anrejistre ✓');
+                if (_initStatus === 'pending_review') {
+                    addStep('hourglass_top', 'An atant verifikasyon admin ✓');
+                    // Alèt admin yo pou yo revize li
+                    if (typeof notifyAdmins === 'function') {
+                        notifyAdmins({
+                            type: 'system', icon: 'inventory_2',
+                            title: 'Nouvo pwodwi pou revize',
+                            body: (A.user.name || 'Yon vandè') + ' soumèt "' + t.slice(0, 60) + '" — apwouve oswa rejte.',
+                            color: '#97422b',
+                            data: { product_id: newProduct.id, seller_id: A.user.uid, kind: 'pending_product' },
+                        });
+                    }
+                } else {
+                    addStep('check_circle', 'Pwodwi anrejistre ✓');
+                }
 
                 // Step 2b: Create Flash Deal entry if discount is set
                 if (hasDiscount && newProduct) {
@@ -6682,9 +6765,11 @@
                 const imgEl = imgSrc
                     ? `<img src="${imgSrc}" alt="" onerror="this.onerror=null;this.style.display='none'" class="w-full h-full object-cover"/>`
                     : prodPlaceholder(p, 56);
-                const statusBadge = p.status && p.status !== 'active'
-                    ? `<span class="font-label text-[9px] px-1.5 py-0.5 rounded-full" style="background:#e5e2dd;color:#5c6160">${p.status}</span>`
-                    : `<span class="font-label text-[9px] px-1.5 py-0.5 rounded-full" style="background:rgba(0,102,111,.1);color:#00666f">aktif</span>`;
+                const statusBadge = p.status === 'pending_review'
+                    ? `<span class="font-label text-[9px] px-1.5 py-0.5 rounded-full" style="background:rgba(151,66,43,.12);color:#97422b">⏳ An atant admin</span>`
+                    : (p.status && p.status !== 'active'
+                        ? `<span class="font-label text-[9px] px-1.5 py-0.5 rounded-full" style="background:#e5e2dd;color:#5c6160">${p.status}</span>`
+                        : `<span class="font-label text-[9px] px-1.5 py-0.5 rounded-full" style="background:rgba(0,102,111,.1);color:#00666f">aktif</span>`);
                 const priceLine = p.oldP
                     ? `<p class="font-headline font-extrabold text-sm text-primary mt-0.5">${fp(p.p)} HTG <span class="font-label text-[10px] text-on-surface-variant line-through ml-1">${fp(p.oldP)}</span></p>`
                     : `<p class="font-headline font-extrabold text-sm text-primary mt-0.5">${fp(p.p)} HTG</p>`;
@@ -10639,6 +10724,28 @@
                     data: { order_id: o.id, kind: 'dispute', reason: reasonId },
                 });
             }
+            // Anti-fraud: si vandè a gen >=2 litij nan 30 dènye jou, voye
+            // yon ALÈT WOUJ bay admin pou yo tcheke kont la pi pre.
+            try {
+                if (o.seller_id) {
+                    const since30 = new Date(Date.now() - 30 * 24 * 3_600_000).toISOString();
+                    const { count: recentDisputes } = await db.from('orders')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('seller_id', o.seller_id)
+                        .eq('status', 'disputed')
+                        .gte('updated_at', since30);
+                    if ((recentDisputes || 0) >= 2 && typeof notifyAdmins === 'function') {
+                        notifyAdmins({
+                            type: 'system', icon: 'warning',
+                            title: '🚩 Vandè gen plizyè litij',
+                            body: 'Vandè "' + (o.seller_name || '?') + '" gen ' + recentDisputes
+                                + ' litij nan 30 dènye jou yo. Revize kont la.',
+                            color: '#991b1b',
+                            data: { seller_id: o.seller_id, kind: 'seller_red_flag', dispute_count: recentDisputes },
+                        });
+                    }
+                }
+            } catch (e) { console.warn('[anti-fraud dispute count]', e && e.message); }
             if (typeof renderOrderScreen === 'function') renderOrderScreen();
         }
         window.submitDispute = submitDispute;
