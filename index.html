@@ -2862,6 +2862,53 @@
         </div>
     </div>
 
+    <!-- ══ ADDRESSES SHEET — manage saved addresses (kay, biwo, …) ══ -->
+    <div class="sheet" id="addressesSheet">
+        <div class="handle"></div>
+        <div class="text-center mb-4">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 amb" style="background:rgba(0,102,111,.08)">
+                <span class="material-symbols-outlined fi text-primary" style="font-size:26px">home_pin</span>
+            </div>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Adrès mwen</h3>
+            <p class="font-body text-sm text-on-surface-variant mt-1 leading-relaxed">
+                Anrejistre plizyè adrès (Kay, Biwo, etc.) — chwazi default ou pou kòmand yo.
+            </p>
+        </div>
+        <div id="addressesList" class="space-y-2 mb-4"></div>
+
+        <div class="bg-surface-container-low rounded-xl p-3 mb-3">
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Ajoute yon adrès</p>
+            <div class="space-y-2">
+                <div class="flex gap-2">
+                    <input id="addrLabelInput" class="si flex-1" placeholder="Tit (egz: Kay, Biwo)" maxlength="32"/>
+                    <button onclick="addrDetectZone()" id="addrDetectBtn"
+                        class="flex items-center justify-center rounded-xl flex-shrink-0 active:scale-95"
+                        style="width:48px;color:#fff;background:linear-gradient(155deg,#00939e,#00666f);box-shadow:0 4px 12px rgba(0,102,111,.32),inset 0 1px 0 rgba(255,255,255,.22)"
+                        aria-label="Detekte zòn aktyèl">
+                        <span class="material-symbols-outlined" style="font-size:21px">my_location</span>
+                    </button>
+                </div>
+                <input id="addrZoneInput" class="si w-full" readonly placeholder="Zòn detekte ap parèt isit la"/>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="addrDefaultInput" class="w-4 h-4 rounded accent-[#00666f]"/>
+                    <span class="font-label text-xs text-on-surface-variant">Itilize kòm adrès default</span>
+                </label>
+            </div>
+            <button id="addrSaveBtn" onclick="addrSave()" disabled
+                class="w-full mt-3 py-3 rounded-xl font-headline font-bold text-sm active:scale-95 transition-all"
+                style="background:#e5e2dd;color:#6d7979">
+                <span class="material-symbols-outlined align-middle mr-1" style="font-size:16px">add_location</span>
+                Anrejistre adrès la
+            </button>
+        </div>
+
+        <button onclick="closeSheets()"
+            class="w-full py-3.5 rounded-xl font-headline font-bold text-sm active:scale-95"
+            style="background:#e5e2dd;color:#1c1c19">
+            Fèmen
+        </button>
+    </div>
+
     <!-- ══ FEED FILTER SHEET — pri, nòt, an stòk, triye ══ -->
     <div class="sheet" id="filterSheet">
         <div class="handle"></div>
@@ -5195,6 +5242,12 @@
     </div>
     <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Zòn Kolekte</p>
     <div class="space-y-2 mb-4">
+      ${(typeof MY_ADDRESSES !== 'undefined' && MY_ADDRESSES.length > 0)
+        ? `<select id="orderAddrSelect" onchange="pickSavedAddressForOrder(this.value)" class="si w-full">
+             <option value="">— Chwazi yon adrès anrejistre —</option>
+             ${MY_ADDRESSES.map(a => `<option value="${a.id}" ${a.is_default ? 'selected' : ''}>${a.label} · ${(a.address_text || '').slice(0, 40)}</option>`).join('')}
+           </select>`
+        : ''}
       ${zone && zone.label
         ? `<div class="flex items-center gap-3 p-3.5 rounded-xl bg-surface-container-lowest" style="border:1.5px solid #00666f">
              <span class="material-symbols-outlined fi text-primary" style="font-size:18px">where_to_vote</span>
@@ -5215,6 +5268,10 @@
         style="background:rgba(0,102,111,.08);color:#00666f">
         <span class="material-symbols-outlined fi" style="font-size:18px">my_location</span>
         <span class="font-label text-sm font-bold">Detekte zòn mwen</span>
+      </button>
+      <button onclick="openAddressesSheet()" class="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl active:scale-[.99] transition-transform" style="background:rgba(0,102,111,.04);color:#00666f">
+        <span class="material-symbols-outlined" style="font-size:14px">home_pin</span>
+        <span class="font-label text-xs">Jere adrès mwen</span>
       </button>
     </div>
     <div class="flex items-start gap-3 p-4 rounded-xl mb-4" style="background:rgba(0,102,111,.06)">
@@ -5849,6 +5906,13 @@
             } else {
                 items.push({ i: "location_on", l: "Zòn Kolekte", s: "Detekte zòn ou", a: "openPickupPicker()" });
             }
+            // Adrès anrejistre miltip (kay, biwo, etc.)
+            const _addrCount = (typeof MY_ADDRESSES !== 'undefined') ? MY_ADDRESSES.length : 0;
+            items.push({
+                i: "home_pin", l: "Adrès mwen",
+                s: _addrCount ? (_addrCount + ' adrès anrejistre') : 'Ajoute adrès kay, biwo…',
+                a: "openAddressesSheet()",
+            });
             if (u.role === 'buyer') {
                 items.push({ i: "store", l: "Vin yon Vandè", s: "Soumèt ID ou", a: "openSheet('verifySheet')" });
             }
@@ -8585,6 +8649,186 @@
             if (z && z.label) fl.value = z.label;
         }
         window._syncPubZoneField = _syncPubZoneField;
+
+        // ── Adrès anrejistre miltip — kay, biwo, etc. ─────────────────
+        let MY_ADDRESSES = [];
+        let _addrDraftZone = null;   // { label, lat, lng } pandan w ap ajoute
+
+        async function loadMyAddresses() {
+            if (!db || !A.user?.uid) return [];
+            try {
+                const { data, error } = await db.from('user_addresses')
+                    .select('*').eq('user_id', A.user.uid)
+                    .order('is_default', { ascending: false })
+                    .order('created_at', { ascending: false });
+                if (error) { console.warn('[addresses load]', error.message); return []; }
+                MY_ADDRESSES = data || [];
+                return MY_ADDRESSES;
+            } catch (e) { console.warn('[addresses load]', e && e.message); return []; }
+        }
+        window.loadMyAddresses = loadMyAddresses;
+
+        async function saveAddress({ label, address_text, lat, lng, is_default }) {
+            if (!db || !A.user?.uid) return { ok: false, reason: 'Konekte pou anrejistre' };
+            try {
+                // Si ranje nouvo a se default, dezaktive lòt default yo anvan
+                // pou egzanp inik partial-index la pa rejte INSERT la.
+                if (is_default) {
+                    await db.from('user_addresses').update({ is_default: false })
+                        .eq('user_id', A.user.uid).eq('is_default', true);
+                }
+                const { data, error } = await db.from('user_addresses').insert({
+                    user_id: A.user.uid,
+                    label: (label || 'Kay').trim().slice(0, 32),
+                    address_text: (address_text || '').trim().slice(0, 200),
+                    geo_lat: lat ?? null,
+                    geo_lng: lng ?? null,
+                    is_default: !!is_default,
+                }).select().single();
+                if (error) return { ok: false, reason: error.message };
+                MY_ADDRESSES.unshift(data);
+                return { ok: true, row: data };
+            } catch (e) { return { ok: false, reason: (e && e.message) || 'Erè rezo' }; }
+        }
+        window.saveAddress = saveAddress;
+
+        async function deleteAddress(id) {
+            if (!db || !A.user?.uid) return;
+            await db.from('user_addresses').delete().eq('id', id).eq('user_id', A.user.uid);
+            MY_ADDRESSES = MY_ADDRESSES.filter(a => a.id !== id);
+            renderAddressesList();
+        }
+        window.deleteAddress = deleteAddress;
+
+        async function setDefaultAddress(id) {
+            if (!db || !A.user?.uid) return;
+            await db.from('user_addresses').update({ is_default: false })
+                .eq('user_id', A.user.uid).eq('is_default', true);
+            await db.from('user_addresses').update({ is_default: true })
+                .eq('id', id).eq('user_id', A.user.uid);
+            MY_ADDRESSES = MY_ADDRESSES.map(a => ({ ...a, is_default: a.id === id }));
+            renderAddressesList();
+            toast('Adrès default mete ajou');
+        }
+        window.setDefaultAddress = setDefaultAddress;
+
+        function renderAddressesList() {
+            const el = document.getElementById('addressesList');
+            if (!el) return;
+            if (!MY_ADDRESSES.length) {
+                el.innerHTML = `<div class="text-center p-5 rounded-xl" style="background:rgba(0,102,111,.04);border:1px dashed rgba(0,102,111,.2)">
+                    <span class="material-symbols-outlined text-on-surface-variant" style="font-size:28px">location_off</span>
+                    <p class="font-label text-xs text-on-surface-variant mt-1">Poko gen adrès anrejistre.</p>
+                </div>`;
+                return;
+            }
+            el.innerHTML = MY_ADDRESSES.map(a => `
+                <div class="flex items-center gap-3 p-3 rounded-xl bg-surface-container-lowest" style="border:1.5px solid ${a.is_default ? '#00666f' : 'rgba(188,201,200,.25)'}">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
+                        <span class="material-symbols-outlined fi text-primary" style="font-size:18px">${
+                            /biwo/i.test(a.label) ? 'work' : /kay/i.test(a.label) ? 'home_pin' : 'location_on'
+                        }</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="font-headline font-bold text-sm text-on-surface truncate">${a.label}</p>
+                            ${a.is_default ? '<span class="font-label text-[9px] font-bold px-1.5 py-0.5 rounded-full" style="background:#00666f;color:#fff">DEFAULT</span>' : ''}
+                        </div>
+                        <p class="font-label text-[11px] text-on-surface-variant truncate">${a.address_text || '—'}</p>
+                    </div>
+                    ${a.is_default ? '' : `<button onclick="setDefaultAddress('${a.id}')" class="px-2 py-1.5 rounded-lg active:scale-90" style="background:rgba(0,102,111,.08);color:#00666f" aria-label="Mete kòm default">
+                        <span class="material-symbols-outlined" style="font-size:16px">push_pin</span>
+                    </button>`}
+                    <button onclick="deleteAddress('${a.id}')" class="px-2 py-1.5 rounded-lg active:scale-90" style="background:rgba(153,27,27,.08);color:#991b1b" aria-label="Efase">
+                        <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+                    </button>
+                </div>
+            `).join('');
+        }
+        window.renderAddressesList = renderAddressesList;
+
+        async function openAddressesSheet() {
+            openSheet('addressesSheet');
+            // Reset draft fields
+            _addrDraftZone = null;
+            const z = document.getElementById('addrZoneInput'); if (z) z.value = '';
+            const lbl = document.getElementById('addrLabelInput'); if (lbl) lbl.value = '';
+            const def = document.getElementById('addrDefaultInput'); if (def) def.checked = false;
+            const btn = document.getElementById('addrSaveBtn');
+            if (btn) { btn.disabled = true; btn.style.background = '#e5e2dd'; btn.style.color = '#6d7979'; btn.classList.remove('cta'); }
+            await loadMyAddresses();
+            renderAddressesList();
+        }
+        window.openAddressesSheet = openAddressesSheet;
+
+        function addrDetectZone() {
+            // Re-itilize nwayo pataje a — pa konsome kota Map jou a paske
+            // se yon aksyon konfigirasyon, pa yon rechèch.
+            _withGeoZone('addrDetectBtn', '', zone => {
+                _addrDraftZone = { label: zone.label, lat: zone.lat, lng: zone.lng };
+                const z = document.getElementById('addrZoneInput');
+                if (z) z.value = zone.label;
+                const btn = document.getElementById('addrSaveBtn');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.classList.add('cta');
+                }
+                toast('Zòn detekte: ' + zone.label);
+            });
+        }
+        window.addrDetectZone = addrDetectZone;
+
+        async function addrSave() {
+            const label = (document.getElementById('addrLabelInput')?.value || '').trim() || 'Kay';
+            const def = !!document.getElementById('addrDefaultInput')?.checked;
+            if (!_addrDraftZone) { toast('Detekte zòn ou anvan'); return; }
+            const btn = document.getElementById('addrSaveBtn');
+            const orig = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined align-middle sp" style="font-size:16px">progress_activity</span> Ap anrejistre…';
+            }
+            const res = await saveAddress({
+                label,
+                address_text: _addrDraftZone.label,
+                lat: _addrDraftZone.lat, lng: _addrDraftZone.lng,
+                is_default: def,
+            });
+            if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+            if (!res.ok) { toast('Erè: ' + res.reason); return; }
+            // Reset draft
+            _addrDraftZone = null;
+            const z = document.getElementById('addrZoneInput'); if (z) z.value = '';
+            const lbl = document.getElementById('addrLabelInput'); if (lbl) lbl.value = '';
+            const dc = document.getElementById('addrDefaultInput'); if (dc) dc.checked = false;
+            if (btn) { btn.disabled = true; btn.style.background = '#e5e2dd'; btn.style.color = '#6d7979'; btn.classList.remove('cta'); }
+            await loadMyAddresses();
+            renderAddressesList();
+            toast('Adrès anrejistre');
+        }
+        window.addrSave = addrSave;
+
+        // Retounen adrès default itilizatè a (oswa premye a), oswa null.
+        function defaultAddress() {
+            if (!MY_ADDRESSES.length) return null;
+            return MY_ADDRESSES.find(a => a.is_default) || MY_ADDRESSES[0];
+        }
+        window.defaultAddress = defaultAddress;
+
+        // Lè achtè chwazi yon adrès anrejistre nan sheet kòmand la, kanal
+        // li nan A.pickupZone pou rès flux la sèvi ak menm valè.
+        function pickSavedAddressForOrder(addrId) {
+            if (!addrId) return;
+            const a = MY_ADDRESSES.find(x => x.id === addrId);
+            if (!a) return;
+            A.pickupZone = { label: a.address_text || a.label, lat: a.geo_lat, lng: a.geo_lng };
+            try { localStorage.setItem('aym_geozone', JSON.stringify(A.pickupZone)); } catch (_) { }
+            toast('Adrès chwazi: ' + a.label);
+            if (typeof renderOrderSheet === 'function' && A.curProd) renderOrderSheet();
+        }
+        window.pickSavedAddressForOrder = pickSavedAddressForOrder;
 
         // Montre zòn kolekte aktyèl la nan #pickupList.
         function renderPickupZone() {
@@ -12459,6 +12703,10 @@
             };
             try { localStorage.setItem('aym_geozone', JSON.stringify(A.pickupZone)); } catch (_) { }
             if (typeof _syncPubZoneField === 'function') _syncPubZoneField();
+        }
+        // Pre-load adrès anrejistre yo pou pwofil menu/komand sheet la wè yo deja.
+        if (typeof loadMyAddresses === 'function') {
+            loadMyAddresses().catch(() => { /* annilo */ });
         }
         localStorage.setItem('aym_user', JSON.stringify(A.user));
         // Anyone with a valid Supabase session has already used the app
