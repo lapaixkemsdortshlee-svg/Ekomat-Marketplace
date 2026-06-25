@@ -6440,6 +6440,142 @@
             renderBoutiqueContent();
         }
 
+        // ── Analytics vandè ──────────────────────────────────────────
+        // Yon sèl agreg kèk lavant 30 jou + lavant total + top pwodwi —
+        // dirèkteman sou orders nan Supabase. Mete ajou anndan boutik la.
+        async function loadSellerAnalytics() {
+            const out = {
+                lifetimeSales: 0, lifetimeOrders: 0,
+                paidSales: 0, paidOrders: 0,
+                avgOrder: 0, conversion: 0,
+                topProducts: [],
+                last30: [],   // [{ day:'YYYY-MM-DD', sales:N }, …]
+            };
+            if (!db || !A.user?.uid) return out;
+            const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+            try {
+                const { data: orders, error } = await db.from('orders')
+                    .select('id, status, product_id, product_title, total_amount, net_amount, quantity, created_at')
+                    .eq('seller_id', A.user.uid);
+                if (error) { console.warn('[analytics]', error.message); return out; }
+                const list = orders || [];
+                out.lifetimeOrders = list.length;
+                const paidStates = ['payment_verified', 'ready_for_pickup', 'picked_up',
+                                    'otp_confirmed', 'released', 'completed', 'delivered'];
+                const paid = list.filter(o => paidStates.includes(o.status));
+                out.paidOrders = paid.length;
+                out.lifetimeSales = list.reduce((s, o) => s + (Number(o.net_amount) || Number(o.total_amount) || 0), 0);
+                out.paidSales = paid.reduce((s, o) => s + (Number(o.net_amount) || Number(o.total_amount) || 0), 0);
+                out.avgOrder = paid.length ? Math.round(out.paidSales / paid.length) : 0;
+
+                // Top 5 pwodwi pa lavant net
+                const byProd = new Map();
+                paid.forEach(o => {
+                    const k = o.product_id || o.product_title || 'unknown';
+                    const cur = byProd.get(k) || { title: o.product_title || 'Pwodwi', count: 0, sales: 0 };
+                    cur.count += Number(o.quantity) || 1;
+                    cur.sales += Number(o.net_amount) || Number(o.total_amount) || 0;
+                    byProd.set(k, cur);
+                });
+                out.topProducts = Array.from(byProd.values())
+                    .sort((a, b) => b.sales - a.sales).slice(0, 5);
+
+                // 30 dènye jou — boutik byje
+                const buckets = {};
+                for (let i = 29; i >= 0; i--) {
+                    const d = new Date(Date.now() - i * 24 * 3600 * 1000);
+                    const k = d.toISOString().slice(0, 10);
+                    buckets[k] = 0;
+                }
+                paid.forEach(o => {
+                    if (!o.created_at) return;
+                    if (o.created_at < since) return;
+                    const k = String(o.created_at).slice(0, 10);
+                    if (k in buckets) {
+                        buckets[k] += Number(o.net_amount) || Number(o.total_amount) || 0;
+                    }
+                });
+                out.last30 = Object.keys(buckets).map(day => ({ day, sales: buckets[day] }));
+
+                // Konvèsyon: total visit pou pwodwi vandè a / total kòmand
+                const myProducts = A.myBoutiqueProducts || [];
+                const totalViews = myProducts.reduce((s, p) => s + (Number(p.v) || 0), 0);
+                if (totalViews > 0) {
+                    out.conversion = Math.round((out.paidOrders / totalViews) * 1000) / 10; // pct ak 1 desimal
+                }
+            } catch (e) { console.warn('[analytics]', e && e.message); }
+            return out;
+        }
+        window.loadSellerAnalytics = loadSellerAnalytics;
+
+        function _sparkSvg(values, w, h) {
+            if (!values.length) return '';
+            const max = Math.max(1, ...values);
+            const stepX = w / Math.max(1, values.length - 1);
+            const points = values.map((v, i) => {
+                const x = i * stepX;
+                const y = h - (v / max) * (h - 4) - 2;
+                return x.toFixed(1) + ',' + y.toFixed(1);
+            }).join(' ');
+            const areaPoints = '0,' + h + ' ' + points + ' ' + w + ',' + h;
+            return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
+                <polygon points="${areaPoints}" fill="rgba(0,102,111,.12)"/>
+                <polyline points="${points}" fill="none" stroke="#00666f" stroke-width="2" stroke-linejoin="round"/>
+            </svg>`;
+        }
+        function _barsSvg(rows, w, h) {
+            if (!rows.length) return '';
+            const max = Math.max(1, ...rows.map(r => r.sales));
+            const barH = Math.max(10, Math.floor(h / rows.length) - 8);
+            return rows.map((r, i) => {
+                const pct = (r.sales / max) * 100;
+                return `<div style="margin-bottom:8px">
+                    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#3d4949">
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${r.title}</span>
+                        <span style="color:#00666f;font-weight:700">${fp(r.sales)} HTG</span>
+                    </div>
+                    <div style="height:6px;background:#e5e2dd;border-radius:999px;overflow:hidden;margin-top:3px">
+                        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#00666f,#00818c)"></div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderSellerAnalytics(a) {
+            const card = (val, lbl, color) => `<div class="bg-surface-container-lowest rounded-xl p-3 text-center amb">
+                <p class="font-headline font-extrabold text-lg" style="color:${color || '#00666f'}">${val}</p>
+                <p class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant mt-1">${lbl}</p>
+            </div>`;
+            const empty = !a.lifetimeOrders;
+            return `
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2 mt-5">Analytics — 30 dènye jou</p>
+            ${empty
+                ? `<div class="bg-surface-container-lowest rounded-xl p-6 text-center amb">
+                    <span class="material-symbols-outlined text-on-surface-variant" style="font-size:32px">monitoring</span>
+                    <p class="font-label text-sm text-on-surface-variant mt-2">Pa gen kòmand pou analize ankò.</p>
+                  </div>`
+                : `<div class="grid grid-cols-2 gap-3 mb-3">
+                    ${card(fp(a.paidSales) + ' HTG', 'Lavant Eskwo+')}
+                    ${card(a.paidOrders + '', 'Kòmand peye')}
+                    ${card(fp(a.avgOrder) + ' HTG', 'Mwayèn / kòmand')}
+                    ${card((a.conversion || 0) + '%', 'Konvèsyon (vizit→kòmand)')}
+                  </div>
+                  <div class="bg-surface-container-lowest rounded-xl p-3 mb-3 amb">
+                    <p class="font-label text-[10px] font-bold text-on-surface-variant mb-1.5">Lavant pa jou</p>
+                    ${_sparkSvg(a.last30.map(d => d.sales), 320, 64)}
+                    <div class="flex justify-between mt-1.5">
+                        <span class="font-label text-[9px] text-on-surface-variant">${a.last30[0]?.day || ''}</span>
+                        <span class="font-label text-[9px] text-on-surface-variant">${a.last30[a.last30.length-1]?.day || ''}</span>
+                    </div>
+                  </div>
+                  <div class="bg-surface-container-lowest rounded-xl p-3 amb">
+                    <p class="font-label text-[10px] font-bold text-on-surface-variant mb-2">Top pwodwi</p>
+                    ${_barsSvg(a.topProducts, 320, 24 * Math.min(5, a.topProducts.length))}
+                  </div>`
+            }`;
+        }
+        window.renderSellerAnalytics = renderSellerAnalytics;
+
         async function renderBoutiqueContent() {
             const el = document.getElementById('boutiqueContent');
             if (!el) return;
@@ -6544,10 +6680,24 @@
       <div class="space-y-3">
         ${myProducts.length > 0 ? cardHtml : '<div class="bg-surface-container-lowest rounded-xl p-6 text-center amb"><span class="material-symbols-outlined text-on-surface-variant" style="font-size:32px">inventory_2</span><p class="font-label text-sm text-on-surface-variant mt-2">Ou poko gen pwodwi</p></div>'}
       </div>
+      <div id="boutiqueAnalytics">
+        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2 mt-5">Analytics — 30 dènye jou</p>
+        <div class="bg-surface-container-lowest rounded-xl p-6 text-center amb">
+            <span class="material-symbols-outlined sp text-on-surface-variant" style="font-size:24px">progress_activity</span>
+            <p class="font-label text-xs text-on-surface-variant mt-1">Chaje analytics…</p>
+        </div>
+      </div>
       <button onclick="goBack();navTo('pub')" class="w-full mt-5 py-3.5 rounded-xl cta font-headline font-bold text-sm active:scale-95 flex items-center justify-center gap-2 amb">
         <span class="material-symbols-outlined" style="font-size:18px">add</span>Ajoute Nouvo Pwodwi
       </button>
     </div>`;
+
+            // Chaje analytics annaryè epi rann li nan blòk dedye a sou la-a.
+            try {
+                const analytics = await loadSellerAnalytics();
+                const target = document.getElementById('boutiqueAnalytics');
+                if (target) target.innerHTML = renderSellerAnalytics(analytics);
+            } catch (e) { console.warn('[analytics render]', e && e.message); }
         }
 
         // ── Edit / Delete / Discount for seller's own products ──
