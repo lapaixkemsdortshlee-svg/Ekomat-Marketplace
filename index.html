@@ -3720,6 +3720,8 @@
         async function notify(userId, opts) {
             if (!db || !userId) return null;
             opts = opts || {};
+            // `data` (jsonb) pèmèt nou pase kontèks (egz. order_id, kind)
+            // bay Edge Function `send-email` pou li ka rann yon resi rich.
             const { error } = await db.from('notifications').insert({
                 user_id: userId,
                 type: opts.type || 'system',
@@ -3727,6 +3729,7 @@
                 title: opts.title || '',
                 body: opts.body || '',
                 color: opts.color || '#00666f',
+                data: opts.data || {},
             });
             if (error) console.warn('[notify]', error.message);
             return error;
@@ -3748,6 +3751,7 @@
                     title: (opts && opts.title) || '',
                     body: (opts && opts.body) || '',
                     color: (opts && opts.color) || '#97422b',
+                    data: (opts && opts.data) || {},
                 }));
             if (rows.length === 0) return null;
             const { error: insErr } = await db.from('notifications').insert(rows);
@@ -5571,6 +5575,7 @@
                         title: 'Komand kreye — peye kounye a',
                         body: 'Voye ' + fp(totalAmount) + ' HTG MonCash pou fini komand ' + p.t + '.',
                         color: '#97422b',
+                        data: { order_id: newOrder.id, kind: 'order_placed' },
                     });
 
                     // Bug 4.1: alert admins in real time when a new order is active
@@ -5579,6 +5584,7 @@
                         title: 'Nouvo komand aktif',
                         body: (A.user.name || 'Yon achtè') + ' kòmande ' + p.t + ' — ap tann peman MonCash.',
                         color: '#97422b',
+                        data: { order_id: newOrder.id, kind: 'order_placed' },
                     });
                 } catch(e) {
                     console.warn('[Order]', e.message);
@@ -6218,11 +6224,13 @@
                 body: (A.user.name || 'Yon kliyan') + ' kòmande ' + itemsLabel + ' — ap tann peman MonCash.',
                 color: '#00666f',
             });
+            const _firstOrderId = createdOrders[0]?.id || null;
             notify(A.user.uid, {
                 type: 'order', icon: 'payments',
                 title: 'Komand kreye — peye kounye a',
                 body: 'Voye ' + fp(grandTotal) + ' HTG MonCash pou fini komand ' + itemsLabel + '.',
                 color: '#97422b',
+                data: { order_id: _firstOrderId, kind: 'order_placed', order_ids: createdOrders.map(o => o.id) },
             });
             // Bug 4.1: alert admins in real time when a new order is active
             notifyAdmins({
@@ -6230,6 +6238,7 @@
                 title: 'Nouvo komand aktif',
                 body: (A.user.name || 'Yon achtè') + ' kòmande ' + itemsLabel + ' — ap tann peman MonCash.',
                 color: '#97422b',
+                data: { order_id: _firstOrderId, kind: 'order_placed' },
             });
 
             updateNotifBadge();
@@ -8008,12 +8017,14 @@
                 title: 'Peman kliyan an konfime',
                 body: 'Lajan pou "' + (o.product_title || 'kòmand') + '" bloke nan eskwo. Prepare pwodwi a.',
                 color: '#1e40af',
+                data: { order_id: o.id, kind: 'payment_verified' },
             });
             notify(o.buyer_id, {
                 type: 'order', icon: 'verified',
                 title: 'Peman ou konfime',
                 body: 'Lajan ou bloke nan eskwo. Vandè ap prepare pwodwi a.',
                 color: '#1e40af',
+                data: { order_id: o.id, kind: 'payment_verified' },
             });
             renderAdminOrders();
         }
@@ -8045,17 +8056,19 @@
             });
             if (error) { toast('Erè DB: ' + error.message); return; }
             toast(result.simulated ? 'Lajan libere — transfere manyèlman via MonCash' : 'Lajan libere via MonCash ✓');
-            db.from('notifications').insert({
-                user_id: o.seller_id, type: 'order', icon: 'paid',
+            notify(o.seller_id, {
+                type: 'order', icon: 'paid',
                 title: 'Lajan libere',
                 body: fp(o.net_amount || o.total_amount) + ' HTG voye sou MonCash ' + seller.moncash_number,
                 color: '#065f46',
+                data: { order_id: o.id, kind: 'released' },
             });
-            db.from('notifications').insert({
-                user_id: o.buyer_id, type: 'order', icon: 'task_alt',
+            notify(o.buyer_id, {
+                type: 'order', icon: 'task_alt',
                 title: 'Tranzaksyon fèmen',
                 body: 'Komand "' + (o.product_title || 'pwodwi') + '" fini. Mèsi!',
                 color: '#065f46',
+                data: { order_id: o.id, kind: 'released' },
             });
             // Bug 3: keep public profile counters in sync with orders
             syncSaleCompletionCounts(o.seller_id, o.buyer_id);
@@ -8080,12 +8093,14 @@
                     title: 'Komand ranbouse',
                     body: 'Admin ranbouse komand ou. Rezon: ' + note,
                     color: '#97422b',
+                    data: { order_id: o.id, kind: 'refunded' },
                 });
                 notify(o.seller_id, {
                     type: 'order', icon: 'currency_exchange',
                     title: 'Komand ranbouse',
                     body: 'Komand "' + (o.product_title || 'pwodwi') + '" ranbouse pa admin. Rezon: ' + note,
                     color: '#97422b',
+                    data: { order_id: o.id, kind: 'refunded' },
                 });
             }
             renderAdminOrders();
@@ -9665,6 +9680,7 @@
                         title: 'Komand anile',
                         body: 'Komand "' + title + '" anile.',
                         color: '#991b1b',
+                        data: { order_id: o.id, kind: 'cancelled' },
                     });
                 }
                 if (o.seller_id && o.seller_id !== actor) {
@@ -9673,6 +9689,7 @@
                         title: 'Komand anile',
                         body: 'Komand "' + title + '" anile pa achtè a.',
                         color: '#991b1b',
+                        data: { order_id: o.id, kind: 'cancelled' },
                     });
                 }
                 notifyAdmins({
@@ -9695,14 +9712,15 @@
             });
             if (error) { toast('Erè: ' + error.message); return; }
             toast('Pwodwi deklare pare — achtè ka vin chèche li');
-            // Notify buyer
+            // Notify buyer via the centralized helper (FCM + email fan-out).
             const o = await fetchOrder(orderId);
             if (o) {
-                db.from('notifications').insert({
-                    user_id: o.buyer_id, type: 'order', icon: 'inventory_2',
+                notify(o.buyer_id, {
+                    type: 'order', icon: 'inventory_2',
                     title: 'Pwodwi ou pare!',
                     body: (o.product_title || 'Komand') + ' disponib nan ' + (o.pickup_location || 'pwen kolèk la') + '. Pran kòd OTP ou.',
                     color: '#00666f',
+                    data: { order_id: o.id, kind: 'ready_for_pickup' },
                 });
             }
             if (typeof renderOrderScreen === 'function') renderOrderScreen();
@@ -9751,12 +9769,14 @@
                         title: 'Livrezon konfime',
                         body: 'OTP ou valide. Mèsi pou konfyans ou!',
                         color: '#065f46',
+                        data: { order_id: o.id, kind: 'otp_confirmed' },
                     });
                     notify(o.seller_id, {
                         type: 'order', icon: 'check_circle',
                         title: 'Livrezon konfime',
                         body: 'Achtè a konfime resepsyon "' + (o.product_title || 'komand') + '". Lajan ap libere.',
                         color: '#065f46',
+                        data: { order_id: o.id, kind: 'otp_confirmed' },
                     });
                     // Bug 3: OTP confirmed = delivery acknowledged. Bump
                     // the public seller sales count + buyer order count
@@ -9877,6 +9897,7 @@
                 body: openerTag + ' "' + (A.user.name || 'Yon itilizatè') + '" pwoteste — '
                     + reasonLabel + ': ' + details.slice(0, 100),
                 color: '#991b1b',
+                data: { order_id: o.id, kind: 'dispute', reason: reasonId, details },
             });
             const opener = A.user && A.user.uid;
             const other = opener === o.buyer_id ? o.seller_id : o.buyer_id;
@@ -9886,6 +9907,7 @@
                     title: 'Yon litij ouvri sou kòmand sa a',
                     body: 'Admin ap egzamine: ' + reasonLabel,
                     color: '#991b1b',
+                    data: { order_id: o.id, kind: 'dispute', reason: reasonId },
                 });
             }
             if (typeof renderOrderScreen === 'function') renderOrderScreen();
