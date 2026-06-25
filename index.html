@@ -2223,8 +2223,53 @@
                 <!-- filled dynamically by renderVsCats() -->
             </div>
 
-            <button id="vsCatsBtn" onclick="vsGoStep(4)"
+            <button id="vsCatsBtn" onclick="vsGoStep('phone')"
                 class="w-full py-4 rounded-xl font-headline font-extrabold text-sm active:scale-95 transition-all cta">
+                Kontinye <span class="material-symbols-outlined align-middle" style="font-size:18px">arrow_forward</span>
+            </button>
+        </div>
+
+        <!-- Étape 'phone' : Verifikasyon nimewo telefòn ak OTP SMS -->
+        <div id="vs-stepphone" class="hidden">
+            <div class="flex items-center gap-3 mb-4">
+                <button onclick="vsGoStep('cats')"
+                    class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:bg-surface-container-high flex-shrink-0">
+                    <span class="material-symbols-outlined text-on-surface-variant" style="font-size:16px">arrow_back</span>
+                </button>
+                <div>
+                    <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant">Sekirite</p>
+                    <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">Verifye nimewo telefòn ou</h3>
+                </div>
+            </div>
+            <p class="font-body text-sm text-on-surface-variant mb-4 leading-relaxed">
+                N ap voye yon kòd 6 chif sou SMS. Sa garanti se ou ki gen kont sa a — obligatwa pou verifikasyon vandè.
+            </p>
+
+            <div class="mb-3">
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">Nimewo telefòn (fòma entènasyonal)</p>
+                <input id="vsPhoneInput" type="tel" class="si w-full" placeholder="+509 3X XX XXXX" autocomplete="tel"/>
+            </div>
+
+            <button id="vsSendOtpBtn" onclick="vsSendOtp()" class="w-full py-3 rounded-xl font-headline font-bold text-sm active:scale-95 mb-4 cta">
+                <span class="material-symbols-outlined align-middle mr-1" style="font-size:16px">sms</span>
+                Voye kòd verifikasyon
+            </button>
+
+            <div id="vsOtpBox" class="hidden">
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">Kòd 6 chif</p>
+                <input id="vsOtpInput" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                    class="si w-full text-center" style="letter-spacing:.5em;font-size:1.25rem;font-weight:700" placeholder="------"/>
+                <button id="vsVerifyOtpBtn" onclick="vsVerifyOtp()" class="w-full py-3 mt-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:#065f46;color:#fcf9f4">
+                    <span class="material-symbols-outlined align-middle mr-1" style="font-size:16px">check_circle</span>
+                    Verifye kòd la
+                </button>
+            </div>
+
+            <div id="vsPhoneStatus" class="hidden text-center mt-4 p-3 rounded-xl" style="background:rgba(101,124,71,.08);border:1px solid rgba(101,124,71,.25)"></div>
+
+            <button id="vsPhoneNextBtn" onclick="vsGoStep(4)" disabled
+                class="w-full py-4 mt-4 rounded-xl font-headline font-extrabold text-sm active:scale-95 transition-all"
+                style="background:#e5e2dd;color:#6d7979">
                 Kontinye <span class="material-symbols-outlined align-middle" style="font-size:18px">arrow_forward</span>
             </button>
         </div>
@@ -7108,6 +7153,25 @@
                 btn.innerHTML = '<span class="material-symbols-outlined align-middle" style="font-size:15px;animation:spin .8s linear infinite">progress_activity</span> Soumèt...';
             }
 
+            // Telefòn dwe verifye via OTP — re-konfime kont pwofil la sou
+            // ka kote A.user.phoneVerified pa ajou.
+            try {
+                if (!A.user?.phoneVerified && db && A.user?.uid) {
+                    const { data } = await db.from('profiles')
+                        .select('phone, phone_verified').eq('id', A.user.uid).maybeSingle();
+                    if (data && data.phone_verified) {
+                        A.user.phoneVerified = true;
+                        A.user.phone = data.phone || A.user.phone;
+                    }
+                }
+            } catch (_) { /* annilo */ }
+            if (!A.user?.phoneVerified) {
+                toast('Verifye nimewo telefòn ou anvan ou soumèt');
+                if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+                if (typeof vsGoStep === 'function') vsGoStep('phone');
+                return;
+            }
+
             const newReq = {
                 uid: A.user?.uid || 'u_' + Date.now(),
                 name: A.user?.name || 'Utilisateur',
@@ -7166,6 +7230,24 @@
                     read: false,
                     color: '#00666f',
                 });
+                // Notifye admin yo (via FCM Phase 2 fan-out tou).
+                if (typeof notifyAdmins === 'function') {
+                    notifyAdmins({
+                        type: 'system', icon: 'badge',
+                        title: 'Nouvo demann verifikasyon',
+                        body: (A.user.name || 'Yon itilizatè') + ' soumèt ID + telefòn verifye.',
+                        color: '#00666f',
+                    });
+                }
+                // Notifye itilizatè a tou nan baz done a (FCM apre).
+                if (typeof notify === 'function' && A.user && A.user.uid) {
+                    notify(A.user.uid, {
+                        type: 'system', icon: 'hourglass_top',
+                        title: 'Demann verifikasyon resevwa',
+                        body: 'Admin ap egzamine. Repons nan maksimòm 24h.',
+                        color: '#00666f',
+                    });
+                }
 
                 closeSheets();
                 showSuccess(
@@ -7193,18 +7275,144 @@
             }
         }
 
-        // Intercept step 4 to render summary + extra step 'cats' (multi-select categories)
+        // Intercept step 4 to render summary + extra steps 'cats' (categories)
+        // and 'phone' (SMS OTP verification).
         const origVsGoStep = vsGoStep.toString();
         window.vsGoStep = function (n) {
-            const steps = [1, 2, 3, 4, 'cats'];
+            const steps = [1, 2, 3, 4, 'cats', 'phone'];
             steps.forEach(i => {
                 const el = document.getElementById('vs-step' + i);
                 if (el) el.classList.toggle('hidden', i !== n);
             });
             document.getElementById('verifySheet').scrollTop = 0;
             if (n === 'cats') renderVsCats();
+            if (n === 'phone') vsPreparePhoneStep();
             if (n === 4) updateVSSummary();
         };
+
+        // ─ Verifikasyon nimewo telefòn (SMS OTP via Supabase Phone Auth) ─
+        function _normalizePhone(raw) {
+            let p = String(raw || '').trim().replace(/[\s\-().]/g, '');
+            if (!p) return null;
+            if (p.startsWith('+')) return p;
+            if (p.startsWith('509')) return '+' + p;
+            if (/^[0-9]{8}$/.test(p)) return '+509' + p;
+            return null;
+        }
+
+        async function smsRequestOtp(rawPhone) {
+            const phone = _normalizePhone(rawPhone);
+            if (!phone) return { ok: false, reason: 'Fòma nimewo telefòn pa valid' };
+            if (!db || !db.auth) return { ok: false, reason: 'Pa gen koneksyon' };
+            try {
+                const { error } = await db.auth.signInWithOtp({
+                    phone, options: { channel: 'sms' },
+                });
+                if (error) {
+                    const msg = String(error.message || '');
+                    if (/provider/i.test(msg) || /not enabled/i.test(msg)
+                        || /unsupported/i.test(msg) || /sms.*disabled/i.test(msg)) {
+                        return { ok: false, reason: 'Konfigirasyon SMS pa konplè sou Supabase' };
+                    }
+                    return { ok: false, reason: msg };
+                }
+                return { ok: true, phone };
+            } catch (e) {
+                return { ok: false, reason: (e && e.message) || 'Erè rezo' };
+            }
+        }
+        window.smsRequestOtp = smsRequestOtp;
+
+        async function smsVerifyOtp(rawPhone, code) {
+            const phone = _normalizePhone(rawPhone);
+            if (!phone) return { ok: false, reason: 'Fòma nimewo telefòn pa valid' };
+            const token = String(code || '').trim();
+            if (!/^[0-9]{6}$/.test(token)) return { ok: false, reason: 'Kòd dwe gen 6 chif' };
+            if (!db || !db.auth) return { ok: false, reason: 'Pa gen koneksyon' };
+            try {
+                const { error } = await db.auth.verifyOtp({ phone, token, type: 'sms' });
+                if (error) return { ok: false, reason: error.message };
+                if (A.user && A.user.uid) {
+                    const { error: pErr } = await db.from('profiles').update({
+                        phone, phone_verified: true,
+                        phone_verified_at: new Date().toISOString(),
+                    }).eq('id', A.user.uid);
+                    if (pErr) console.warn('[phone profile]', pErr.message);
+                    A.user.phone = phone;
+                    A.user.phoneVerified = true;
+                    try { localStorage.setItem('aym_user', JSON.stringify(A.user)); } catch (_) { }
+                }
+                return { ok: true, phone };
+            } catch (e) {
+                return { ok: false, reason: (e && e.message) || 'Erè rezo' };
+            }
+        }
+        window.smsVerifyOtp = smsVerifyOtp;
+
+        function vsPreparePhoneStep() {
+            const input = document.getElementById('vsPhoneInput');
+            if (input && !input.value && A.user && A.user.phone) input.value = A.user.phone;
+            // Si telefòn deja verifye nan yon sesyon anvan, lese itilizatè kontinye.
+            if (A.user && A.user.phoneVerified) _vsMarkPhoneVerified(A.user.phone);
+            else {
+                const status = document.getElementById('vsPhoneStatus');
+                if (status) { status.classList.add('hidden'); status.innerHTML = ''; }
+                const next = document.getElementById('vsPhoneNextBtn');
+                if (next) { next.disabled = true; next.style.background = '#e5e2dd'; next.style.color = '#6d7979'; next.classList.remove('cta'); }
+                const otpBox = document.getElementById('vsOtpBox');
+                if (otpBox) otpBox.classList.add('hidden');
+                const otp = document.getElementById('vsOtpInput');
+                if (otp) otp.value = '';
+            }
+        }
+        function _vsMarkPhoneVerified(phone) {
+            const status = document.getElementById('vsPhoneStatus');
+            if (status) {
+                status.classList.remove('hidden');
+                status.innerHTML = '<span class="material-symbols-outlined align-middle" style="font-size:18px;color:#065f46">verified</span> <span class="font-label text-sm font-bold" style="color:#065f46">Telefòn ' + (phone || '') + ' verifye</span>';
+            }
+            const next = document.getElementById('vsPhoneNextBtn');
+            if (next) {
+                next.disabled = false;
+                next.style.background = '';
+                next.style.color = '';
+                next.classList.add('cta');
+            }
+        }
+
+        async function vsSendOtp() {
+            const phone = document.getElementById('vsPhoneInput')?.value;
+            const btn = document.getElementById('vsSendOtpBtn');
+            const orig = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined align-middle sp" style="font-size:16px">progress_activity</span> Ap voye…';
+            }
+            const res = await smsRequestOtp(phone);
+            if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+            if (!res.ok) { toast(res.reason || 'Erè'); return; }
+            const box = document.getElementById('vsOtpBox');
+            if (box) box.classList.remove('hidden');
+            toast('Kòd voye nan ' + res.phone);
+        }
+        window.vsSendOtp = vsSendOtp;
+
+        async function vsVerifyOtp() {
+            const phone = document.getElementById('vsPhoneInput')?.value;
+            const code = document.getElementById('vsOtpInput')?.value;
+            const btn = document.getElementById('vsVerifyOtpBtn');
+            const orig = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined align-middle sp" style="font-size:16px">progress_activity</span> Ap verifye…';
+            }
+            const res = await smsVerifyOtp(phone, code);
+            if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+            if (!res.ok) { toast(res.reason || 'Pa ka verifye'); return; }
+            _vsMarkPhoneVerified(res.phone);
+            toast('Telefòn verifye!');
+        }
+        window.vsVerifyOtp = vsVerifyOtp;
 
         // ── Seller category selection ──
         window.SELLER_CATS_MAP = [
