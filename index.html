@@ -3513,6 +3513,25 @@
         // ranplase ansyen lis 4 pwen fiks la.
         const LOCATIONIQ_KEY = 'pk.b51355ffccd59ca2e04bca945d4e2c56';
 
+        // ── Firebase Cloud Messaging (push notifications) ───────────
+        // RANPLI KLE SA YO SOTI NAN FIREBASE CONSOLE LÈ OU PARE:
+        //   1) console.firebase.google.com → Project → Project settings
+        //      → Your apps → Web → copye `firebaseConfig` la → kole l isit
+        //   2) Cloud Messaging → "Web Push certificates" → jenere yon kle
+        //      → kole VAPID public key a anba a
+        //   3) Mete menm valè yo nan firebase-messaging-sw.js a tou
+        // Pandan kle yo vid, FCM ap mete tèt li an pòz an silans —
+        // rès aplikasyon an pa kraze.
+        const FIREBASE_CONFIG = {
+            apiKey: '',
+            authDomain: '',
+            projectId: '',
+            storageBucket: '',
+            messagingSenderId: '',
+            appId: '',
+        };
+        const FCM_VAPID_KEY = '';
+
         // ── All data fetched from Supabase — no mock users/data ──
         const DEMO_USERS = {};
         const VERIF_REQUESTS = [];
@@ -7984,7 +8003,7 @@
         let NOTIFS = [];
 
         // FCM state
-        let FCM = { permission: 'default', token: null }; // default | granted | denied
+        let FCM = { permission: 'default', token: null, supported: null }; // default | granted | denied
 
         function addNotif(notif) {
             NOTIFS.unshift(notif);
@@ -8341,43 +8360,132 @@
             updateNotifBadge();
         }
 
-        // ── FCM Permission + Service Worker stub ──────────────────
+        // ── FCM Permission + Service Worker (vrè entegrasyon) ─────
+        // Verifye konfigirasyon Firebase la — si yon nan kle yo manke,
+        // tout flux la mete tèt li an pòz san kraze anyen.
+        function _isFcmConfigured() {
+            return !!(FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey
+                && FIREBASE_CONFIG.projectId && FCM_VAPID_KEY
+                && typeof firebase !== 'undefined');
+        }
+
+        let _fbInited = false, _fcmForegroundBound = false;
+        function _initFirebaseApp() {
+            if (_fbInited || !_isFcmConfigured()) return _fbInited;
+            try {
+                firebase.initializeApp(FIREBASE_CONFIG);
+                _fbInited = true;
+            } catch (e) {
+                // initializeApp jete si w rele l de fwa — pa fatal.
+                if (!/already exists/i.test(e && e.message || '')) {
+                    console.warn('[Firebase init]', e && e.message);
+                    return false;
+                }
+                _fbInited = true;
+            }
+            return true;
+        }
+
+        // Lè yon push rive pandan onglè a louvri, FCM lanse onMessage —
+        // chanmen pou pase nan menm sistèm in-app la (toast + son).
+        function _bindFcmForeground(messaging) {
+            if (_fcmForegroundBound || !messaging) return;
+            try {
+                messaging.onMessage(payload => {
+                    const n = (payload && payload.notification) || {};
+                    const title = n.title || (payload.data && payload.data.title) || 'AyitiMarket';
+                    if (typeof toast === 'function') toast(title);
+                    if (typeof playNotifSound === 'function') playNotifSound();
+                    if (typeof navigator !== 'undefined' && navigator.vibrate && typeof VIBRATE_ON !== 'undefined' && VIBRATE_ON) {
+                        try { navigator.vibrate(100); } catch (_) { }
+                    }
+                });
+                _fcmForegroundBound = true;
+            } catch (e) { console.warn('[FCM foreground]', e && e.message); }
+        }
+
+        async function _saveFcmToken(token) {
+            if (!db || !A.user || !A.user.uid || !token) return;
+            try {
+                const { error } = await db.from('user_devices').upsert({
+                    user_id: A.user.uid,
+                    fcm_token: token,
+                    platform: 'web',
+                    last_seen_at: new Date().toISOString(),
+                }, { onConflict: 'fcm_token' });
+                if (error) console.warn('[FCM token save]', error.message);
+            } catch (e) { console.warn('[FCM token save]', e && e.message); }
+        }
+
         async function requestFCMPermission() {
             const btn = document.getElementById('fcmBtn');
             const dot = document.getElementById('fcmDot');
             const txt = document.getElementById('fcmStatusTxt');
-            btn.textContent = '…';
-            btn.disabled = true;
+            if (btn) { btn.textContent = '…'; btn.disabled = true; }
+
+            const setUI = (color, status, button) => {
+                if (dot) dot.style.background = color;
+                if (txt) txt.textContent = status;
+                if (btn) { btn.textContent = button; btn.style.color = color; btn.disabled = false; }
+            };
+
+            // 1. Sipò navigatè
+            if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                FCM.supported = false;
+                setUI('#f99188', 'FCM — Navigatè sa a pa sipòte notifikasyon push', 'Pa sipòte');
+                toast('Navigatè a pa sipòte FCM');
+                return;
+            }
+            FCM.supported = true;
+
+            // 2. Konfigirasyon Firebase
+            if (!_isFcmConfigured()) {
+                setUI('#e5e2dd', 'FCM — Konfigirasyon Firebase pa konplè (kòle kle yo nan kòd la)', 'Konfigirasyon');
+                toast('Ranpli FIREBASE_CONFIG + FCM_VAPID_KEY anvan');
+                return;
+            }
 
             try {
+                if (!_initFirebaseApp()) {
+                    setUI('#f99188', 'FCM — Pa ka inisyalize Firebase', 'Erè');
+                    return;
+                }
+
+                // 3. Enskri service worker la (scope dedye pou pa konfli ak sw.js)
+                const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                    scope: '/firebase-cloud-messaging-push-scope/',
+                });
+
+                // 4. Mande pèmisyon navigatè a
                 const perm = await Notification.requestPermission();
                 FCM.permission = perm;
-
-                if (perm === 'granted') {
-                    // Obtain push notification token
-                    FCM.token = 'fcm_token_' + Math.random().toString(36).slice(2, 18);
-                    dot.style.background = '#22c55e';
-                    txt.textContent = `FCM actif · Token: ${FCM.token.slice(0, 16)}…`;
-                    btn.textContent = 'Aktif ✓';
-                    btn.style.color = '#22c55e';
-                    toast("Notifikasyon push aktive!");
-                    // En production: envoyer le token à Firestore users/{uid}
-                    // await updateDoc(doc(db,'users',uid),{fcmToken: FCM.token});
-                } else {
-                    dot.style.background = '#98443e';
-                    txt.textContent = 'Notifikasyon bloke. Chanje nan paramèt navigatè ou.';
-                    btn.textContent = 'Bloke';
-                    btn.style.color = '#98443e';
-                    toast("Notifikasyon refize nan navigatè a");
+                if (perm !== 'granted') {
+                    setUI('#98443e', 'Notifikasyon bloke. Chanje nan paramèt navigatè ou.', 'Bloke');
+                    toast('Pèmisyon notifikasyon refize');
+                    return;
                 }
+
+                // 5. Pran token FCM la
+                const messaging = firebase.messaging();
+                _bindFcmForeground(messaging);
+                const token = await messaging.getToken({
+                    vapidKey: FCM_VAPID_KEY,
+                    serviceWorkerRegistration: reg,
+                });
+                if (!token) {
+                    setUI('#f99188', 'FCM — Token pa jwenn (eseye ankò)', 'Eseye ankò');
+                    return;
+                }
+                FCM.token = token;
+                await _saveFcmToken(token);
+                setUI('#22c55e', 'FCM aktif · Token: ' + token.slice(0, 16) + '…', 'Aktif ✓');
+                toast('Notifikasyon push aktive!');
             } catch (e) {
-                // Navigateur sans support Notification API (ex: iOS Safari)
-                dot.style.background = '#f99188';
-                txt.textContent = 'FCM — Navigatè sa a pa sipòte notifikasyon push';
-                btn.textContent = 'Pa sipòte';
-                toast("ℹ️ Sèvi ak aplikasyon mobil pou notifikasyon");
+                console.warn('[FCM]', e && e.message);
+                setUI('#f99188', 'FCM — Erè: ' + ((e && e.message) || 'enkoni'), 'Erè');
             }
         }
+        window.requestFCMPermission = requestFCMPermission;
 
         // Push notifications handled by Supabase Realtime
         function showSuccess(emoji, title, body, escrow, btnLabel) {
@@ -11604,6 +11712,9 @@
          SUPABASE SDK — v4.0 (Google + Email, No SMS)
     ══════════════════════════════════════════════════════ -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Firebase Cloud Messaging — compat SDK (chaje kòm script klasik) -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging-compat.js"></script>
     <script>
     // Supabase credentials — set via Vercel environment variables
     // For local dev: create .env with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
