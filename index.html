@@ -9810,7 +9810,13 @@
             trackOrderId: null,    // kòmand k ap swiv la
             meTrackMarker: null,   // makè pozisyon mwen pandan swivi
             peerMarker: null,      // makè lòt pati a (vandè/achtè)
-            trackLine: null,       // liy ant de pozisyon yo
+            trackLine: null,       // liy dwat (fallback) pandan wout la pa chaje
+            driveRoute: null,      // wout an machin LocationIQ Directions
+            _lastRouteAt: 0,       // ms — pwoteje kont vrè-API spam
+            _lastRouteFrom: null,
+            _lastRouteTo: null,
+            _routeFitted: false,
+            _routeBusy: false,
             myTrackPos: null,
             peerTrackPos: null,
             zoom: 13,
@@ -10230,22 +10236,100 @@
             });
             MAP[key] = L.marker([lat, lng], { icon }).addTo(MAP.leaflet);
         }
+        // Konbyen tan + distans pou nou rekalkile vrè wout an machin LIQ a.
+        const _ROUTE_MIN_INTERVAL_MS = 30000;   // 30s ant chak apèl LocationIQ
+        const _ROUTE_MIN_MOVE_M = 80;           // ... eksepte si yon pati bouje > 80m
+
+        // Tcheke si yon nouvo apèl Directions jistifye. Egzante de limit
+        // map jou a — Live Tracking pa konte (jan ou te di).
+        async function _recalcDeliveryRoute() {
+            if (!MAP.leaflet || !MAP.myTrackPos || !MAP.peerTrackPos) return;
+            if (MAP._routeBusy) return;
+            const now = Date.now();
+            const last = MAP._lastRouteAt || 0;
+            const lf = MAP._lastRouteFrom, lt = MAP._lastRouteTo;
+            const moved = !lf || !lt
+                || _distKm(lf, MAP.myTrackPos) * 1000 > _ROUTE_MIN_MOVE_M
+                || _distKm(lt, MAP.peerTrackPos) * 1000 > _ROUTE_MIN_MOVE_M;
+            const stale = now - last > _ROUTE_MIN_INTERVAL_MS;
+            // Premye kalkilasyon → toujou fè l. Apre sa, mande movement + tan.
+            if (last && !(moved && stale)) return;
+
+            MAP._routeBusy = true;
+            const from = MAP.myTrackPos, to = MAP.peerTrackPos;
+            const url = 'https://us1.locationiq.com/v1/directions/driving/'
+                + from.lng + ',' + from.lat + ';' + to.lng + ',' + to.lat
+                + '?key=' + encodeURIComponent(LOCATIONIQ_KEY)
+                + '&overview=full&geometries=geojson';
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), 8000);
+            try {
+                const res = await fetch(url, { signal: ctrl.signal });
+                clearTimeout(timer);
+                if (!res.ok) return;
+                const data = await res.json();
+                const route = data && data.routes && data.routes[0];
+                if (!route) return;
+                const coords = ((route.geometry && route.geometry.coordinates) || [])
+                    .map(c => [c[1], c[0]]);
+                if (!coords.length) return;
+                if (MAP.driveRoute) MAP.driveRoute.setLatLngs(coords);
+                else MAP.driveRoute = L.polyline(coords, {
+                    color: '#00666f', weight: 4, opacity: .9,
+                }).addTo(MAP.leaflet);
+                // Premye fwa sèlman — pa kontrarye eksplorasyon manyèl la.
+                if (!MAP._routeFitted) {
+                    try { MAP.leaflet.fitBounds(MAP.driveRoute.getBounds(), { padding: [40, 40], maxZoom: 16 }); }
+                    catch (_) { }
+                    MAP._routeFitted = true;
+                }
+                // Wout chaje — kache liy dwat fallback la.
+                if (MAP.trackLine) {
+                    try { MAP.trackLine.remove(); } catch (_) { }
+                    MAP.trackLine = null;
+                }
+                MAP._lastRouteAt = now;
+                MAP._lastRouteFrom = { lat: from.lat, lng: from.lng };
+                MAP._lastRouteTo = { lat: to.lat, lng: to.lng };
+                const km = (route.distance / 1000).toFixed(1);
+                const min = Math.max(1, Math.round(route.duration / 60));
+                const peerName = MAP.peerTrackPos && MAP.peerTrackPos.name;
+                const txt = document.getElementById('geoRouteText');
+                const info = document.getElementById('geoRouteInfo');
+                if (txt) txt.textContent = 'Livrezon — ' + km + ' km · ~' + min + ' min an machin'
+                    + (peerName ? ' · ' + peerName : '');
+                if (info) { info.classList.remove('hidden'); info.classList.add('flex'); }
+            } catch (e) {
+                clearTimeout(timer);
+                console.warn('[Track route]', e && e.message);
+            } finally {
+                MAP._routeBusy = false;
+            }
+        }
+
         function _updateTrackLine() {
             if (!MAP.leaflet || !MAP.myTrackPos || !MAP.peerTrackPos) return;
             const a = MAP.myTrackPos, b = MAP.peerTrackPos;
-            const pts = [[a.lat, a.lng], [b.lat, b.lng]];
-            if (MAP.trackLine) MAP.trackLine.setLatLngs(pts);
-            else MAP.trackLine = L.polyline(pts, {
-                color: '#00666f', weight: 3, dashArray: '6,6', opacity: .85,
-            }).addTo(MAP.leaflet);
-            try { MAP.leaflet.fitBounds(MAP.trackLine.getBounds(), { padding: [40, 40], maxZoom: 16 }); }
-            catch (_) { }
-            const km = _distKm(a, b);
-            const txt = document.getElementById('geoRouteText');
-            const info = document.getElementById('geoRouteInfo');
-            if (txt) txt.textContent = 'Livrezon — ' + km.toFixed(1) + ' km ant nou'
-                + (b.name ? ' · ' + b.name : '');
-            if (info) { info.classList.remove('hidden'); info.classList.add('flex'); }
+            // Fallback senp tan vrè wout la pa chaje (oswa li ekspire).
+            if (!MAP.driveRoute) {
+                const pts = [[a.lat, a.lng], [b.lat, b.lng]];
+                if (MAP.trackLine) MAP.trackLine.setLatLngs(pts);
+                else MAP.trackLine = L.polyline(pts, {
+                    color: '#00666f', weight: 3, dashArray: '6,6', opacity: .55,
+                }).addTo(MAP.leaflet);
+                if (!MAP._routeFitted) {
+                    try { MAP.leaflet.fitBounds(MAP.trackLine.getBounds(), { padding: [40, 40], maxZoom: 16 }); }
+                    catch (_) { }
+                }
+                const km = _distKm(a, b);
+                const txt = document.getElementById('geoRouteText');
+                const info = document.getElementById('geoRouteInfo');
+                if (txt) txt.textContent = 'Livrezon — ' + km.toFixed(1) + ' km (dwat) — ap kalkile wout…'
+                    + (b.name ? ' · ' + b.name : '');
+                if (info) { info.classList.remove('hidden'); info.classList.add('flex'); }
+            }
+            // Lanse vrè rekalkilasyon LocationIQ Directions (throttled).
+            _recalcDeliveryRoute();
         }
         function renderPeerPos(payload) {
             if (!payload || !MAP.leaflet) return;
@@ -10300,10 +10384,12 @@
         function stopLiveTracking() {
             if (MAP.liveInterval) { clearInterval(MAP.liveInterval); MAP.liveInterval = null; }
             if (MAP.trackChannel) { try { db.removeChannel(MAP.trackChannel); } catch (_) { } MAP.trackChannel = null; }
-            ['peerMarker', 'meTrackMarker', 'trackLine'].forEach(k => {
+            ['peerMarker', 'meTrackMarker', 'trackLine', 'driveRoute'].forEach(k => {
                 if (MAP[k]) { try { MAP[k].remove(); } catch (_) { } MAP[k] = null; }
             });
             MAP.myTrackPos = null; MAP.peerTrackPos = null; MAP.trackOrderId = null;
+            MAP._lastRouteAt = 0; MAP._lastRouteFrom = null; MAP._lastRouteTo = null;
+            MAP._routeFitted = false; MAP._routeBusy = false;
             const info = document.getElementById('geoRouteInfo');
             if (info) { info.classList.add('hidden'); info.classList.remove('flex'); }
         }
