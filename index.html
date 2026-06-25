@@ -1444,6 +1444,13 @@
                 <button
                     class="cchip flex-shrink-0 px-4 py-2 rounded-full font-label font-semibold text-[12px] bg-surface-container-highest text-on-surface active:scale-95"
                     onclick="filterFeed(this,'artisanat')">Atizana</button>
+                <button id="feedFilterBtn" onclick="openFilterSheet()"
+                    class="flex-shrink-0 px-3 py-2 rounded-full font-label font-bold text-[12px] active:scale-95 flex items-center gap-1"
+                    style="background:rgba(0,102,111,.08);color:#00666f">
+                    <span class="material-symbols-outlined" style="font-size:14px">filter_alt</span>
+                    <span>Filtè</span>
+                    <span id="feedFilterBadge" class="hidden ml-1 px-1.5 py-0.5 rounded-full font-bold" style="background:#00666f;color:#fff;font-size:9px"></span>
+                </button>
             </div>
             <!-- Announcement banner -->
             <div id="feedAnnounceBanner" class="hidden mb-3"></div>
@@ -2853,6 +2860,59 @@
                 Wi, peman resevwa — Konfime
             </button>
         </div>
+    </div>
+
+    <!-- ══ FEED FILTER SHEET — pri, nòt, an stòk, triye ══ -->
+    <div class="sheet" id="filterSheet">
+        <div class="handle"></div>
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Filtè pwodwi</h3>
+                <p class="font-body text-xs text-on-surface-variant mt-0.5">Rafine sa w wè nan feed la</p>
+            </div>
+            <button onclick="resetFeedFilters()" class="px-3 py-2 rounded-full bg-surface-container active:bg-surface-container-high font-label text-xs font-bold text-on-surface-variant">
+                Reset
+            </button>
+        </div>
+        <div class="space-y-4 mb-5">
+            <div>
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Pri (HTG)</p>
+                <div class="flex items-center gap-2">
+                    <input id="fltPriceMin" type="number" inputmode="numeric" class="si flex-1" placeholder="Min"/>
+                    <span class="text-on-surface-variant">—</span>
+                    <input id="fltPriceMax" type="number" inputmode="numeric" class="si flex-1" placeholder="Maks"/>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant">Nòt minimòm</p>
+                    <span id="fltRatingLbl" class="font-label text-xs font-bold text-primary">0★</span>
+                </div>
+                <input id="fltRating" type="range" min="0" max="5" step="0.5" value="0" class="w-full"
+                    oninput="document.getElementById('fltRatingLbl').textContent = (+this.value).toFixed(1) + '★'"/>
+            </div>
+            <label class="flex items-center justify-between p-3 rounded-xl bg-surface-container-lowest cursor-pointer">
+                <div>
+                    <p class="font-headline font-bold text-sm text-on-surface">An stòk sèlman</p>
+                    <p class="font-label text-xs text-on-surface-variant">Kache pwodwi ki epuize</p>
+                </div>
+                <input type="checkbox" id="fltInStock" class="w-5 h-5 rounded accent-[#00666f]"/>
+            </label>
+            <div>
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Triye pa</p>
+                <select id="fltSort" class="si w-full">
+                    <option value="popular">Pi popilè</option>
+                    <option value="new">Pi nouvo</option>
+                    <option value="price_asc">Pri: pi ba an premye</option>
+                    <option value="price_desc">Pri: pi wo an premye</option>
+                    <option value="rating">Nòt pi wo</option>
+                </select>
+            </div>
+        </div>
+        <button onclick="applyFeedFiltersFromSheet()" class="w-full py-4 rounded-xl cta font-headline font-extrabold text-sm active:scale-95">
+            <span class="material-symbols-outlined align-middle mr-1" style="font-size:18px">filter_alt</span>
+            Aplike filtè yo
+        </button>
     </div>
 
     <!-- ══ DISPUTE SHEET — Buyer (or seller) opens a dispute ══ -->
@@ -4351,8 +4411,12 @@
                 g.innerHTML = emptyState('storefront', 'Pa gen pwodwi', 'Okenn pwodwi pa disponib nan kategori sa a.');
                 return;
             }
-            const scored = list.map(p => ({ ...p, score: scoreP(p) })).sort((a, b) => b.score - a.score);
-            g.innerHTML = scored.map((p, i) => feedCard(p, i)).join("");
+            const final = applyFeedFilters(list);
+            if (final.length === 0) {
+                g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.');
+                return;
+            }
+            g.innerHTML = final.map((p, i) => feedCard(p, i)).join("");
         }
 
         function renderFeedCards(g, products) {
@@ -4360,9 +4424,96 @@
                 g.innerHTML = emptyState('storefront', 'Pa gen pwodwi disponib', 'Okenn pwodwi pa pibliye ankò.');
                 return;
             }
-            const scored = products.map(p => ({ ...p, score: scoreP(p) })).sort((a, b) => b.score - a.score);
-            g.innerHTML = scored.map((p, i) => feedCard(p, i)).join("");
+            const final = applyFeedFilters(products);
+            if (final.length === 0) {
+                g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.');
+                return;
+            }
+            g.innerHTML = final.map((p, i) => feedCard(p, i)).join("");
         }
+
+        // ── Filtè feed (pri, nòt, an stòk, triye) — kliyan-kote sou PRODUCTS ──
+        A.filters = (function () {
+            try { return JSON.parse(localStorage.getItem('aym_filters') || 'null'); }
+            catch (_) { return null; }
+        })() || { priceMin: null, priceMax: null, minRating: 0, inStock: false, sort: 'popular' };
+
+        function _filterCount(f) {
+            let n = 0;
+            if (f.priceMin != null || f.priceMax != null) n++;
+            if ((f.minRating || 0) > 0) n++;
+            if (f.inStock) n++;
+            if (f.sort && f.sort !== 'popular') n++;
+            return n;
+        }
+        function _updateFilterBadge() {
+            const badge = document.getElementById('feedFilterBadge');
+            if (!badge) return;
+            const n = _filterCount(A.filters);
+            if (n > 0) { badge.classList.remove('hidden'); badge.textContent = n; }
+            else badge.classList.add('hidden');
+        }
+
+        function applyFeedFilters(list) {
+            const f = A.filters || {};
+            let out = (list || []).slice();
+            if (f.priceMin != null) out = out.filter(p => (p.p || 0) >= f.priceMin);
+            if (f.priceMax != null) out = out.filter(p => (p.p || 0) <= f.priceMax);
+            if ((f.minRating || 0) > 0) out = out.filter(p => (p.r || 0) >= f.minRating);
+            if (f.inStock) out = out.filter(p => (typeof p.s !== 'number') || p.s > 0);
+            if (f.sort === 'new') {
+                out.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            } else if (f.sort === 'price_asc') {
+                out.sort((a, b) => (a.p || 0) - (b.p || 0));
+            } else if (f.sort === 'price_desc') {
+                out.sort((a, b) => (b.p || 0) - (a.p || 0));
+            } else if (f.sort === 'rating') {
+                out.sort((a, b) => (b.r || 0) - (a.r || 0));
+            } else {
+                out = out.map(p => ({ ...p, score: scoreP(p) })).sort((a, b) => b.score - a.score);
+            }
+            return out;
+        }
+        window.applyFeedFilters = applyFeedFilters;
+
+        function loadFilterSheet() {
+            const f = A.filters;
+            const mn = document.getElementById('fltPriceMin'); if (mn) mn.value = f.priceMin ?? '';
+            const mx = document.getElementById('fltPriceMax'); if (mx) mx.value = f.priceMax ?? '';
+            const rt = document.getElementById('fltRating'); if (rt) rt.value = f.minRating || 0;
+            const lbl = document.getElementById('fltRatingLbl'); if (lbl) lbl.textContent = (+(f.minRating || 0)).toFixed(1) + '★';
+            const inS = document.getElementById('fltInStock'); if (inS) inS.checked = !!f.inStock;
+            const sr = document.getElementById('fltSort'); if (sr) sr.value = f.sort || 'popular';
+        }
+        function openFilterSheet() { openSheet('filterSheet'); loadFilterSheet(); }
+        function applyFeedFiltersFromSheet() {
+            const priceMin = parseFloat(document.getElementById('fltPriceMin')?.value);
+            const priceMax = parseFloat(document.getElementById('fltPriceMax')?.value);
+            const minRating = parseFloat(document.getElementById('fltRating')?.value) || 0;
+            const inStock = !!document.getElementById('fltInStock')?.checked;
+            const sort = document.getElementById('fltSort')?.value || 'popular';
+            A.filters = {
+                priceMin: isNaN(priceMin) ? null : priceMin,
+                priceMax: isNaN(priceMax) ? null : priceMax,
+                minRating, inStock, sort,
+            };
+            try { localStorage.setItem('aym_filters', JSON.stringify(A.filters)); } catch (_) { }
+            _updateFilterBadge();
+            closeSheets();
+            if (typeof renderFeed === 'function') renderFeed();
+        }
+        function resetFeedFilters() {
+            A.filters = { priceMin: null, priceMax: null, minRating: 0, inStock: false, sort: 'popular' };
+            try { localStorage.setItem('aym_filters', JSON.stringify(A.filters)); } catch (_) { }
+            loadFilterSheet();
+            _updateFilterBadge();
+        }
+        window.openFilterSheet = openFilterSheet;
+        window.loadFilterSheet = loadFilterSheet;
+        window.applyFeedFiltersFromSheet = applyFeedFiltersFromSheet;
+        window.resetFeedFilters = resetFeedFilters;
+        // Aktyalize badj la lè app la chaje pou itilizatè wè filtè pèsistan yo.
+        try { _updateFilterBadge(); } catch (_) { }
 
         // ── Skeleton loader helpers ──
         function skeletonFeedCards(n) {
