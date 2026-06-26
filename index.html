@@ -1902,6 +1902,11 @@
                 </button>
                 <button
                     class="admin-tab flex-1 py-2.5 rounded-lg font-label font-bold text-sm text-on-surface-variant active:scale-95 transition-transform"
+                    id="at-pending" onclick="switchAdminTab('pending')">
+                    Pwodwi
+                </button>
+                <button
+                    class="admin-tab flex-1 py-2.5 rounded-lg font-label font-bold text-sm text-on-surface-variant active:scale-95 transition-transform"
                     id="at-convos" onclick="switchAdminTab('convos')">
                     Mesaj
                 </button>
@@ -1926,6 +1931,18 @@
                 <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
                     Itilizatè yo</p>
                 <div class="space-y-3" id="adminUserList"></div>
+            </div>
+
+            <!-- Tab: Pending products awaiting admin approval -->
+            <div id="admin-pending" class="hidden">
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
+                    Pwodwi an atant verifikasyon</p>
+                <div class="space-y-3" id="adminPendingList">
+                    <div class="text-center py-8">
+                        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:36px">inventory_2</span>
+                        <p class="font-body text-sm text-on-surface-variant mt-2">Ap chaje pwodwi…</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Tab: Conversations -->
@@ -5157,6 +5174,57 @@
         }
         window.checkSellerEligibility = checkSellerEligibility;
 
+        // ── Foto-hash dedup — anpeche vòl katalòg ────────────────────
+        async function _sha256(blob) {
+            const buf = await blob.arrayBuffer();
+            const h = await crypto.subtle.digest('SHA-256', buf);
+            return Array.from(new Uint8Array(h))
+                .map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Konpoute hash chak foto epi tcheke nan baz done a si yon lòt
+        // vandè deja itilize l. Retounen { ok, conflicts, hashes }.
+        async function checkPhotoDedup(blobs) {
+            const out = { ok: true, conflicts: [], hashes: [] };
+            if (!db || !A.user?.uid) return out;
+            try {
+                for (const b of blobs) {
+                    const h = await _sha256(b);
+                    out.hashes.push(h);
+                }
+                if (!out.hashes.length) return out;
+                const { data } = await db.from('product_image_hashes')
+                    .select('hash, seller_id').in('hash', out.hashes);
+                if (data && data.length) {
+                    for (const row of data) {
+                        if (row.seller_id !== A.user.uid) {
+                            out.conflicts.push(row.hash);
+                        }
+                    }
+                }
+                out.ok = out.conflicts.length === 0;
+                return out;
+            } catch (e) {
+                console.warn('[photo dedup]', e && e.message);
+                return out;   // pa bloke sou erè rezo
+            }
+        }
+        window.checkPhotoDedup = checkPhotoDedup;
+
+        async function saveProductImageHashes(productId, hashes) {
+            if (!db || !A.user?.uid || !productId || !hashes?.length) return;
+            try {
+                const rows = hashes.map(hash => ({
+                    hash, product_id: productId, seller_id: A.user.uid,
+                }));
+                // upsert sou hash pou pa kraze si yon hash deja egziste
+                // pou menm vandè a (egz. re-listing).
+                await db.from('product_image_hashes')
+                    .upsert(rows, { onConflict: 'hash', ignoreDuplicates: true });
+            } catch (e) { console.warn('[save image hashes]', e && e.message); }
+        }
+        window.saveProductImageHashes = saveProductImageHashes;
+
         // Premye 3 pwodwi yon vandè → pending_review (admin dwe apwouve).
         async function initialProductStatus() {
             if (!A.user?.uid || !db) return 'active';
@@ -5182,6 +5250,13 @@
                 }
                 return;
             }
+            // Anti-fraud: tcheke si foto yo deja itilize pa yon lòt vandè
+            const dedup = await checkPhotoDedup(uploadedPhotos.map(p => p.file));
+            if (!dedup.ok) {
+                toast('Yon oswa plizyè foto ou yo deja itilize pa yon lòt vandè. Pran foto orijinal.');
+                return;
+            }
+            const _photoHashes = dedup.hashes;
             // Zòn kolekte OBLIGATWA pou vandè — detekte zòn GPS la anvan
             // pibliye pou pwodwi a toujou gen yon zòn reyèl sou li.
             if (!(A.pickupZone || _lastGeocode())) {
@@ -5277,6 +5352,10 @@
                     }
                 } else {
                     addStep('check_circle', 'Pwodwi anrejistre ✓');
+                }
+                // Anrejistre hash foto yo pou anpeche vòl katalòg
+                if (_photoHashes && _photoHashes.length) {
+                    saveProductImageHashes(newProduct.id, _photoHashes);
                 }
 
                 // Step 2b: Create Flash Deal entry if discount is set
@@ -7470,9 +7549,119 @@
         function switchAdminTab(tab) {
             document.querySelectorAll(".admin-tab").forEach(b => { b.className = b.className.replace("bg-surface-container-lowest font-headline font-bold text-sm text-on-surface amb", "font-label font-bold text-sm text-on-surface-variant"); });
             document.getElementById("at-" + tab).className = document.getElementById("at-" + tab).className.replace("font-label font-bold text-sm text-on-surface-variant", "bg-surface-container-lowest font-headline font-bold text-sm text-on-surface amb");
-            ["verif", "orders", "users", "convos"].forEach(t => { document.getElementById("admin-" + t).classList.toggle("hidden", t !== tab); });
+            ["verif", "orders", "users", "pending", "convos"].forEach(t => { document.getElementById("admin-" + t).classList.toggle("hidden", t !== tab); });
             if (tab === 'convos') loadAdminConversations();
+            if (tab === 'pending') renderAdminPending();
         }
+
+        // ── Admin: pwodwi an atant verifikasyon ──────────────────────
+        async function renderAdminPending() {
+            const el = document.getElementById('adminPendingList');
+            if (!el || !db) return;
+            el.innerHTML = '<div class="text-center py-8"><span class="material-symbols-outlined sp text-on-surface-variant" style="font-size:24px">progress_activity</span><p class="font-label text-xs text-on-surface-variant mt-1">Ap chaje…</p></div>';
+            try {
+                const { data, error } = await db.from('products')
+                    .select('id, title, price, images, seller_id, seller_name, category, location, created_at')
+                    .eq('status', 'pending_review')
+                    .order('created_at', { ascending: true });
+                if (error) throw error;
+                if (!data || !data.length) {
+                    el.innerHTML = `<div class="text-center py-8">
+                        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:36px">check_circle</span>
+                        <p class="font-body text-sm text-on-surface-variant mt-2">Pa gen pwodwi an atant.</p>
+                    </div>`;
+                    return;
+                }
+                // Chèche non vandè yo nan profiles
+                const sellerIds = Array.from(new Set(data.map(p => p.seller_id).filter(Boolean)));
+                let sellers = {};
+                if (sellerIds.length) {
+                    const { data: profs } = await db.from('profiles')
+                        .select('id, display_name, verified_seller').in('id', sellerIds);
+                    (profs || []).forEach(s => { sellers[s.id] = s; });
+                }
+                el.innerHTML = data.map(p => {
+                    const img = (p.images && p.images[0]) || '';
+                    const s = sellers[p.seller_id] || {};
+                    // Eskap backslash ANVAN single-quote pou anpeche
+                    // enjeksyon (CodeQL incomplete-string-escaping).
+                    const pid = String(p.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    return `<div class="bg-surface-container-lowest rounded-xl p-3 amb">
+                        <div class="flex items-start gap-3">
+                            <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style="background:#f0ede8">
+                                ${img ? `<img src="${img}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.style.display='none'"/>` : `<div class="w-full h-full flex items-center justify-center"><span class="material-symbols-outlined text-on-surface-variant" style="font-size:24px">image</span></div>`}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-headline font-bold text-sm text-on-surface truncate">${p.title || 'Pwodwi'}</p>
+                                <p class="font-label text-[11px] text-on-surface-variant">${fp(p.price || 0)} HTG · ${p.category || '—'}</p>
+                                <p class="font-label text-[11px] text-on-surface-variant mt-0.5"><strong>Vandè:</strong> ${(s.display_name || p.seller_name || '—')} ${s.verified_seller ? '✓' : ''}</p>
+                                <p class="font-label text-[11px] text-on-surface-variant"><strong>Zòn:</strong> ${p.location || '—'}</p>
+                                ${p.images && p.images.length > 1 ? `<p class="font-label text-[10px] text-on-surface-variant mt-1">${p.images.length} foto</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <button onclick="adminApproveProduct('${pid}')" class="py-2 rounded-lg font-label font-bold text-[12px] active:scale-95" style="background:#065f46;color:#fcf9f4">
+                                <span class="material-symbols-outlined align-middle" style="font-size:14px">check_circle</span> Apwouve
+                            </button>
+                            <button onclick="adminRejectProduct('${pid}')" class="py-2 rounded-lg font-label font-bold text-[12px] active:scale-95" style="background:#991b1b;color:#fcf9f4">
+                                <span class="material-symbols-outlined align-middle" style="font-size:14px">close</span> Rejte
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                console.warn('[renderAdminPending]', e && e.message);
+                el.innerHTML = `<p class="text-center font-body text-sm text-on-surface-variant py-8">Erè: ${e.message}</p>`;
+            }
+        }
+        window.renderAdminPending = renderAdminPending;
+
+        async function adminApproveProduct(productId) {
+            if (!db) return;
+            const { data: o, error: fetchErr } = await db.from('products')
+                .select('id, title, seller_id').eq('id', productId).maybeSingle();
+            if (fetchErr || !o) { toast('Pwodwi pa jwenn'); return; }
+            const { error } = await db.from('products')
+                .update({ status: 'active' }).eq('id', productId).eq('status', 'pending_review');
+            if (error) { toast('Erè: ' + error.message); return; }
+            toast('Pwodwi apwouve');
+            if (o.seller_id) {
+                notify(o.seller_id, {
+                    type: 'system', icon: 'check_circle',
+                    title: 'Pwodwi w apwouve!',
+                    body: '"' + (o.title || 'Pwodwi') + '" vizib nan feed la kounye a.',
+                    color: '#065f46',
+                    data: { product_id: o.id, kind: 'product_approved' },
+                });
+            }
+            renderAdminPending();
+        }
+        window.adminApproveProduct = adminApproveProduct;
+
+        async function adminRejectProduct(productId) {
+            if (!db) return;
+            const reason = prompt('Rezon rejè (admin sèlman wè li):');
+            if (reason === null) return;   // anile
+            const note = (reason || '').trim().slice(0, 200) || 'Pa konfòm';
+            const { data: o, error: fetchErr } = await db.from('products')
+                .select('id, title, seller_id').eq('id', productId).maybeSingle();
+            if (fetchErr || !o) { toast('Pwodwi pa jwenn'); return; }
+            const { error } = await db.from('products')
+                .update({ status: 'archived' }).eq('id', productId).eq('status', 'pending_review');
+            if (error) { toast('Erè: ' + error.message); return; }
+            toast('Pwodwi rejte');
+            if (o.seller_id) {
+                notify(o.seller_id, {
+                    type: 'system', icon: 'cancel',
+                    title: 'Pwodwi w pa apwouve',
+                    body: '"' + (o.title || 'Pwodwi') + '" rejte. Rezon: ' + note,
+                    color: '#991b1b',
+                    data: { product_id: o.id, kind: 'product_rejected', reason: note },
+                });
+            }
+            renderAdminPending();
+        }
+        window.adminRejectProduct = adminRejectProduct;
 
         function renderVerifList() {
             const pending = VERIF_REQUESTS.filter(v => v.status === "pending");
