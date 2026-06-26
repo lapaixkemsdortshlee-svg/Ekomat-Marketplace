@@ -7583,8 +7583,9 @@
                 el.innerHTML = data.map(p => {
                     const img = (p.images && p.images[0]) || '';
                     const s = sellers[p.seller_id] || {};
-                    const pid = String(p.id).replace(/'/g, "\\'");
-                    const stitle = (p.title || 'Pwodwi').replace(/"/g, '&quot;');
+                    // Eskap backslash ANVAN single-quote pou anpeche
+                    // enjeksyon (CodeQL incomplete-string-escaping).
+                    const pid = String(p.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     return `<div class="bg-surface-container-lowest rounded-xl p-3 amb">
                         <div class="flex items-start gap-3">
                             <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style="background:#f0ede8">
