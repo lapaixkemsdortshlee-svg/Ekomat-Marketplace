@@ -106,17 +106,19 @@ Priorité aux flux à argent :
 > Outils : Supabase MCP (`get_logs`, `get_advisors`, requêtes), edge functions, error tracking.
 
 ### Monitoring des paiements
-- [ ] Vue admin de l'état des commandes/escrow en temps réel (par statut)
-- [ ] Suivi des montants bloqués vs libérés vs remboursés
+- [x] Vue admin de l'état des commandes/escrow en temps réel (par statut) — `escrow_overview()` RPC + carte « Sante Escrow »
+- [x] Suivi des montants bloqués vs libérés vs remboursés — snapshot `money` dans `escrow_overview()`
 
 ### Réconciliation
-- [ ] Réconciliation paiements ↔ commandes (détecter les écarts)
-- [ ] Détecter les commandes « coincées » dans un état (ni release ni refund)
+- [x] Réconciliation paiements ↔ commandes (détecter les écarts) — compteurs d'anomalies (`net_mismatch`, `missing_ref`, `bad_amount`, `released_no_releaser`)
+- [x] Détecter les commandes « coincées » dans un état (ni release ni refund) — `escrow_attention_orders()`
 
 ### Alertes
-- [ ] Alerte avant l'auto-release 168h (fenêtre de revue côté admin)
-- [ ] Alerte sur transition d'état anormale / échec de release
+- [x] Alerte avant l'auto-release 168h (fenêtre de revue côté admin) — `release_due` / `release_soon_12h`
+- [ ] Alerte sur transition d'état anormale / échec de release (push/email temps réel) — *à faire*
 
 ### Error tracking
 - [ ] Capturer les erreurs front (single-file app) et edge functions
 - [ ] Surveiller les advisors Supabase (sécurité / perf) régulièrement
+
+> **Livré (1ʳᵉ itération)** : `supabase/migration-2026-observability.sql` (RPC `escrow_overview` + `escrow_attention_orders`, admin-only, lecture seule) + carte « Sante Escrow » dans le panneau admin. **À déployer** : exécuter la migration dans Supabase (SQL Editor).
