@@ -19,3 +19,6 @@ playwright/.cache/
 
 # Vercel
 .vercel/
+
+# Generated code-graph artifacts
+graphify-out/
