@@ -1,25 +1,23 @@
-# Plan QA & Durcissement — Semaine du 1ᵉʳ juillet 2026
+# Plan & Objectifs — AyitiMarket (à partir du 1ᵉʳ juillet 2026)
 
-> **Contexte** : 29 commits de fonctionnalités livrés en 6 jours (24–30 juin). Avant
-> d'ouvrir à de vrais utilisateurs, on valide et on durcit tout ce qui a été livré.
->
-> **Objectif** : chaque flux critique testé end-to-end sur le preview Vercel **et**
-> couvert par un smoke test qui passe en CI.
+> **Contexte** : 29 commits de fonctionnalités livrés en 6 jours (24–30 juin). On passe
+> de la livraison rapide à la **fiabilisation et la croissance**.
 >
 > **Note paiements** : l'intégration MonCash réelle (Digicel) est **bloquée** faute de
 > credentials marchands. On garde le stub (`moncashSendPayout` / `moncashVerifyTransaction`)
-> et on le sort du chemin critique cette semaine.
+> et on le sort du chemin critique en attendant.
 
-## Stack de priorités
+## 🎯 Les trois objectifs (/goal — autonomie déléguée)
 
-| Prio | Chantier | Definition of Done |
-|------|----------|--------------------|
-| **P0** | QA end-to-end des flux critiques sur le preview | Chaque flux ci-dessous validé manuellement ; bugs loggués en issues |
-| **P1** | Élargir les smoke tests Playwright | Chemins heureux des features clés couverts + CI verte |
-| **P2** | Durcir la machine escrow + disputes | Cas limites gérés, aucune transition d'état illégale |
-| **P3** | Prépa MonCash (sans creds) | Env vars + structure sandbox prêtes pour le jour J |
+| # | Objectif | Résultat visé |
+|---|----------|---------------|
+| **A** | QA & Durcissement | Chaque flux critique testé end-to-end + couvert par un smoke test qui passe en CI |
+| **B** | Croissance / Acquisition | Premiers utilisateurs réels : onboarding Kreyòl, SEO, parrainage activé, ads |
+| **C** | Observabilité escrow | Machine à états financière monitorée, réconciliée, et alertée avant tout incident |
 
 ---
+
+# 🅰️ Objectif A — QA & Durcissement
 
 ## P0 — QA end-to-end
 
@@ -67,3 +65,58 @@ Priorité aux flux à argent :
 - [ ] Ajouter les `env vars` Digicel dans `.env.example`
 - [ ] Structure sandbox prête pour que le branchement réel soit trivial le jour J
 - [ ] Documenter le contrat des deux fonctions (`moncashSendPayout`, `moncashVerifyTransaction`)
+
+---
+
+# 🅱️ Objectif B — Croissance / Acquisition
+
+> Le produit est riche ; il faut maintenant des utilisateurs. Toute la copie reste en **Kreyòl**.
+> Skills mobilisables : `onboarding`, `cro`, `seo-audit`, `ai-seo`, `referrals`, `ads`,
+> `ad-creative`, `copywriting`, `social`, `analytics`. Connecteurs : Windsor.ai (Meta/Google Ads),
+> Magic (UI), Supabase (cohortes/funnel).
+
+### Activation & onboarding (Kreyòl)
+- [ ] Auditer le first-run / `onboarding.html` → réduire le time-to-value
+- [ ] Définir le « aha moment » (1ère commande ? 1ère mise en vente ?) et le mesurer
+- [ ] Empty states qui guident l'acheteur et le vendeur
+
+### Parrainage (déjà construit → à pousser)
+- [ ] Rendre l'invitation visible au bon moment (post-achat, post-vente)
+- [ ] Vérifier la boucle crédit parrain/filleul de bout en bout
+- [ ] Message de partage en Kreyòl optimisé (WhatsApp first)
+
+### SEO & visibilité
+- [ ] Audit SEO technique (meta, OG, sitemap, perf mobile)
+- [ ] AI-SEO : être cité par les assistants (llms.txt, contenu structuré)
+- [ ] Pages d'atterrissage par catégorie / ville
+
+### Acquisition payante (quand prêt)
+- [ ] Stratégie ads Meta/Google ciblée diaspora + Haïti
+- [ ] Variantes de créatives en Kreyòl
+- [ ] Tracking conversions branché (analytics) avant de dépenser
+
+### Mesure
+- [ ] Funnel AARRR de base instrumenté (acquisition → activation → rétention → referral)
+
+---
+
+# 🅲️ Objectif C — Observabilité escrow
+
+> Sécuriser la machine à états financière : rien ne doit bouger sans qu'on le voie.
+> Outils : Supabase MCP (`get_logs`, `get_advisors`, requêtes), edge functions, error tracking.
+
+### Monitoring des paiements
+- [ ] Vue admin de l'état des commandes/escrow en temps réel (par statut)
+- [ ] Suivi des montants bloqués vs libérés vs remboursés
+
+### Réconciliation
+- [ ] Réconciliation paiements ↔ commandes (détecter les écarts)
+- [ ] Détecter les commandes « coincées » dans un état (ni release ni refund)
+
+### Alertes
+- [ ] Alerte avant l'auto-release 168h (fenêtre de revue côté admin)
+- [ ] Alerte sur transition d'état anormale / échec de release
+
+### Error tracking
+- [ ] Capturer les erreurs front (single-file app) et edge functions
+- [ ] Surveiller les advisors Supabase (sécurité / perf) régulièrement
