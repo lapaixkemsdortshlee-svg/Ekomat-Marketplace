@@ -23,6 +23,8 @@
 
 > Tester sur le preview Vercel (header de bypass de protection requis).
 
+> **Scaffold E2E livré** : `playwright.e2e.config.mjs` + `tests/e2e/auth.spec.mjs` (test de login acheteur qui tourne + squelettes `fixme` pour escrow/promo/litige) + workflow `.github/workflows/e2e.yml` (déclenché à la main). Isolé de la suite smoke (via `testIgnore`). **Pour activer** : créer un compte de test + poser les GitHub Secrets `AYM_E2E_URL`, `AYM_E2E_EMAIL`, `AYM_E2E_PASSWORD` (et `AYM_BYPASS_TOKEN` si preview privé), puis lancer le workflow. Note : la QA live n'a pas pu tourner depuis l'environnement agent (HTTP 429 rate-limit de Vercel).
+
 ### Flux escrow complet (cœur du business)
 - [ ] Commande → paiement (stub) → vendeur expédie → live tracking → livraison → release fonds
 - [ ] Auto-release à 168h (simuler / forcer la fenêtre)

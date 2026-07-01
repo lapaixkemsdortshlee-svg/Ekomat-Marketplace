@@ -18,6 +18,9 @@ const useLocalChrome = !process.env.CI && existsSync(LOCAL_CHROME);
 
 export default defineConfig({
     testDir: './tests',
+    // Tès e2e otantifye yo gen pwòp config yo (playwright.e2e.config.mjs)
+    // epi yo frape yon URL deplwaye — pa enkli yo nan smoke run lokal/CI.
+    testIgnore: ['**/e2e/**'],
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,

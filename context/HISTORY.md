@@ -7,6 +7,16 @@
 
 ---
 
+## 2026-07-01 : Objectif A — scaffold E2E CI (P0)
+
+- P0 (QA end-to-end sur le vrai déploiement) ne peut pas tourner depuis l'environnement agent : Vercel renvoie HTTP 429 (rate-limit) + besoin d'un compte de test et d'un header de bypass.
+- Choix (validé) : scaffold E2E qui tourne dans GitHub Actions avec les identifiants en secrets.
+- Livré : `playwright.e2e.config.mjs` (URL déployée + bypass header optionnel), `tests/e2e/auth.spec.mjs` (login acheteur réel + squelettes `fixme` escrow/promo/litige), workflow `.github/workflows/e2e.yml` (workflow_dispatch), exclusion des e2e de la suite smoke (`testIgnore`), doc dans `.env.example`.
+- Suite smoke par défaut confirmée à 11 tests (e2e exclus) ; config e2e liste bien ses 4 tests.
+- **À faire côté toi** : créer un compte de test acheteur + poser les GitHub Secrets (AYM_E2E_URL, AYM_E2E_EMAIL, AYM_E2E_PASSWORD, AYM_BYPASS_TOKEN si preview privé), puis lancer le workflow « E2E (deployed) ». Le test de login valide les sélecteurs au premier run.
+
+---
+
 ## 2026-07-01 : Objectif A — audit machine à états escrow (P2)
 
 - Audit de `advance_order_status()` : 2 trous de sécurité financière trouvés.
