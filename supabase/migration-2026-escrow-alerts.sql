@@ -55,7 +55,7 @@ CREATE POLICY "escrow_alert_log_admin_read" ON public.escrow_alert_log
 -- ──────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.escrow_dispatch_alerts()
 RETURNS INTEGER
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE
     v_hours INTEGER;
     v_new   INTEGER := 0;
@@ -146,8 +146,10 @@ END;
 $$;
 
 -- Only the owner (and pg_cron, which runs as the owner) may call it.
--- Not exposed to app clients, to avoid manual alert spam.
-REVOKE ALL ON FUNCTION public.escrow_dispatch_alerts() FROM PUBLIC;
+-- Not exposed to app clients, to avoid manual alert spam. Supabase grants
+-- EXECUTE to anon + authenticated by default, so revoke those explicitly
+-- (REVOKE FROM PUBLIC alone is not enough).
+REVOKE ALL ON FUNCTION public.escrow_dispatch_alerts() FROM PUBLIC, anon, authenticated;
 
 -- ──────────────────────────────────────────────────────────
 -- 3) SCHEDULE — run the dispatcher every hour via pg_cron.
