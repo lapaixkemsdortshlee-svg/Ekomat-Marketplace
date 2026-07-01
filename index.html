@@ -1923,6 +1923,7 @@
             <div id="admin-orders" class="hidden">
                 <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
                     Komand Aktif yo</p>
+                <div id="escrowHealth" class="mb-4"></div>
                 <div class="space-y-3" id="adminOrderList"></div>
             </div>
 
@@ -8434,6 +8435,7 @@
             const list = document.getElementById('adminOrderList');
             if (!list) return;
             if (!db || !A.user?.uid) { list.innerHTML = '<p class="text-on-surface-variant text-sm">Konekte pou wè komand yo</p>'; return; }
+            renderEscrowHealth();
 
             // Tab bar
             const tabBtn = (id, label, icon) => `
@@ -8510,6 +8512,67 @@
             }).join('');
         }
         window.renderAdminOrders = renderAdminOrders;
+
+        // ── Escrow Health card — server-side observability snapshot ──
+        // Calls escrow_overview() (see migration-2026-observability.sql):
+        // money held / released / refunded, work-queue depths, and
+        // time-sensitive alerts. Read-only; never mutates an order.
+        async function renderEscrowHealth() {
+            const box = document.getElementById('escrowHealth');
+            if (!box || !db) return;
+            try {
+                const { data, error } = await db.rpc('escrow_overview');
+                if (error) throw error;
+                if (!data) { box.innerHTML = ''; return; }
+
+                const m = data.money || {}, q = data.queues || {},
+                      al = data.alerts || {}, rc = data.reconciliation || {};
+                const alertTotal = (al.verify_overdue_24h||0) + (al.release_due||0) +
+                                   (al.release_soon_12h||0) + (al.dispute_stale_48h||0);
+                const reconTotal = (rc.net_mismatch||0) + (rc.missing_ref||0) +
+                                   (rc.bad_amount||0) + (rc.released_no_releaser||0);
+
+                const stat = (label, value, sub) => `
+                    <div class="bg-surface-container-lowest rounded-xl p-3 amb">
+                        <p class="font-label text-[10px] text-on-surface-variant uppercase tracking-wide">${label}</p>
+                        <p class="font-headline font-extrabold text-lg leading-tight">${value}</p>
+                        ${sub ? `<p class="font-label text-[10px] text-on-surface-variant">${sub}</p>` : ''}
+                    </div>`;
+                const chip = (label, n, color) => n > 0
+                    ? `<span class="font-label text-[11px] font-bold px-2 py-1 rounded-lg" style="background:${color}1a;color:${color}">${label}: ${n}</span>`
+                    : '';
+
+                box.innerHTML = `
+                    <div class="rounded-xl p-3 mb-3" style="background:#00666f;color:#fcf9f4">
+                        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] opacity-80 mb-2">
+                            <span class="material-symbols-outlined align-middle" style="font-size:13px">monitoring</span>
+                            Sante Escrow</p>
+                        <div class="grid grid-cols-3 gap-2 text-on-surface" style="color:#1a1a1a">
+                            ${stat('Nan escrow', fp(m.in_escrow_htg||0)+' HTG', 'Lajan bloke')}
+                            ${stat('Libere', fp(m.released_htg||0)+' HTG', 'Bay vandè')}
+                            ${stat('Ranbouse', fp(m.refunded_htg||0)+' HTG', 'Bay achtè')}
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mb-2">
+                        ${chip('Pou verifye', q.awaiting_verify||0, '#92400e')}
+                        ${chip('Pou libere', q.awaiting_release||0, '#065f46')}
+                        ${chip('Litij', q.open_disputes||0, '#97422b')}
+                    </div>
+                    ${(alertTotal>0 || reconTotal>0) ? `
+                    <div class="flex flex-wrap gap-2 mb-1">
+                        ${chip('⏰ Verif an reta', al.verify_overdue_24h||0, '#b91c1c')}
+                        ${chip('⏰ Libere rive', al.release_due||0, '#b91c1c')}
+                        ${chip('⏳ Libere pre', al.release_soon_12h||0, '#92400e')}
+                        ${chip('⚠️ Litij ansyen', al.dispute_stale_48h||0, '#92400e')}
+                        ${reconTotal>0 ? chip('🧮 Rekonsilyasyon', reconTotal, '#b91c1c') : ''}
+                    </div>` : `<p class="font-label text-[11px]" style="color:#065f46">✓ Pa gen alèt</p>`}`;
+            } catch (e) {
+                // RPC not deployed yet (migration pending) → fail silently, keep panel usable
+                box.innerHTML = '';
+                console.warn('[escrow_overview]', e.message);
+            }
+        }
+        window.renderEscrowHealth = renderEscrowHealth;
 
         // Bug 4.2: opens a clear confirmation sheet instead of a native
         // prompt() — admin sees a summary of the order they're about to
