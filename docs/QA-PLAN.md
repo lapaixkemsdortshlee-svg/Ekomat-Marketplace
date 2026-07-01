@@ -47,7 +47,9 @@
 
 ## P1 — Smoke tests à ajouter
 
-Priorité aux flux à argent :
+- [x] Couche de tests UI sans backend — `tests/ui.spec.mjs` : intégrité meta/PWA, manifest + icônes, présence du formulaire d'auth, logique `toggleAuthMode()` (login ↔ signup), intégrité des assets/entrées. **11 tests passent** (Chromium).
+
+Reste (nécessite un compte de test / auth sur le preview) :
 - [ ] Checkout / escrow
 - [ ] Application d'un code promo
 - [ ] Soumission de dispute

@@ -7,6 +7,15 @@
 
 ---
 
+## 2026-07-01 : Objectif A — smoke tests UI (P1)
+
+- Nouveau `tests/ui.spec.mjs` : couche de tests Playwright sans backend (meta/PWA, manifest + icônes, présence du formulaire d'auth, logique `toggleAuthMode()` login ↔ signup, intégrité des assets).
+- Suite complète validée en local avec le Chromium préinstallé : **11 tests passent** (6 existants + 5 nouveaux).
+- Aide dashboard : Leaked Password Protection se trouve dans Authentication → Attack Protection (probablement plan Pro ; c'est un WARN, non bloquant).
+- Reste sur P1 : les tests des flux à argent (checkout/escrow, promo, dispute, gating vendeur) qui nécessitent un compte de test authentifié sur le preview.
+
+---
+
 ## 2026-07-01 : Objectif A démarré — durcissement (advisors sécurité)
 
 - Lancé les advisors sécurité Supabase (MCP). Confirmé : RLS activé sur les 22 tables de `public`.
