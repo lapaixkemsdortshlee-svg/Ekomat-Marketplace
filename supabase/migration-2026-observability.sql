@@ -39,7 +39,7 @@
 -- ──────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.escrow_overview()
 RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE
     v_is_admin BOOLEAN;
     v_hours    INTEGER;
@@ -140,6 +140,7 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.escrow_overview() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.escrow_overview() TO authenticated;
 
 -- ──────────────────────────────────────────────────────────
@@ -149,7 +150,7 @@ GRANT EXECUTE ON FUNCTION public.escrow_overview() TO authenticated;
 -- ──────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.escrow_attention_orders(p_limit INTEGER DEFAULT 100)
 RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE
     v_is_admin BOOLEAN;
     v_hours    INTEGER;
@@ -224,6 +225,7 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.escrow_attention_orders(INTEGER) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.escrow_attention_orders(INTEGER) TO authenticated;
 
 -- ══════════════════════════════════════════════════════════

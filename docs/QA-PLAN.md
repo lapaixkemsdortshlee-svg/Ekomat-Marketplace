@@ -58,7 +58,10 @@ Priorité aux flux à argent :
 
 - [ ] Audit de la machine à états escrow : transitions illégales bloquées côté RPC
 - [ ] Idempotence des paiements / release
-- [ ] RLS sur les nouvelles tables (`addresses`, `promo`, `image-hashes`, `fcm`)
+- [x] RLS sur les nouvelles tables — vérifié via Supabase `list_tables` : **RLS activé sur les 22 tables** de `public`.
+- [x] Durcissement des fonctions (advisors sécurité) — `search_path` figé sur toutes les fonctions `SECURITY DEFINER`, et RPC escrow privilégiées verrouillées (`escrow_dispatch_alerts` cron-only ; `escrow_overview`/`escrow_attention_orders`/`error_overview` = authenticated + garde `is_admin`). Voir `supabase/migration-2026-harden-functions.sql`. Validé sur Postgres 16.
+
+> **Reste hors-code (dashboard Supabase)** : activer « Leaked password protection » (Auth) ; extensions `pg_trgm`/`pg_net` dans `public` laissées telles quelles (déplacement risqué). **Routine** : relancer `get_advisors` (security + performance) après chaque migration.
 
 ## P3 — Prépa MonCash (reporté, débloqué quand Digicel arrive)
 

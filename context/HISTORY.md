@@ -7,6 +7,18 @@
 
 ---
 
+## 2026-07-01 : Objectif A démarré — durcissement (advisors sécurité)
+
+- Lancé les advisors sécurité Supabase (MCP). Confirmé : RLS activé sur les 22 tables de `public`.
+- Corrigé les warnings `function_search_path_mutable` : `search_path` figé sur toutes les fonctions `SECURITY DEFINER`.
+  - Mes fonctions (escrow_overview/attention/dispatch, log_error, error_overview) : `search_path = ''` dans leurs migrations source (elles qualifient tout).
+  - Fonctions préexistantes : nouvelle migration `supabase/migration-2026-harden-functions.sql` (bloc générique, `pg_catalog, public`, sûr pour les corps non qualifiés).
+- Verrouillé les RPC privilégiées : `escrow_dispatch_alerts` cron/owner uniquement (plus d'accès anon/authenticated) ; `escrow_overview`/`escrow_attention_orders`/`error_overview` en authenticated + garde `is_admin`.
+- Validé le tout en intégration sur Postgres 16 (search_path figé partout, fonctions OK, droits corrects).
+- Reste hors-code : activer « Leaked password protection » dans le dashboard Auth.
+
+---
+
 ## 2026-07-01 : Error tracking + clôture de l'Objectif C
 
 - Nouvelle migration `supabase/migration-2026-error-logs.sql` : table `error_logs`, `log_error()` (appelable anon + auth), `error_overview()` (admin). Validé en local sur Postgres 16.

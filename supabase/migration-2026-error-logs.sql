@@ -50,7 +50,7 @@ CREATE OR REPLACE FUNCTION public.log_error(
     p_message TEXT,
     p_context JSONB DEFAULT '{}'::jsonb
 ) RETURNS VOID
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 BEGIN
     IF p_message IS NULL OR length(trim(p_message)) = 0 THEN
         RETURN;
@@ -73,7 +73,7 @@ GRANT EXECUTE ON FUNCTION public.log_error(TEXT, TEXT, JSONB) TO anon, authentic
 -- ──────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.error_overview()
 RETURNS JSONB
-LANGUAGE plpgsql SECURITY DEFINER AS $$
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE
     v_is_admin BOOLEAN;
     v_result   JSONB;
@@ -115,6 +115,7 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.error_overview() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.error_overview() TO authenticated;
 
 -- ══════════════════════════════════════════════════════════
