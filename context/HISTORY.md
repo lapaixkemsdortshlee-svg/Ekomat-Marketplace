@@ -7,6 +7,29 @@
 
 ---
 
+## 2026-07-01 : Flux escrow validé LIVE en prod (P0 débloqué)
+
+- Thrasher a donné la clé `service_role` (à régénérer après) ; les comptes admin/vendeur se connectaient via Google (pas de mot de passe email), d'où les échecs. J'ai défini des mots de passe temporaires via l'admin API.
+- **Flux escrow complet exécuté en prod** avec les 3 vrais comptes (achteur/vandè/admin) : awaiting_payment → payment_submitted → payment_verified → ready_for_pickup → OTP → released. + litige (buyer→disputed, admin→refunded). Commandes de test créées puis **supprimées** (impact net nul).
+- **Gardes PR #94 confirmées déployées en prod** : re-release = no-op (pas de doublon d'audit) ; refunded→released = bloqué ("final state").
+- Traduit en test répétable : `tests/e2e/escrow-api.spec.mjs` (skip sans identifiants) — **passe** ici.
+- Scan axe authentifié rendu répétable (mode session injectée dans `tests/e2e/auth.spec.mjs`) et **exécuté** : feed/order/pub OK, profil avait 1 `image-alt` (avatar) → corrigé (`alt="Foto pwofil"`). Les 2 tests passent.
+- **Finding a11y plus large** : plusieurs `<img>` d'avatar/photo sans `alt` ailleurs (lignes ~5068, 6098[corrigé], 7684-7686, 7776, 10464…) — sweep a11y à faire.
+- ⚠️ **Action sécurité** : régénérer la clé `service_role` (elle a transité par le chat).
+
+---
+
+## 2026-07-01 : Correctif sécurité codes promo (finding QA live)
+
+- Correctif du finding #3 (énumération des codes promo). Avant : `promo_codes_public_select` = `USING (active=true)` → n'importe qui listait tous les codes actifs (dont les codes admin).
+- `supabase/migration-2026-promo-hardening.sql` : SELECT public restreint aux codes `referral` (parrainage intact) + nouvelle RPC `validate_promo_code()` (SECURITY DEFINER, search_path figé) qui valide un code au checkout sans exposer la table.
+- Client (`index.html`) : `validatePromoCode` appelle la RPC (fini le SELECT direct) ; `_calcPromoDiscount` retiré (logique déplacée en SQL).
+- Validé sur Postgres 16 (8 scénarios : %, plafond fixe, expiré, épuisé, self-referral, déjà utilisé, inexistant, non connecté).
+- **À déployer** : exécuter la migration dans Supabase (le client mergé attend la RPC — déployer la migration en même temps).
+- **Comptes admin/vendeur** : les nouveaux mots de passe échouent aussi ("Invalid login credentials") alors que les comptes existent → probablement comptes créés via Google (pas de mot de passe email). Piste : vérifier le provider dans Auth → Users, ou définir un mot de passe / utiliser service_role.
+
+---
+
 ## 2026-07-01 : QA live via API (P0) + findings prod
 
 - **Découverte infra clé** : le navigateur Chromium du sandbox NE PEUT PAS joindre Supabase (le proxy egress ferme la connexion TLS ; `curl` marche, pas le navigateur). Donc : la QA **UI/navigateur** doit tourner en **CI** (egress propre) ; la QA **API/backend** se fait ici via `curl`. Le 429 Vercel n'était qu'un symptôme secondaire.

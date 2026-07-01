@@ -51,12 +51,13 @@
 
 - [x] Couche de tests UI sans backend — `tests/ui.spec.mjs` : intégrité meta/PWA, manifest + icônes, présence du formulaire d'auth, logique `toggleAuthMode()` (login ↔ signup), intégrité des assets/entrées. **11 tests passent** (Chromium).
 
-Reste (nécessite un compte de test / auth sur le preview) :
-- [ ] Checkout / escrow
-- [ ] Application d'un code promo
-- [ ] Soumission de dispute
+- [x] Flux escrow complet (E2E API) — `tests/e2e/escrow-api.spec.mjs` : cycle awaiting_payment → … → released avec les 3 rôles, **validé live en prod** + idempotence + verrou état final + nettoyage.
+- [x] Soumission de dispute — couverte par le même test API (buyer → disputed, admin → refunded), validée live.
+- [x] axe-core sur les écrans authentifiés — `tests/e2e/auth.spec.mjs` (feed/order/profile/pub), exécuté live (0 violation après fix `alt` sur l'avatar profil).
+
+Reste :
+- [ ] Application d'un code promo (UI) — attend le déploiement de `migration-2026-promo-hardening.sql` (RPC `validate_promo_code`)
 - [ ] Gating de la vérification vendeur (téléphone SMS)
-- [ ] Re-run axe-core sur les nouveaux écrans
 
 ## P2 — Durcissement
 

@@ -16,10 +16,17 @@ import AxeBuilder from '@axe-core/playwright';
 const URL = process.env.AYM_E2E_URL;
 const EMAIL = process.env.AYM_E2E_EMAIL;
 const PASSWORD = process.env.AYM_E2E_PASSWORD;
-const ready = Boolean(URL && EMAIL && PASSWORD);
+// Mòd altènatif: enjekte yon sesyon Supabase deja jenere. Itil lokalman /
+// nan sandbox kote login UI a pa ka rive sou Supabase depi navigatè a.
+// Bay tou AYM_E2E_SB_REF (ref pwojè), epi opsyonèlman AYM_E2E_SDK_PATH
+// (chemen lokal SDK supabase-js si CDN jsdelivr bloke).
+const SESSION = process.env.AYM_E2E_SESSION;
+const SB_REF = process.env.AYM_E2E_SB_REF;
+const SDK_PATH = process.env.AYM_E2E_SDK_PATH;
+const ready = Boolean(URL && ((EMAIL && PASSWORD) || (SESSION && SB_REF)));
 
 test.skip(!ready,
-    'E2E idantifyan absan — mete AYM_E2E_URL / AYM_E2E_EMAIL / AYM_E2E_PASSWORD (gade .env.example)');
+    'E2E idantifyan absan — bay AYM_E2E_URL + (AYM_E2E_EMAIL/PASSWORD) oswa (AYM_E2E_SESSION + AYM_E2E_SB_REF). Gade .env.example.');
 
 // Menm règ dezaktive ak tests/a11y.spec.mjs pou konsistans (baseline
 // fòm ki poko gen label). Vize: diminye lis sa a piti piti.
@@ -29,8 +36,25 @@ const A11Y_DISABLE = ['aria-hidden-focus', 'color-contrast', 'label', 'select-na
 const NOISE = [/tailwind/i, /cdn\./i, /Failed to load resource/i, /net::ERR_/i, /unpkg/i];
 const isNoise = (m) => NOISE.some(re => re.test(m));
 
-// Konekte yon achtè atravè vrè UI a.
+// Konekte yon achtè — swa via UI a (email/modpas), swa via yon sesyon
+// enjekte (AYM_E2E_SESSION).
 async function login(page, email, password) {
+    // Sèvi SDK supabase-js lokalman si CDN jsdelivr bloke (sandbox).
+    if (SDK_PATH) {
+        await page.route(/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js/,
+            r => r.fulfill({ path: SDK_PATH, contentType: 'text/javascript' }));
+    }
+
+    // Mòd enjeksyon sesyon: pa gen login UI, app la boote deja konekte.
+    if (SESSION && SB_REF) {
+        await page.addInitScript(([k, v]) => {
+            try { localStorage.setItem('aym_onboarded', '1'); localStorage.setItem(k, v); } catch (_) {}
+        }, [`sb-${SB_REF}-auth-token`, SESSION]);
+        await page.goto('/');
+        await expect(page.locator('#emailAuthForm')).toBeHidden({ timeout: 20_000 });
+        return;
+    }
+
     // Sote onboarding premye-vizit la pou n rive dirèk sou #s-login apre splash.
     await page.addInitScript(() => { try { localStorage.setItem('aym_onboarded', '1'); } catch (_) {} });
     await page.goto('/');
@@ -100,24 +124,14 @@ test('axe: ekran otantifye yo pa gen vyolasyon kritik', async ({ page }) => {
     }
 });
 
-// ── Skelèt flux end-to-end (P0) ─────────────────────────────
-// Sa yo mande done runtime (kòmand nan bon eta) e/oswa plizyè wòl
-// (vandè + admin). Yo makè `fixme` — y ap ranpli ANSANM ak achtè a
-// pandan premye run live la (pou pa livre tès ki pa verifye).
-
-test.fixme('kòd pwomo: aplike yon kòd valab sou yon kòmand', async () => {
+// ── Flux end-to-end (P0) ─────────────────────────────────────
+// Flux escrow konplè + litij yo kouvri kounye a kòm tès API repetab
+// nan tests/e2e/escrow-api.spec.mjs (validé live an pwodiksyon ak
+// achtè + vandè + admin, ak netwayaj).
+//
+// Rès la (UI navigatè):
+test.fixme('kòd pwomo (UI): aplike yon kòd valab nan checkout', async () => {
     // Achtè -> checkout -> #orderPromoInput = kòd valab -> total redwi.
-    // Verifye tou: kòd ekspire/deja itilize -> rejte ak mesaj.
-    // (Antre: checkoutCart(), applyPromoToOrder())
-});
-
-test.fixme('litij: achtè ouvri yon litij ak yon rezon', async () => {
-    // Sou yon kòmand elijib -> openDispute(orderId) ak yon rezon ->
-    // status 'disputed'. (Antre: openDispute() ~L10939)
-});
-
-test.fixme('flux escrow konplè (bezwen kont vandè + admin)', async () => {
-    // kòmand -> payment_submitted -> payment_verified (admin) ->
-    // ready_for_pickup (vandè) -> otp_confirmed -> released (admin).
-    // Verifye idempotans: 2èm "Lage lajan" = no-op.
+    // Sèvi validate_promo_code() RPC (gade migration-2026-promo-hardening).
+    // A ranpli lè migration promo a deplwaye an pwodiksyon.
 });
