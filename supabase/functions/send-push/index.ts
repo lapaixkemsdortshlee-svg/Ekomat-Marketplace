@@ -87,7 +87,25 @@ function json(body: unknown, status = 200): Response {
     });
 }
 
+// Best-effort: record an edge-function crash into public.error_logs so it
+// shows up in the admin System Health card alongside front-end errors.
+// (see supabase/migration-2026-error-logs.sql). Never throws.
+async function logEdgeError(fn: string, message: string, context: Record<string, unknown> = {}) {
+    try {
+        const url = Deno.env.get("SUPABASE_URL");
+        const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (!url || !key) return;
+        const sb = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+        await sb.from("error_logs").insert({
+            source: "edge",
+            message: String(message).slice(0, 1000),
+            context: { fn, ...context },
+        });
+    } catch (_) { /* swallow — logging must never break the function */ }
+}
+
 Deno.serve(async (req: Request) => {
+  try {
     if (req.method !== "POST") return new Response("method not allowed", { status: 405 });
 
     // 1. Verifye sekrè webhook la
@@ -201,4 +219,9 @@ Deno.serve(async (req: Request) => {
     }
 
     return json({ ok: true, sent: results.length, results });
+  } catch (e) {
+    await logEdgeError("send-push", (e as Error)?.message || String(e),
+        { stack: (e as Error)?.stack ? String((e as Error).stack).slice(0, 1000) : null });
+    return json({ ok: false, error: (e as Error)?.message || "unhandled" }, 500);
+  }
 });

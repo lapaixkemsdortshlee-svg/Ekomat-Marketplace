@@ -118,11 +118,17 @@ Priorité aux flux à argent :
 - [x] Alerting temps réel push + email (via `notifications`) — `escrow_dispatch_alerts()` planifié par pg_cron, avec dédup (`escrow_alert_log`). Couvre `release_due`, `release_soon_12h`, `verify_overdue_24h`, `dispute_stale_48h`.
 
 ### Error tracking
-- [ ] Capturer les erreurs front (single-file app) et edge functions
-- [ ] Surveiller les advisors Supabase (sécurité / perf) régulièrement
+- [x] Capturer les erreurs front (single-file app) et edge functions — table `error_logs` + `log_error()`, handlers globaux `error`/`unhandledrejection` côté front, capture des crashes dans `send-push` / `send-email`
+- [x] Surveiller les advisors Supabase (sécurité / perf) régulièrement — routine documentée ci-dessous ; visibilité in-app via la carte « Sante Sistèm » (`error_overview()`)
+
+**Routine advisors Supabase** (à faire ~1×/semaine) : via le Supabase MCP, lancer `get_advisors` (types `security` puis `performance`) et traiter les alertes ; en complément, `get_logs` pour les erreurs des edge functions. Objectif : zéro advisor de sécurité non traité.
 
 > **Livré (itération 1)** : `supabase/migration-2026-observability.sql` (RPC `escrow_overview` + `escrow_attention_orders`, admin-only, lecture seule) + carte « Sante Escrow » dans le panneau admin.
 >
 > **Livré (itération 2)** : `supabase/migration-2026-escrow-alerts.sql` — alerting temps réel (push + email) via le pipeline `notifications` existant, dispatché par pg_cron toutes les heures, avec dédup par `(order_id, reason)`. Validé en local sur Postgres 16 (dispatch + dédup).
 >
-> **À déployer** : exécuter les deux migrations dans Supabase (SQL Editor). Pour l'alerting, activer l'extension **pg_cron** (Database → Extensions) puis relancer la migration si besoin.
+> **Livré (itération 3)** : `supabase/migration-2026-error-logs.sql` — error tracking unifié (front + edge) : table `error_logs`, `log_error()` (anon + auth), `error_overview()` (admin). Handlers globaux côté front (throttlés) et capture des crashes dans les edge functions. Carte « Sante Sistèm » dans l'onglet Verifikasyon. Validé en local sur Postgres 16.
+>
+> **Objectif C : clôturé.** ✅
+>
+> **À déployer** : exécuter les trois migrations dans Supabase (SQL Editor). Pour l'alerting, activer l'extension **pg_cron** (Database → Extensions). Pour capturer les crashes edge, redéployer `send-push` et `send-email`.

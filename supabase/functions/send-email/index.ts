@@ -31,6 +31,23 @@ function json(body: unknown, status = 200): Response {
     });
 }
 
+// Best-effort: record an edge-function crash into public.error_logs so it
+// shows up in the admin System Health card alongside front-end errors.
+// (see supabase/migration-2026-error-logs.sql). Never throws.
+async function logEdgeError(fn: string, message: string, context: Record<string, unknown> = {}) {
+    try {
+        const url = Deno.env.get("SUPABASE_URL");
+        const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        if (!url || !key) return;
+        const sb = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+        await sb.from("error_logs").insert({
+            source: "edge",
+            message: String(message).slice(0, 1000),
+            context: { fn, ...context },
+        });
+    } catch (_) { /* swallow — logging must never break the function */ }
+}
+
 const fmtHTG = (n: unknown) => {
     const v = Number(n) || 0;
     return v.toLocaleString("fr-FR") + " HTG";
@@ -328,6 +345,8 @@ Deno.serve(async (req: Request) => {
         if (!res.ok) return json({ ok: false, status, body }, 500);
         return json({ ok: true, status, kind, hasOrder: !!orderId, body: body ? JSON.parse(body) : null });
     } catch (e) {
+        await logEdgeError("send-email", (e as Error)?.message || String(e),
+            { stack: (e as Error)?.stack ? String((e as Error).stack).slice(0, 1000) : null });
         return json({ ok: false, error: (e as Error).message }, 500);
     }
 });
