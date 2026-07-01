@@ -9471,44 +9471,29 @@
 
         // ── Kòd pwomosyon + refer-a-friend ──────────────────────────
         // State: A._promoCode + A._promoDiscount kenbe sa achtè aplike
-        // anvan li konfime kòmand la. Validasyon se yon SELECT senp;
-        // anrejistreman redenmsyon fèt apre kòmand kreye ak siksè.
+        // anvan li konfime kòmand la. Validasyon fèt sou sèvè a via
+        // validate_promo_code() (SECURITY DEFINER) pou kliyan pa ka list
+        // tout kòd yo; anrejistreman redenmsyon fèt apre kòmand kreye.
         const _normalizePromoCode = (s) => String(s || '').trim().toUpperCase();
-
-        function _calcPromoDiscount(promo, total) {
-            const v = Number(promo.discount_value) || 0;
-            if (promo.discount_type === 'percent') {
-                return Math.min(total, Math.round(total * (v / 100)));
-            }
-            return Math.min(total, Math.round(v));
-        }
 
         async function validatePromoCode(code, total) {
             const c = _normalizePromoCode(code);
             if (!c) return { ok: false, reason: 'Antre yon kòd' };
             if (!db || !A.user?.uid) return { ok: false, reason: 'Konekte pou aplike kòd' };
             try {
-                const { data: promo, error } = await db.from('promo_codes')
-                    .select('*').eq('code', c).eq('active', true).maybeSingle();
+                // Validasyon fèt sou sèvè a (SECURITY DEFINER) — kliyan pa ka
+                // list tout kòd yo ankò (gade migration-2026-promo-hardening.sql).
+                const { data, error } = await db.rpc('validate_promo_code', {
+                    p_code: c, p_total: total,
+                });
                 if (error) return { ok: false, reason: error.message };
-                if (!promo) return { ok: false, reason: 'Kòd pa egziste oswa pa aktif' };
-                if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
-                    return { ok: false, reason: 'Kòd la ekspire' };
+                if (!data || !data.ok) {
+                    return { ok: false, reason: (data && data.reason) || 'Kòd pa valab' };
                 }
-                if (promo.max_uses != null && promo.used_count >= promo.max_uses) {
-                    return { ok: false, reason: 'Kòd la rive nan limit itilizasyon li' };
-                }
-                if (promo.scope === 'referral' && promo.referrer_id === A.user.uid) {
-                    return { ok: false, reason: 'Ou pa ka itilize pwòp kòd refè ou' };
-                }
-                // Anpeche reyitilize pa menm itilizatè a.
-                const { data: prior } = await db.from('promo_redemptions')
-                    .select('id').eq('code', c).eq('user_id', A.user.uid).limit(1);
-                if (prior && prior.length) return { ok: false, reason: 'Ou deja itilize kòd sa a' };
-
-                const discount = _calcPromoDiscount(promo, total);
-                if (discount <= 0) return { ok: false, reason: 'Kòd la pa aplikab sou total sa a' };
-                return { ok: true, promo, discount };
+                return {
+                    ok: true, discount: data.discount,
+                    code: data.code, discount_type: data.discount_type,
+                };
             } catch (e) {
                 return { ok: false, reason: (e && e.message) || 'Erè rezo' };
             }
