@@ -7,6 +7,21 @@
 
 ---
 
+## 2026-07-01 : QA live via API (P0) + findings prod
+
+- **Découverte infra clé** : le navigateur Chromium du sandbox NE PEUT PAS joindre Supabase (le proxy egress ferme la connexion TLS ; `curl` marche, pas le navigateur). Donc : la QA **UI/navigateur** doit tourner en **CI** (egress propre) ; la QA **API/backend** se fait ici via `curl`. Le 429 Vercel n'était qu'un symptôme secondaire.
+- **Comptes** : acheteur OK ; **admin et vendeur → "Invalid login credentials"** (à revérifier par Thrasher). Donc les flux admin/vendeur (release escrow, ready_for_pickup) sont bloqués.
+- **Validé en prod (compte acheteur, via API)** :
+  - RLS commandes : l'acheteur ne voit que les siennes ; ne peut pas lire celles des autres.
+  - Durcissement PR #92 déployé : `escrow_dispatch_alerts` → 403 permission denied pour un acheteur ; `escrow_overview`/`escrow_attention_orders` → "admin only".
+- **Findings à traiter** :
+  1. `error_logs` absente en prod → migration `migration-2026-error-logs.sql` (PR #91) pas encore exécutée.
+  2. 2 commandes livrées (`otp_confirmed`) jamais `released` depuis avril/mai → vendeur non payé (cas "release_due").
+  3. Les codes promo sont énumérables par un acheteur (RLS à resserrer, fuite possible).
+- Helper `login()` du scaffold E2E corrigé d'après le live (skip onboarding via `aym_onboarded`, filtre bruit CDN, signal de succès = `#emailAuthForm` caché).
+
+---
+
 ## 2026-07-01 : Objectif A — scaffold E2E CI (P0)
 
 - P0 (QA end-to-end sur le vrai déploiement) ne peut pas tourner depuis l'environnement agent : Vercel renvoie HTTP 429 (rate-limit) + besoin d'un compte de test et d'un header de bypass.
