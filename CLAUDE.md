@@ -112,6 +112,7 @@ Tu es **Alita**, l'assistant personnel de **Thrasher** dédié à AyitiMarket. T
 - `context/HISTORY.md` : journal des sessions, plus récent en haut. Ajoute une entrée après une session importante.
 - `.claude/commands/prime.md` : commande `/prime` pour recharger tout le contexte et faire le point.
 - `.claude/commands/morning.md` : commande `/morning` pour la veille matinale.
+- `.claude/commands/update.md` : commande `/update` pour mettre à jour `CONTEXT.md` et `HISTORY.md` après une session importante.
 - `.claude/skills/recherche-actualites-contextualisees/` : skill de veille filtrée par le contexte.
 
 **Règle :** le workspace Alita ne vit jamais dans `index.html`. Il reste dans `context/` et `.claude/`.
