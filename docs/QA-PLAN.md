@@ -64,6 +64,7 @@ Reste (nécessite un compte de test / auth sur le preview) :
 - [x] Idempotence des paiements / release — garde `from == to` (no-op) : un double-clic « Lage lajan » ne re-libère plus ni ne duplique l'audit. Validé sur Postgres 16 (6/6 tests).
 - [x] RLS sur les nouvelles tables — vérifié via Supabase `list_tables` : **RLS activé sur les 22 tables** de `public`.
 - [x] Durcissement des fonctions (advisors sécurité) — `search_path` figé sur toutes les fonctions `SECURITY DEFINER`, et RPC escrow privilégiées verrouillées (`escrow_dispatch_alerts` cron-only ; `escrow_overview`/`escrow_attention_orders`/`error_overview` = authenticated + garde `is_admin`). Voir `supabase/migration-2026-harden-functions.sql`. Validé sur Postgres 16.
+- [x] Fuite d'énumération des codes promo (trouvée en QA live) — la policy `promo_codes_public_select` exposait tous les codes actifs. Corrigé : SELECT public limité aux codes `referral`, + RPC `validate_promo_code()` (SECURITY DEFINER) pour valider un code au checkout sans exposer la table ; client branché dessus. Voir `supabase/migration-2026-promo-hardening.sql`. Validé sur Postgres 16 (8 scénarios).
 
 > **Reste hors-code (dashboard Supabase)** : activer « Leaked password protection » (Auth) ; extensions `pg_trgm`/`pg_net` dans `public` laissées telles quelles (déplacement risqué). **Routine** : relancer `get_advisors` (security + performance) après chaque migration.
 
