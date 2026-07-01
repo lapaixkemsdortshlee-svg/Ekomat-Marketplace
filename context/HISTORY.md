@@ -7,6 +7,13 @@
 
 ---
 
+## 2026-07-01 : Ajout de la commande /update
+
+- Nouvelle commande `.claude/commands/update.md` : `/update` met à jour `CONTEXT.md` et `HISTORY.md` de façon guidée (questions, plan validé, puis écriture).
+- Le workspace Alita a maintenant ses trois commandes : `/prime`, `/morning`, `/update`.
+
+---
+
 ## 2026-07-01 : Alerting temps réel de l'escrow (Objectif C, itération 2)
 
 - Nouvelle migration `supabase/migration-2026-escrow-alerts.sql` : les alertes escrow arrivent maintenant toutes seules à l'admin, par **push + email**, sans qu'on ait à ouvrir l'app.
