@@ -58,8 +58,8 @@ Reste (nécessite un compte de test / auth sur le preview) :
 
 ## P2 — Durcissement
 
-- [ ] Audit de la machine à états escrow : transitions illégales bloquées côté RPC
-- [ ] Idempotence des paiements / release
+- [x] Audit de la machine à états escrow : transitions illégales bloquées côté RPC — audit de `advance_order_status()` + verrou des états finaux (`completed`/`refunded`/`cancelled`). Voir `supabase/migration-2026-escrow-guards.sql`.
+- [x] Idempotence des paiements / release — garde `from == to` (no-op) : un double-clic « Lage lajan » ne re-libère plus ni ne duplique l'audit. Validé sur Postgres 16 (6/6 tests).
 - [x] RLS sur les nouvelles tables — vérifié via Supabase `list_tables` : **RLS activé sur les 22 tables** de `public`.
 - [x] Durcissement des fonctions (advisors sécurité) — `search_path` figé sur toutes les fonctions `SECURITY DEFINER`, et RPC escrow privilégiées verrouillées (`escrow_dispatch_alerts` cron-only ; `escrow_overview`/`escrow_attention_orders`/`error_overview` = authenticated + garde `is_admin`). Voir `supabase/migration-2026-harden-functions.sql`. Validé sur Postgres 16.
 
