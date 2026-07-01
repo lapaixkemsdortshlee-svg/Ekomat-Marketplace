@@ -115,10 +115,14 @@ Priorité aux flux à argent :
 
 ### Alertes
 - [x] Alerte avant l'auto-release 168h (fenêtre de revue côté admin) — `release_due` / `release_soon_12h`
-- [ ] Alerte sur transition d'état anormale / échec de release (push/email temps réel) — *à faire*
+- [x] Alerting temps réel push + email (via `notifications`) — `escrow_dispatch_alerts()` planifié par pg_cron, avec dédup (`escrow_alert_log`). Couvre `release_due`, `release_soon_12h`, `verify_overdue_24h`, `dispute_stale_48h`.
 
 ### Error tracking
 - [ ] Capturer les erreurs front (single-file app) et edge functions
 - [ ] Surveiller les advisors Supabase (sécurité / perf) régulièrement
 
-> **Livré (1ʳᵉ itération)** : `supabase/migration-2026-observability.sql` (RPC `escrow_overview` + `escrow_attention_orders`, admin-only, lecture seule) + carte « Sante Escrow » dans le panneau admin. **À déployer** : exécuter la migration dans Supabase (SQL Editor).
+> **Livré (itération 1)** : `supabase/migration-2026-observability.sql` (RPC `escrow_overview` + `escrow_attention_orders`, admin-only, lecture seule) + carte « Sante Escrow » dans le panneau admin.
+>
+> **Livré (itération 2)** : `supabase/migration-2026-escrow-alerts.sql` — alerting temps réel (push + email) via le pipeline `notifications` existant, dispatché par pg_cron toutes les heures, avec dédup par `(order_id, reason)`. Validé en local sur Postgres 16 (dispatch + dédup).
+>
+> **À déployer** : exécuter les deux migrations dans Supabase (SQL Editor). Pour l'alerting, activer l'extension **pg_cron** (Database → Extensions) puis relancer la migration si besoin.

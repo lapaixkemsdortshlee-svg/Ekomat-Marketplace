@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-01 : Alerting temps réel de l'escrow (Objectif C, itération 2)
+
+- Nouvelle migration `supabase/migration-2026-escrow-alerts.sql` : les alertes escrow arrivent maintenant toutes seules à l'admin, par **push + email**, sans qu'on ait à ouvrir l'app.
+- Mécanisme : `escrow_dispatch_alerts()` planifié par **pg_cron** toutes les heures, qui insère des notifications (le pipeline `notifications` existant fan-out vers push + email). Dédup via `escrow_alert_log` pour ne pas ré-alerter la même situation.
+- Couvre : libération due, libération imminente (12h), paiement en attente de vérif (24h), litige ancien (48h).
+- Validé en local sur Postgres 16 (dispatch = 4 notifications, re-run = 0 grâce à la dédup).
+- Choix : l'auto-release automatique après 168h reste volontairement de côté (décision financière séparée).
+- **À déployer** : exécuter la migration dans Supabase et activer l'extension pg_cron.
+
+---
+
 ## 2026-07-01 : Installation du workspace Alita
 
 - Mise en place du workspace personnel **Alita** dans le repo (fichiers `context/`, commandes `/prime` et `/morning`, skill de veille contextualisée).
