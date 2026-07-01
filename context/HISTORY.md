@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-01 : Objectif A — audit machine à états escrow (P2)
+
+- Audit de `advance_order_status()` : 2 trous de sécurité financière trouvés.
+  1. Pas de garde d'idempotence : un admin double-cliquant « Lage lajan » (released→released) re-exécutait les effets (re-timestamp + audit dupliqué) → risque de double paiement off-platform.
+  2. États finaux non verrouillés : la branche admin autorisait n'importe quelle transition, donc une commande `refunded`/`cancelled`/`completed` pouvait revenir à `released`.
+- Correctif : `supabase/migration-2026-escrow-guards.sql` remplace la fonction avec (a) no-op si `from == to`, (b) blocage des transitions depuis un état final. Reste du comportement inchangé. `search_path` figé.
+- Validé sur Postgres 16, 6/6 tests (release OK, no-op sans doublon d'audit, refunded/cancelled bloqués, flux acheteur + released→disputed préservés).
+- **À déployer** : exécuter la migration dans Supabase.
+
+---
+
 ## 2026-07-01 : Objectif A — smoke tests UI (P1)
 
 - Nouveau `tests/ui.spec.mjs` : couche de tests Playwright sans backend (meta/PWA, manifest + icônes, présence du formulaire d'auth, logique `toggleAuthMode()` login ↔ signup, intégrité des assets).
