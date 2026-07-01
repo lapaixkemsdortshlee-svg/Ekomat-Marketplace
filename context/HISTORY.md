@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-01 : Error tracking + clôture de l'Objectif C
+
+- Nouvelle migration `supabase/migration-2026-error-logs.sql` : table `error_logs`, `log_error()` (appelable anon + auth), `error_overview()` (admin). Validé en local sur Postgres 16.
+- Front (`index.html`) : handlers globaux `error` et `unhandledrejection` qui loggent dans `error_logs` (throttlés, dédupliqués, sûrs) + carte « Sante Sistèm » dans l'onglet Verifikasyon admin.
+- Edge functions `send-push` et `send-email` : capture des crashes dans `error_logs` (source `edge`).
+- Routine advisors Supabase documentée (sécurité + perf, ~1×/semaine).
+- **Objectif C (Observabilité escrow) : clôturé** — monitoring, réconciliation, alertes pré-auto-release, alerting temps réel, et error tracking sont tous livrés.
+- **À déployer** : exécuter les 3 migrations escrow/erreurs, activer pg_cron, redéployer les 2 edge functions.
+
+---
+
 ## 2026-07-01 : Ajout de la commande /update
 
 - Nouvelle commande `.claude/commands/update.md` : `/update` met à jour `CONTEXT.md` et `HISTORY.md` de façon guidée (questions, plan validé, puis écriture).

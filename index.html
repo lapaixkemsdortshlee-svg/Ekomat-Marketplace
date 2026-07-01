@@ -1914,6 +1914,7 @@
 
             <!-- Tab: Verifications -->
             <div id="admin-verif">
+                <div id="sysHealth" class="mb-4"></div>
                 <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
                     Demann Verifikasyon Vandè</p>
                 <div class="space-y-3" id="verifList"></div>
@@ -7540,6 +7541,7 @@
             // doesn't flash a blank state while the network round-trip runs,
             // then await the real fetch and let it re-render on completion.
             renderVerifList();
+            renderSystemHealth();
             renderAdminOrders();
             renderAdminUsers();
             if (typeof loadAdminDataFromSupabase === 'function') {
@@ -7553,6 +7555,7 @@
             ["verif", "orders", "users", "pending", "convos"].forEach(t => { document.getElementById("admin-" + t).classList.toggle("hidden", t !== tab); });
             if (tab === 'convos') loadAdminConversations();
             if (tab === 'pending') renderAdminPending();
+            if (tab === 'verif') renderSystemHealth();
         }
 
         // ── Admin: pwodwi an atant verifikasyon ──────────────────────
@@ -8573,6 +8576,49 @@
             }
         }
         window.renderEscrowHealth = renderEscrowHealth;
+
+        // ── System Health card — error tracking snapshot ──
+        // Calls error_overview() (see migration-2026-error-logs.sql):
+        // 24h / 7d error counts, breakdown by source, recent messages.
+        // Read-only; degrades silently if the migration isn't deployed.
+        async function renderSystemHealth() {
+            const box = document.getElementById('sysHealth');
+            if (!box || !db) return;
+            try {
+                const { data, error } = await db.rpc('error_overview');
+                if (error) throw error;
+                if (!data) { box.innerHTML = ''; return; }
+                const d24 = data.last_24h || 0, d7 = data.last_7d || 0;
+                const bySrc = data.by_source || {};
+                const recent = Array.isArray(data.recent) ? data.recent : [];
+                const tone = d24 > 0 ? '#b91c1c' : '#065f46';
+                const srcChips = Object.keys(bySrc).map(k =>
+                    `<span class="font-label text-[11px] font-bold px-2 py-1 rounded-lg" style="background:#00666f1a;color:#00666f">${k}: ${bySrc[k]}</span>`
+                ).join('');
+                const recentHtml = recent.length
+                    ? recent.slice(0, 5).map(r => `
+                        <div class="flex items-start gap-2 py-1 border-t" style="border-color:#e5e2dd">
+                            <span class="font-label text-[10px] px-1.5 py-0.5 rounded" style="background:#f4f1eb;color:#6d7979">${r.source || '?'}</span>
+                            <span class="font-label text-[11px] text-on-surface-variant flex-1 truncate">${(r.message || '').replace(/</g,'&lt;')}</span>
+                        </div>`).join('')
+                    : `<p class="font-label text-[11px]" style="color:#065f46">✓ Pa gen erè resan</p>`;
+                box.innerHTML = `
+                    <div class="rounded-xl p-3" style="background:${tone}0d;border:1px solid ${tone}33">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="font-label text-[10px] font-bold uppercase tracking-[.12em]" style="color:${tone}">
+                                <span class="material-symbols-outlined align-middle" style="font-size:13px">bug_report</span>
+                                Sante Sistèm</p>
+                            <p class="font-label text-[11px] text-on-surface-variant">24è: <strong style="color:${tone}">${d24}</strong> · 7 jou: <strong>${d7}</strong></p>
+                        </div>
+                        ${srcChips ? `<div class="flex flex-wrap gap-2 mb-2">${srcChips}</div>` : ''}
+                        <div>${recentHtml}</div>
+                    </div>`;
+            } catch (e) {
+                box.innerHTML = '';
+                console.warn('[error_overview]', e.message);
+            }
+        }
+        window.renderSystemHealth = renderSystemHealth;
 
         // Bug 4.2: opens a clear confirmation sheet instead of a native
         // prompt() — admin sees a summary of the order they're about to
@@ -13401,6 +13447,44 @@
         });
         console.log('%c[AyitiMarket] Supabase ✅ Konekte', 'color:#00666f;font-weight:bold');
     } catch(e) { console.error('[Supabase]', e.message); }
+
+    // ── Error tracking — capture front-end errors into error_logs ──
+    // (see supabase/migration-2026-error-logs.sql). Fire-and-forget,
+    // throttled + deduped, and wrapped so logging can never break the app.
+    (function setupErrorTracking() {
+        const seen = new Map();          // key -> last-sent ms (dedupe)
+        let sent = 0;
+        const MAX_PER_SESSION = 20;
+        function logAppError(kind, message, extra) {
+            try {
+                if (!db || !message || sent >= MAX_PER_SESSION) return;
+                const msg = String(message).slice(0, 500);
+                const key = kind + '|' + msg.slice(0, 200);
+                const now = Date.now();
+                if (seen.has(key) && now - seen.get(key) < 60000) return;
+                seen.set(key, now);
+                sent++;
+                const ctx = Object.assign(
+                    { kind, ua: navigator.userAgent, path: location.hash || location.pathname },
+                    extra || {});
+                db.rpc('log_error', { p_source: 'web', p_message: msg, p_context: ctx })
+                    .then(function(){}, function(){});
+            } catch (_) { /* never let logging throw */ }
+        }
+        window.logAppError = logAppError;
+        window.addEventListener('error', function(e) {
+            logAppError('error',
+                (e && e.message) || (e && e.error && e.error.message) || 'Unknown error',
+                { file: e && e.filename, line: e && e.lineno, col: e && e.colno,
+                  stack: e && e.error && e.error.stack ? String(e.error.stack).slice(0, 1000) : null });
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+            const r = e && e.reason;
+            logAppError('unhandledrejection',
+                (r && r.message) || String(r) || 'Unhandled rejection',
+                { stack: r && r.stack ? String(r.stack).slice(0, 1000) : null });
+        });
+    })();
 
     // ── LOADER ──
     function showAuthLoader(msg) {
