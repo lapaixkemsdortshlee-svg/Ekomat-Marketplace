@@ -6095,7 +6095,7 @@
     <div class="relative mx-5 rounded-xl overflow-hidden mb-0" style="background:linear-gradient(135deg,#00666f,#00818c)">
       <div class="relative px-5 pt-5 pb-16 flex items-center gap-4">
         <div class="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 amb overflow-hidden cursor-pointer" style="border:4px solid rgba(255,255,255,.2);background:linear-gradient(180deg,#00666f,#00818c)" onclick="openEditProfile()">
-          ${u.photoURL ? '<img src="' + u.photoURL + '" class="w-full h-full object-cover"/>' : '<span class="font-headline font-bold text-white text-xl">' + (u.initials || "?") + '</span>'}
+          ${u.photoURL ? '<img src="' + u.photoURL + '" alt="Foto pwofil" class="w-full h-full object-cover"/>' : '<span class="font-headline font-bold text-white text-xl">' + (u.initials || "?") + '</span>'}
         </div>
         <div class="flex-1">
           <h2 class="font-headline font-extrabold text-white text-xl tracking-tight">${u.name}</h2>
