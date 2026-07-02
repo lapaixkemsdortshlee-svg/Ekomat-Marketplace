@@ -95,7 +95,7 @@ Reste :
 - [ ] Message de partage en Kreyòl optimisé (WhatsApp first)
 
 ### SEO & visibilité
-- [ ] Audit SEO technique (meta, OG, sitemap, perf mobile)
+- [~] Audit SEO technique — **Open Graph / Twitter + apple-touch-icon + canonical ajoutés** (aperçu de partage WhatsApp/Facebook) ; test dans `tests/ui.spec.mjs`. Reste : sitemap, image OG dédiée 1200×630, perf mobile.
 - [ ] AI-SEO : être cité par les assistants (llms.txt, contenu structuré)
 - [ ] Pages d'atterrissage par catégorie / ville
 

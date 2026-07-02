@@ -7,6 +7,15 @@
 
 ---
 
+## 2026-07-01 : Sweep a11y + libération commandes + démarrage Objectif B (SEO)
+
+- **Sweep a11y** : `alt` ajouté aux 11 `<img>` restants (logos splash, photos produit, avatars chat/partenaire, photos de vérification vendeur). Plus aucun `<img>` sans `alt`.
+- **Libération commandes bloquées** : 3 commandes `otp_confirmed` (livrées depuis avril/mai, jamais libérées) libérées via l'admin → **6426 HTG** à verser aux vendeurs (versement MonCash manuel, stub). 0 commande bloquée restante.
+- **Objectif B démarré — SEO** : balises **Open Graph / Twitter** + `apple-touch-icon` + `canonical` ajoutées dans `<head>` (aperçu de partage WhatsApp/Facebook). Test OG dans `tests/ui.spec.mjs`. 6/6 tests UI passent. Reste : sitemap, image OG dédiée 1200×630, perf mobile.
+- `service_role` régénérée par Thrasher (ok).
+
+---
+
 ## 2026-07-01 : Flux escrow validé LIVE en prod (P0 débloqué)
 
 - Thrasher a donné la clé `service_role` (à régénérer après) ; les comptes admin/vendeur se connectaient via Google (pas de mot de passe email), d'où les échecs. J'ai défini des mots de passe temporaires via l'admin API.

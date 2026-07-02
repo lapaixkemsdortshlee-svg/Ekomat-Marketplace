@@ -19,6 +19,15 @@ test.describe('Meta / PWA integrity', () => {
         await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
     });
 
+    test('head gen Open Graph pou pataj sosyal', async ({ page }) => {
+        await page.goto('/');
+        await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /AyitiMarket/i);
+        await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /https?:\/\/.+\.(png|jpg|jpeg|webp)/i);
+        await expect(page.locator('meta[property="og:type"]')).toHaveCount(1);
+        await expect(page.locator('meta[name="twitter:card"]')).toHaveCount(1);
+        await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+    });
+
     test('manifest gen yon non + ikòn ki sèvi', async ({ request }) => {
         const res = await request.get('/manifest.json');
         expect(res.status()).toBeLessThan(400);
