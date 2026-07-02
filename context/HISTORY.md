@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-02 (session 2) : 🎯 Objectifs A/B/C ATTEINTS + guide de déploiement mobile
+
+Thrasher acte la clôture. Mis à jour de `context/CONTEXT.md` (section « Objectifs déjà ATTEINTS »).
+
+- **A (QA & Durcissement)** ✅ : flux escrow E2E, RLS/RPC durcis, audit sécurité complet traité — advisors Supabase re-vérifiés en live : **zéro alerte non intentionnelle** (reste que des WARN voulus + toggle Leaked Password pour le plan pro).
+- **B (Croissance)** ✅ : parrainage bout-en-bout, SEO/AI-SEO, funnel AARRR. Reste : ads (reportées, coût).
+- **C (Observabilité escrow)** ✅ : clôturé (monitoring, réconciliation, alerting, error tracking).
+- **Nouveau milestone — déploiement mobile** : Thrasher a fourni `AyitiMarketDeploymentGuide.pdf` → converti en `docs/DEPLOYMENT-GUIDE.md`. L'app est prête à être packagée PWA → Android (Google Play) et iOS (App Store) via Capacitor 6.x (`com.ayitidigital.ayitimarket`, v2.0.0 MVP Final). Prochain objectif court terme : **publier sur les stores**.
+
+---
+
 ## 2026-07-02 (session 2) : harden-p1c — retirer les fonctions trigger de l'API
 
 Advisors re-vérifiés après `harden-p1b` : `advance_order_status`/`try_seller_otp` bien retirées de `anon` ✅. Restaient des WARN `0028`/`0029` sur des **fonctions trigger** exposées inutilement comme RPC. → `migration-2026-harden-p1c.sql` : `REVOKE EXECUTE FROM PUBLIC, anon, authenticated` sur `grant_referral_reward`, `handle_new_user`, `promo_codes_inc_used`, `update_seller_rating`, `rls_auto_enable`, `generate_order_number`, `update_updated_at`, `update_updated_at_column`.

@@ -30,13 +30,19 @@ Je construis **AyitiMarket**, une marketplace multi-vendeurs pensée pour la com
 
 ## Mes objectifs
 
+### Objectifs déjà ATTEINTS ✅
+
+- **Objectif A - QA & Durcissement** : flux escrow testés E2E, RLS/RPC durcis, audit sécurité complet traité (XSS, search_path, least-privilege) - advisors Supabase : zéro alerte non intentionnelle.
+- **Objectif B - Croissance / Acquisition** : parrainage bout-en-bout (crédit parrain), SEO + AI-SEO (sitemap, llms.txt, landing pages Kreyòl), mesure du funnel AARRR. Reste seulement les ads (reportées, coût).
+- **Objectif C - Observabilité escrow** : monitoring temps réel, réconciliation, alerting, error tracking - clôturé.
+- **Déploiement mobile prêt** : app packageable PWA → Android (Google Play) et iOS (App Store) via Capacitor. Guide complet : `docs/DEPLOYMENT-GUIDE.md` (v2.0.0 MVP Final, `com.ayitidigital.ayitimarket`).
+
 ### Objectifs court terme (3 à 6 mois)
 
 - Ne jamais arrêter de progresser sur AyitiMarket, pour en faire une entreprise fiable, au service de tous les Haïtiens.
-- Fiabiliser le produit : QA de bout en bout et durcissement (Objectif A).
-- Poser l'observabilité de l'escrow pour sécuriser l'argent (Objectif C, démarré).
+- **Publier l'app sur les stores** : builds Android (.aab) + iOS (.ipa), comptes Google Play ($25) et Apple Developer ($99/an), soumission (voir `docs/DEPLOYMENT-GUIDE.md`).
 - Brancher les vrais paiements MonCash (bloqué tant que les credentials Digicel ne sont pas obtenus).
-- Attirer les premiers utilisateurs réels (Objectif B : onboarding Kreyòl, SEO, parrainage, ads).
+- Lancer l'acquisition payante (ads Meta/Google) quand le budget le permet + activer Leaked Password Protection (plan pro).
 
 ### Objectifs long terme (1 à 3 ans)
 
