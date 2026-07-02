@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-02 : Objectif B — SEO (sitemap + llms.txt + landing pages Kreyòl)
+
+- **`robots.txt` + `sitemap.xml`** (8 URLs : accueil, onboarding, 6 landing pages) à la racine.
+- **`llms.txt`** (AI-SEO) : résumé bilingue Kreyòl/EN — fonctionnement de l'escrow, catégories, villes, pages clés — pour être cité correctement par les assistants IA.
+- **6 landing pages Kreyòl** sous `/l/` (Elektwonik, Mòd, Bote/Kosmetik, Atizana + Pòtoprens, Cap-Haïtien) : contenu **unique** par page (évite le thin content), JSON-LD structuré (BreadcrumbList + CollectionPage/Organization), OG tags, cross-linking interne, CTA vers l'app. Basées sur les vraies catégories (`SELLER_CATS_MAP`) et villes de l'app.
+- Générées par `scripts/gen-landing.mjs` (committé, extensible via le tableau `PAGES`) — pas un build de l'app, juste un outil de contenu.
+- Servies en statique : Vercel sert les fichiers existants **avant** le rewrite catch-all `/(.*) → index.html` (même mécanisme que `onboarding.html`), donc aucun changement de `vercel.json`.
+- Validé : JSON-LD parse OK (6/6), sitemap bien formé, rendu vérifié au navigateur, **6/6 tests ui** (incl. robots/sitemap/llms + 2 landing pages servies).
+
+---
+
 ## 2026-07-02 : Objectif B — Croissance (parrainage bout-en-bout + image OG)
 
 - **PR #99 mergé** (a11y + Open Graph + durcissement XSS HTML) puis branche remise sur `main`, cron de check-in nettoyé.

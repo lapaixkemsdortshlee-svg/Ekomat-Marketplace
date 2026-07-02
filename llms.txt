@@ -1,0 +1,47 @@
+# AyitiMarket
+
+> AyitiMarket se marketplace mobil Ayisyen an: yon plas kote moun an Ayiti
+> achte ak vann an tout sekirite. Chak tranzaksyon pwoteje ak yon sistèm
+> eskwo sou MonCash — lajan achtè a rete bloke jiskaske li konfime li
+> resevwa komann nan ak yon kòd OTP. Vandè yo verifye (ID + selfie).
+>
+> AyitiMarket is the Haitian mobile marketplace: people in Haiti buy and
+> sell safely. Every transaction is protected by MonCash escrow — the
+> buyer's money is held until they confirm delivery with an OTP code.
+> Sellers are identity-verified.
+
+## Kijan li mache (How it works)
+
+- Achtè jwenn yon pwodwi epi pale ak vandè a nan chat (ak nòt vokal + pataj GPS).
+- Achtè peye ak MonCash; lajan an bloke nan eskwo (li pa ale jwenn vandè a toudenkou).
+- Nan pwen kolèk la, achtè bay vandè a yon kòd OTP 6 chif pou konfime livrezon.
+- Lè livrezon konfime, lajan an libere pou vandè a. Pa gen fwod, pa gen pèt.
+- Gen sistèm litij (dispute) si yon bagay pa mache, ak revizyon admin.
+
+## Kategori (Categories)
+
+Elektwonik (telefòn, akseswa), Mòd (rad, soulye), Bote & Kosmetik,
+Gaming, Akseswa, Atizana Ayisyen, Kay (dekorasyon), Bebe.
+
+## Vil (Cities served)
+
+Pòtoprens, Pétion-Ville, Delmas, Tabarre, Carrefour, Kwadèbouke (Croix-des-Bouquets),
+Cap-Haïtien (Okap), Les Cayes.
+
+## Paj enpòtan (Key pages)
+
+- [Paj dakèy / App](https://ayiti-market.vercel.app/): app la an antye (achte, vann, chat, eskwo).
+- [Elektwonik an Ayiti](https://ayiti-market.vercel.app/l/elektwonik.html)
+- [Rad ak Mòd an Ayiti](https://ayiti-market.vercel.app/l/mod.html)
+- [Bote & Kosmetik an Ayiti](https://ayiti-market.vercel.app/l/bote.html)
+- [Atizana Ayisyen](https://ayiti-market.vercel.app/l/atizana.html)
+- [AyitiMarket nan Pòtoprens](https://ayiti-market.vercel.app/l/potoprens.html)
+- [AyitiMarket nan Cap-Haïtien](https://ayiti-market.vercel.app/l/kap-ayisyen.html)
+- [Sitemap](https://ayiti-market.vercel.app/sitemap.xml)
+
+## Pwen kle (Key facts)
+
+- Peman: MonCash (Digicel). Lajan pwoteje ak eskwo.
+- Lang: Kreyòl ayisyen (interface).
+- Sekirite: vandè verifye (ID + selfie), kòd OTP pou livrezon, sistèm litij.
+- App mobil (PWA) — ou ka enstale l sou telefòn ou.
