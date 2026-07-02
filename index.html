@@ -1933,6 +1933,7 @@
 
             <!-- Tab: Verifications -->
             <div id="admin-verif">
+                <div id="funnelHealth" class="mb-4"></div>
                 <div id="sysHealth" class="mb-4"></div>
                 <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
                     Demann Verifikasyon Vandè</p>
@@ -7584,6 +7585,7 @@
             // then await the real fetch and let it re-render on completion.
             renderVerifList();
             renderSystemHealth();
+            renderFunnelHealth();
             renderAdminOrders();
             renderAdminUsers();
             if (typeof loadAdminDataFromSupabase === 'function') {
@@ -7597,7 +7599,7 @@
             ["verif", "orders", "users", "pending", "convos"].forEach(t => { document.getElementById("admin-" + t).classList.toggle("hidden", t !== tab); });
             if (tab === 'convos') loadAdminConversations();
             if (tab === 'pending') renderAdminPending();
-            if (tab === 'verif') renderSystemHealth();
+            if (tab === 'verif') { renderSystemHealth(); renderFunnelHealth(); }
         }
 
         // ── Admin: pwodwi an atant verifikasyon ──────────────────────
@@ -8661,6 +8663,56 @@
             }
         }
         window.renderSystemHealth = renderSystemHealth;
+
+        // ── Growth funnel card — AARRR snapshot (Objectif B) ──
+        // Calls funnel_overview() (see migration-2026-funnel.sql): acquisition
+        // → activation → retention → referral → revenue, all derived from
+        // existing tables. Numbers only, so safe to inject. Degrades silently
+        // if the migration isn't deployed.
+        async function renderFunnelHealth() {
+            const box = document.getElementById('funnelHealth');
+            if (!box || !db) return;
+            try {
+                const { data, error } = await db.rpc('funnel_overview');
+                if (error) throw error;
+                if (!data) { box.innerHTML = ''; return; }
+                const ac = data.acquisition || {}, act = data.activation || {},
+                      ret = data.retention || {}, rf = data.referral || {}, rv = data.revenue || {};
+                const cell = (label, value, sub) => `
+                    <div class="bg-surface-container-lowest rounded-xl p-2 amb text-center">
+                        <p class="font-label text-[9px] text-on-surface-variant uppercase tracking-wide">${label}</p>
+                        <p class="font-headline font-extrabold text-base leading-tight">${value}</p>
+                        ${sub ? `<p class="font-label text-[9px] text-on-surface-variant">${sub}</p>` : ''}
+                    </div>`;
+                const chip = (label, value, color) =>
+                    `<span class="font-label text-[11px] font-bold px-2 py-1 rounded-lg" style="background:${color}1a;color:${color}">${label}: ${value}</span>`;
+                box.innerHTML = `
+                    <div class="rounded-xl p-3" style="background:#97422b0d;border:1px solid #97422b33">
+                        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] mb-2" style="color:#97422b">
+                            <span class="material-symbols-outlined align-middle" style="font-size:13px">insights</span>
+                            Kwasans — Antònwa AARRR</p>
+                        <div class="grid grid-cols-4 gap-2 mb-2">
+                            ${cell('Enskri', ac.total_users||0, '+'+(ac.new_7d||0)+' / 7j')}
+                            ${cell('Achtè', act.buyers||0, (act.signup_to_buyer_pct||0)+'%')}
+                            ${cell('Aktive', act.activated||0, '1ye livrezon')}
+                            ${cell('Repete', ret.repeat_buyers||0, (ret.repeat_pct||0)+'%')}
+                        </div>
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            ${chip('GMV', fp(rv.gmv_htg||0)+' HTG', '#065f46')}
+                            ${chip('Komisyon', fp(rv.fees_htg||0)+' HTG', '#00666f')}
+                            ${chip('Panyen mwayen', fp(rv.aov_htg||0)+' HTG', '#00666f')}
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${chip('Vini pa refè', ac.referral_acquired||0, '#97422b')}
+                            ${chip('Rekonpans bay', rf.rewards_granted||0, '#97422b')}
+                        </div>
+                    </div>`;
+            } catch (e) {
+                box.innerHTML = '';
+                console.warn('[funnel_overview]', e.message);
+            }
+        }
+        window.renderFunnelHealth = renderFunnelHealth;
 
         // Bug 4.2: opens a clear confirmation sheet instead of a native
         // prompt() — admin sees a summary of the order they're about to
