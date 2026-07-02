@@ -21,6 +21,8 @@ PROJ="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 command -v codegraph   >/dev/null 2>&1 || { LOG "install codegraph";   npm install -g --silent @colbymchenry/codegraph   || LOG "codegraph install failed"; }
 command -v agentmemory >/dev/null 2>&1 || { LOG "install agentmemory"; npm install -g --silent @agentmemory/agentmemory || LOG "agentmemory install failed"; }
 command -v graphify    >/dev/null 2>&1 || { LOG "install graphify";    pip install --quiet graphifyy                     || LOG "graphify install failed"; }
+command -v yt-dlp      >/dev/null 2>&1 || { LOG "install yt-dlp";      pip install --quiet yt-dlp                        || LOG "yt-dlp install failed"; }
+command -v ffmpeg      >/dev/null 2>&1 || { LOG "install ffmpeg";      apt-get install -y --no-install-recommends ffmpeg >/dev/null 2>&1 || { apt-get update -qq >/dev/null 2>&1; apt-get install -y --no-install-recommends ffmpeg >/dev/null 2>&1; } || LOG "ffmpeg install failed"; }
 
 # ── 2. MCP servers (add only if absent) ───────────────────────────────
 have_mcp(){ python3 - "$1" <<'PY'
@@ -65,6 +67,9 @@ fi
 # ── 4. ephemeral global skills ────────────────────────────────────────
 # agentmemory skills (recall/remember/handoff/...)
 [ -d "$HOME/.claude/skills/recall" ] || { LOG "restore agentmemory skills"; npx -y skills add rohitg00/agentmemory --agent claude-code -g -y >/dev/null 2>&1 || LOG "agentmemory skills skipped"; }
+
+# watch skill (video analysis via yt-dlp/ffmpeg/Whisper)
+[ -d "$HOME/.claude/skills/watch" ] || { LOG "restore watch skill"; npx -y skills add bradautomates/claude-video --agent claude-code -g -y >/dev/null 2>&1 || LOG "watch skill skipped"; }
 
 # system-prompts-leaks reference skill
 if [ ! -d "$HOME/.claude/skills/system-prompts-leaks" ]; then
