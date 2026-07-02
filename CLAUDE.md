@@ -3,6 +3,8 @@
 
 Use the installed skills and MCP servers **proactively** whenever they improve the result — **even when the user didn't explicitly ask**. Just tell the user which skill/tool you activated and why (one line). The user has authorized this as a standing rule.
 
+**Auto-select the best skill for every task (Alita, do this without being asked):** at the start of any task-oriented request, silently scan the skill library (`.claude/skills/` and `.agents/skills/`) and pick the skill(s) whose description best match the work at hand, then activate them before starting. Prefer a specific match over a general one; combine skills when a task spans several (e.g. `brainstorming` → `writing-plans`, or `cro` + `copywriting`). If **no** library skill covers the need, use the **`find-skills`** skill to search the open ecosystem (`npx skills find <query>`) and install a good match (`npx skills add <owner/repo@skill>`) — favor skills with strong adoption and reputable owners. Name the skill you activated in one line; don't ask permission first.
+
 Reach for the right capability by task:
 
 - **Understand / navigate / refactor code** → CodeGraph (`codegraph_explore`) or graphify. For `index.html` (single-file SPA, JS not parseable in HTML), use the extracted code graph: `/home/user/ayitimarket-graph/` — rebuild with its `refresh.sh`; line numbers map back to `index.html` (app block starts ~line 3628, second block ~line 12280).
@@ -13,6 +15,7 @@ Reach for the right capability by task:
 - **Test the real app** → gstack `/browse`, `/qa` (the Vercel preview needs the protection-bypass header).
 - **Marketplace growth (Kreyòl)** → `cro`, `pricing`, `onboarding`, `copywriting`, `ads`, `seo-audit`.
 - **Cross-session memory** → agentmemory (`remember` / `recall` / `handoff`).
+- **No library skill fits the task** → `find-skills` (`npx skills find <query>`, then `npx skills add <owner/repo@skill>`) to discover and install a new one.
 - **Before claiming done / shipping** → `verification-before-completion`, then `/ship`.
 
 Honor the project's hard rules (single-file architecture, Kreyòl strings, soft-delete, escrow RPC) — see the `ayitimarket` skill.
