@@ -92,12 +92,12 @@ Reste :
 - [ ] Empty states qui guident l'acheteur et le vendeur
 
 ### Parrainage (déjà construit → à pousser)
-- [ ] Rendre l'invitation visible au bon moment (post-achat, post-vente)
-- [ ] Vérifier la boucle crédit parrain/filleul de bout en bout
-- [ ] Message de partage en Kreyòl optimisé (WhatsApp first)
+- [x] Rendre l'invitation visible au bon moment (post-achat, post-vente) — bouton « Envit yon zanmi » sur les commandes livrées (acheteur) + écran de succès « Vann fèt! » après confirmation OTP (vendeur), tous deux vers `openReferralSheet()`.
+- [x] Vérifier la boucle crédit parrain/filleul de bout en bout — **le trou était le crédit parrain** : `referred_by` était stocké mais le parrain ne touchait jamais rien. Corrigé : `supabase/migration-2026-referral-rewards.sql` — trigger sur `orders` qui, quand la commande d'un filleul est libérée/complétée, crée un code de récompense one-time (100 HTG, `scope='referral_reward'`, `max_uses=1`) pour le parrain + notification. Dédup `UNIQUE(referred_id)` (1 récompense/filleul). Validé sur Postgres 16 (grant unique, dédup, non-parrainé ignoré, idempotence).
+- [x] Message de partage en Kreyòl optimisé (WhatsApp first) — `_referralShareText()` réécrit (WhatsApp-first, valeur des deux côtés, emoji, lien) + copie du sheet mise à jour (« Toulède genyen »).
 
 ### SEO & visibilité
-- [~] Audit SEO technique — **Open Graph / Twitter + apple-touch-icon + canonical ajoutés** (aperçu de partage WhatsApp/Facebook) ; test dans `tests/ui.spec.mjs`. Reste : sitemap, image OG dédiée 1200×630, perf mobile.
+- [~] Audit SEO technique — **Open Graph / Twitter + apple-touch-icon + canonical ajoutés** (aperçu de partage WhatsApp/Facebook) ; **image OG dédiée `og-image.png` 1200×630** (carte de marque : wordmark, tagline Kreyòl, badges eskwo/vandè/MonCash, drapeau haïtien) + `twitter:card=summary_large_image` + `og:image:width/height/alt` ; tests dans `tests/ui.spec.mjs` (dont asset servi). Reste : sitemap, perf mobile.
 - [ ] AI-SEO : être cité par les assistants (llms.txt, contenu structuré)
 - [ ] Pages d'atterrissage par catégorie / ville
 

@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-02 : Objectif B — Croissance (parrainage bout-en-bout + image OG)
+
+- **PR #99 mergé** (a11y + Open Graph + durcissement XSS HTML) puis branche remise sur `main`, cron de check-in nettoyé.
+- **Boucle de parrainage bouclée** : le trou était le crédit **parrain** (`referred_by` stocké à l'inscription, mais le parrain ne touchait jamais rien). Ajout de `supabase/migration-2026-referral-rewards.sql` : trigger `AFTER UPDATE OF status ON orders` → quand la commande d'un filleul passe `released`/`completed`, le parrain reçoit un code one-time **100 HTG** (`scope='referral_reward'`, `max_uses=1`) + une notification. Table `referral_rewards` avec `UNIQUE(referred_id)` (1 récompense par filleul). Testé sur Postgres 16 : grant unique, dédup sur re-transition, buyer non-parrainé ignoré, migration idempotente.
+- **Invitation au bon moment** : bouton « Envit yon zanmi » sur les commandes livrées (acheteur) + écran de succès « Vann fèt! 🎉 » après confirmation OTP (vendeur), tous deux vers `openReferralSheet()`. Message WhatsApp-first réécrit + copie du sheet (« Toulède genyen »).
+- **Image OG dédiée** : `og-image.png` 1200×630 (carte de marque teal, wordmark AyitiMarket, tagline « Achte & Vann an tout sekirite », badges eskwo/vandè/MonCash, drapeau haïtien), générée via Playwright/Chromium. `twitter:card=summary_large_image` + `og:image:width/height/alt`.
+- Validé : 0 erreur de syntaxe (7 blocs), **12/12 tests** (smoke + a11y axe + ui + asset OG) passent.
+- **À déployer par Thrasher** : `migration-2026-referral-rewards.sql` (SQL Editor) — s'ajoute aux migrations déjà en attente (`error-logs`, `promo-hardening`).
+
+---
+
 ## 2026-07-02 : Durcissement XSS (DOM) — sweep esc()
 
 - CodeQL signalait un baseline XSS (données vendeur/achtè interpolées dans `innerHTML`), re-attribué à la PR #99 à cause du gros diff single-file. Confirmé réel : ex. conversations admin où **noms + contenu des messages** allaient dans `innerHTML` sans échappement → XSS stocké visible par l'admin.
