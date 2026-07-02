@@ -4421,7 +4421,7 @@
                 ? prodPlaceholder(p, 340)
                 : imgs.map(src => {
                     const safeSrc = String(src).replace(/'/g, "\\'");
-                    return `<div class="flex-shrink-0 w-full h-full snap-center cursor-pointer flex items-center justify-center" onclick="openProductLightbox('${safeSrc}')"><img src="${esc(src)}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/></div>`;
+                    return `<div class="flex-shrink-0 w-full h-full snap-center cursor-pointer flex items-center justify-center" onclick="openProductLightbox('${safeSrc}')"><img src="${src}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/></div>`;
                 }).join('');
             const dotsHTML = imgs.length > 1
                 ? `<div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" id="detailDots">${imgs.map((_, idx) => `<span class="block rounded-full transition-all" style="width:6px;height:6px;background:${idx === 0 ? 'rgba(252,249,244,.95)' : 'rgba(252,249,244,.5)'}"></span>`).join('')}</div>`
@@ -4450,7 +4450,7 @@
     <div class="bg-surface-container-low px-5 pt-5 pb-4 space-y-4">
       ${p.b === 'Verifye' ? `<div class="flex items-center gap-1"><span class="material-symbols-outlined fi text-primary" style="font-size:14px">verified</span><span class="font-label text-xs font-bold text-primary">Vandè Verifye</span></div>` : ''}
       <div>
-        <h1 class="font-headline font-extrabold text-[1.6rem] text-on-surface tracking-tight leading-tight">${p.t}</h1>
+        <h1 class="font-headline font-extrabold text-[1.6rem] text-on-surface tracking-tight leading-tight">${esc(p.t)}</h1>
         <p class="font-body text-xs text-on-surface-variant mt-0.5">${p.c} · ${p.l}</p>
       </div>
       <div class="flex items-end gap-3 flex-wrap">
@@ -4473,23 +4473,23 @@
                         location: cached.location || p.l || '',
                     };
                     const avatarHtml = seller.avatarUrl
-                        ? `<img src="${esc(seller.avatarUrl)}" alt="${seller.name}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-bold text-white text-sm\\'>${initials}</span>'"/>`
+                        ? `<img src="${esc(seller.avatarUrl)}" alt="${esc(seller.name)}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-bold text-white text-sm\\'>${initials}</span>'"/>`
                         : `<span class="font-headline font-bold text-white text-sm">${initials}</span>`;
                     return `<div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-3 cursor-pointer active:bg-surface-container-low transition-colors" onclick="openSellerProfile('${seller.id}')">
         <div class="w-11 h-11 rounded-full cta flex items-center justify-center flex-shrink-0 overflow-hidden">${avatarHtml}</div>
         <div class="flex-1">
           <div class="flex items-center gap-1.5">
-            <p class="font-headline font-bold text-sm text-on-surface">${seller.name}</p>
+            <p class="font-headline font-bold text-sm text-on-surface">${esc(seller.name)}</p>
             ${seller.verified ? '<span class="material-symbols-outlined fi text-primary" style="font-size:13px">verified</span>' : ''}
           </div>
-          <p class="font-label text-xs text-on-surface-variant">${seller.rating}★ · ${seller.salesCount}+ lavant · ${seller.location}</p>
+          <p class="font-label text-xs text-on-surface-variant">${seller.rating}★ · ${seller.salesCount}+ lavant · ${esc(seller.location)}</p>
         </div>
         <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">chevron_right</span>
       </div>`;
                 })()}
       <div>
         <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Deskripsyon</p>
-        <p class="font-body text-sm text-on-surface-variant leading-relaxed">${p.desc}</p>
+        <p class="font-body text-sm text-on-surface-variant leading-relaxed">${esc(p.desc)}</p>
       </div>
     </div>
 
@@ -4783,7 +4783,7 @@
             const offset = [0, 24, -12, 18, -8, 20][i] || 0;
             const isFav = A.favs.has(p.id);
             const imgHtml = p.img
-                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/>`
+                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${esc(p.t)}" onerror="this.onerror=null;this.style.display='none'"/>`
                 : prodPlaceholder(p, 140 + (i % 2) * 20);
             const spid = typeof p.id === 'string' ? `'${p.id}'` : p.id;
 
@@ -4802,7 +4802,7 @@
           style="font-size:8px;background:rgba(0,102,111,.85);color:#fff">${p.b}</span>` : ''}
       </div>
       <div class="p-2.5">
-        <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.75rem">${p.t}</p>
+        <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.75rem">${esc(p.t)}</p>
         <div class="flex items-baseline gap-1 flex-wrap">
           <p class="font-headline font-extrabold text-primary" style="font-size:.8125rem">${fp(p.p)}</p>
           ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.5625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
@@ -4825,7 +4825,7 @@
             const offset = [0, 32, -16, 24, -8, 40, -24, 16][i % 8];
             const imgHeight = 160 + (i % 3) * 40;
             const imgHtml = p.img
-                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/>`
+                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${esc(p.t)}" onerror="this.onerror=null;this.style.display='none'"/>`
                 : prodPlaceholder(p, imgHeight);
             // Bug D: light up a Flash Deal badge on cards whose product is
             // currently inside an active flash_deals row. FLASH_DEALS is
@@ -4865,7 +4865,7 @@
         ${badgeHtml}
       </div>
       <div class="p-3">
-        <h3 class="font-headline font-bold text-on-surface leading-tight" style="font-size:.8rem">${p.t}</h3>
+        <h3 class="font-headline font-bold text-on-surface leading-tight" style="font-size:.8rem">${esc(p.t)}</h3>
         <div class="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
           <p class="font-headline font-extrabold text-primary" style="font-size:.875rem">${fp(p.p)} HTG</p>
           ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1.5" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
@@ -5485,7 +5485,7 @@
             const zone = A.pickupZone || _lastGeocode();
             document.getElementById("orderSheetContent").innerHTML = `
     <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-1">Kòmande</p>
-    <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-4">${p.t}</h3>
+    <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-4">${esc(p.t)}</h3>
     <div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-4 mb-5">
       <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style="background:#f0ede8">
         ${(p.img || (p.images && p.images[0]))
@@ -5493,7 +5493,7 @@
           : prodPlaceholder(p, 80)}
       </div>
       <div class="flex-1">
-        <p class="font-headline font-bold text-sm text-on-surface">${p.t}</p>
+        <p class="font-headline font-bold text-sm text-on-surface">${esc(p.t)}</p>
         <p class="font-label text-xs text-on-surface-variant">${p.sellerName || 'Vandè'} ${p.b ? '· Verifye' : ''}</p>
         <div class="flex items-baseline gap-1.5 mt-1 flex-wrap">
           <p class="font-headline font-extrabold text-xl text-primary">${fp(sub)} HTG</p>
@@ -5827,7 +5827,7 @@
         </div>
         <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between gap-2">
-                <p class="font-headline font-bold text-sm text-on-surface truncate flex-1">${o.product_title || 'Pwodwi'}</p>
+                <p class="font-headline font-bold text-sm text-on-surface truncate flex-1">${esc(o.product_title || 'Pwodwi')}</p>
                 ${orderStatusBadge(o.status)}
             </div>
             <p class="font-label text-[11px] text-on-surface-variant mt-0.5">${partnerRole}: ${partner}</p>
@@ -6020,7 +6020,7 @@
     <div class="self-center bg-surface-container-lowest rounded-xl p-3 flex items-center gap-3 w-[82%] amb cursor-pointer" onclick="openProduct(${pidAttr})">
       <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style="background:#f0ede8">${thumb}</div>
       <div class="flex-1 min-w-0">
-        <p class="font-headline font-bold text-xs text-on-surface truncate">${p.t}</p>
+        <p class="font-headline font-bold text-xs text-on-surface truncate">${esc(p.t)}</p>
         <div class="flex items-baseline gap-1 flex-wrap">
           <p class="font-headline font-extrabold text-sm text-primary">${fp(p.p)} HTG</p>
           ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
@@ -6031,7 +6031,7 @@
     ${msgs.map(m => `
     <div class="flex ${m.s ? 'justify-end' : 'justify-start'}">
       <div class="max-w-[76%] px-4 py-2.5 ${m.s ? 'bsent' : 'brecv amb'}">
-        <p class="font-body text-sm leading-relaxed">${m.t}</p>
+        <p class="font-body text-sm leading-relaxed">${esc(m.t)}</p>
         <p class="font-label text-[10px] mt-1 ${m.s ? 'text-white/60' : 'text-on-surface-variant'}">${m.tm}</p>
       </div>
     </div>`).join('')}`;
@@ -6122,7 +6122,7 @@
           ${u.photoURL ? '<img src="' + u.photoURL + '" alt="Foto pwofil" class="w-full h-full object-cover"/>' : '<span class="font-headline font-bold text-white text-xl">' + (u.initials || "?") + '</span>'}
         </div>
         <div class="flex-1">
-          <h2 class="font-headline font-extrabold text-white text-xl tracking-tight">${u.name}</h2>
+          <h2 class="font-headline font-extrabold text-white text-xl tracking-tight">${esc(u.name)}</h2>
           <p class="font-body text-white/70 text-sm">${u.phone || ""}</p>
           <div class="flex items-center gap-1 mt-1">
             ${u.role === "admin" ? '<span class="admin-badge">ADMIN</span>'
@@ -6460,7 +6460,7 @@
             <div class="flex items-center gap-3 py-3" style="border-top:1px solid rgba(188,201,200,.18)">
               <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style="background:#f0ede8">${cartProductImageHTML(p, 64)}</div>
               <div class="flex-1 min-w-0">
-                <p class="font-headline font-bold text-sm text-on-surface truncate">${p.t || 'Pwodwi'}</p>
+                <p class="font-headline font-bold text-sm text-on-surface truncate">${esc(p.t || 'Pwodwi')}</p>
                 <p class="font-label text-[11px] text-on-surface-variant truncate">${p.l || ''}</p>
                 <div class="flex items-center gap-2 mt-1">${priceLine}</div>
               </div>
@@ -6771,7 +6771,7 @@
                 const pct = (r.sales / max) * 100;
                 return `<div style="margin-bottom:8px">
                     <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#3d4949">
-                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${r.title}</span>
+                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${esc(r.title)}</span>
                         <span style="color:#00666f;font-weight:700">${fp(r.sales)} HTG</span>
                     </div>
                     <div style="height:6px;background:#e5e2dd;border-radius:999px;overflow:hidden;margin-top:3px">
@@ -6884,7 +6884,7 @@
                     <div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0" style="background:#f0ede8">${imgEl}</div>
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
-                        <p class="font-headline font-bold text-sm text-on-surface truncate">${p.t}</p>
+                        <p class="font-headline font-bold text-sm text-on-surface truncate">${esc(p.t)}</p>
                         ${statusBadge}
                       </div>
                       <div class="flex items-center gap-3 mt-1">
@@ -7341,7 +7341,7 @@
             <p class="font-headline font-bold text-sm text-on-surface truncate">${partnerName}</p>
             <span class="font-label text-[10px] text-on-surface-variant flex-shrink-0">${timeAgo(c.lastMsg.created_at)}</span>
           </div>
-          ${prod ? `<p class="font-label text-[10px] text-primary truncate">${prod.title}</p>` : ''}
+          ${prod ? `<p class="font-label text-[10px] text-primary truncate">${esc(prod.title)}</p>` : ''}
           <div class="flex items-center justify-between gap-2 mt-0.5">
             <p class="font-body text-xs text-on-surface-variant truncate">${preview}</p>
             ${c.unread > 0 ? `<span class="flex-shrink-0 min-w-[20px] h-5 px-1.5 rounded-full text-white text-[10px] font-bold flex items-center justify-center" style="background:#98443e;font-family:'Manrope',sans-serif">${c.unread}</span>` : ''}
@@ -7620,10 +7620,10 @@
                                 ${img ? `<img src="${esc(img)}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.style.display='none'"/>` : `<div class="w-full h-full flex items-center justify-center"><span class="material-symbols-outlined text-on-surface-variant" style="font-size:24px">image</span></div>`}
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="font-headline font-bold text-sm text-on-surface truncate">${p.title || 'Pwodwi'}</p>
+                                <p class="font-headline font-bold text-sm text-on-surface truncate">${esc(p.title || 'Pwodwi')}</p>
                                 <p class="font-label text-[11px] text-on-surface-variant">${fp(p.price || 0)} HTG · ${p.category || '—'}</p>
-                                <p class="font-label text-[11px] text-on-surface-variant mt-0.5"><strong>Vandè:</strong> ${(s.display_name || p.seller_name || '—')} ${s.verified_seller ? '✓' : ''}</p>
-                                <p class="font-label text-[11px] text-on-surface-variant"><strong>Zòn:</strong> ${p.location || '—'}</p>
+                                <p class="font-label text-[11px] text-on-surface-variant mt-0.5"><strong>Vandè:</strong> ${esc(s.display_name || p.seller_name || '—')} ${s.verified_seller ? '✓' : ''}</p>
+                                <p class="font-label text-[11px] text-on-surface-variant"><strong>Zòn:</strong> ${esc(p.location || '—')}</p>
                                 ${p.images && p.images.length > 1 ? `<p class="font-label text-[10px] text-on-surface-variant mt-1">${p.images.length} foto</p>` : ''}
                             </div>
                         </div>
@@ -7699,15 +7699,15 @@
     <div class="flex items-center gap-3 mb-3">
       <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.1)"><span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;color:#00666f">person</span></div>
       <div class="flex-1">
-        <p class="font-headline font-bold text-sm text-on-surface">${v.name}</p>
+        <p class="font-headline font-bold text-sm text-on-surface">${esc(v.name)}</p>
         <p class="font-label text-xs text-on-surface-variant">${v.phone} · ${v.submittedAt}</p>
       </div>
       <span class="font-label text-[10px] font-bold px-2 py-1 rounded-full ${v.status === 'pending' ? 'pill-pending' : v.status === 'approved' ? 'pill-approved' : 'pill-rejected'}">${v.status === 'pending' ? 'An Atant' : v.status === 'approved' ? 'Apwouve' : 'Rejte'}</span>
     </div>
     <div class="flex gap-2 mb-3 flex-wrap">
-      ${v.photos?.front ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.front.publicUrl || v.photos.front.dataUrl).replace(/'/g, "\\'")}')"><img alt="Pyès idantite (devan)" src="${esc(v.photos.front.publicUrl || v.photos.front.dataUrl)}" class="w-full h-full object-cover"/></div>` : ''}
-      ${v.photos?.back ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.back.publicUrl || v.photos.back.dataUrl).replace(/'/g, "\\'")}')"><img alt="Pyès idantite (dèyè)" src="${esc(v.photos.back.publicUrl || v.photos.back.dataUrl)}" class="w-full h-full object-cover"/></div>` : ''}
-      ${v.photos?.selfie ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.selfie.publicUrl || v.photos.selfie.dataUrl).replace(/'/g, "\\'")}')"><img alt="Selfie verifikasyon" src="${esc(v.photos.selfie.publicUrl || v.photos.selfie.dataUrl)}" class="w-full h-full object-cover"/></div>` : ''}
+      ${v.photos?.front ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.front.publicUrl || v.photos.front.dataUrl).replace(/'/g, "\\'")}')"><img alt="Pyès idantite (devan)" src="${v.photos.front.publicUrl || v.photos.front.dataUrl}" class="w-full h-full object-cover"/></div>` : ''}
+      ${v.photos?.back ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.back.publicUrl || v.photos.back.dataUrl).replace(/'/g, "\\'")}')"><img alt="Pyès idantite (dèyè)" src="${v.photos.back.publicUrl || v.photos.back.dataUrl}" class="w-full h-full object-cover"/></div>` : ''}
+      ${v.photos?.selfie ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.selfie.publicUrl || v.photos.selfie.dataUrl).replace(/'/g, "\\'")}')"><img alt="Selfie verifikasyon" src="${v.photos.selfie.publicUrl || v.photos.selfie.dataUrl}" class="w-full h-full object-cover"/></div>` : ''}
       ${!v.photos?.front && !v.photos?.back && !v.photos?.selfie ? `<div class="flex-1 rounded-lg p-3 flex items-center gap-2" style="background:#f6f3ee"><span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">badge</span><div><p class="font-label text-xs font-bold text-on-surface">${v.idType || 'ID'}</p><p class="font-label text-[10px] text-on-surface-variant">Pa gen foto disponib</p></div></div>` : ''}
     </div>
     ${v.idType ? `<p class="font-label text-[10px] text-on-surface-variant mb-2">Tip: <strong>${v.idType === 'cin' ? 'CIN' : v.idType === 'passport' ? 'Paspò' : v.idType}</strong></p>` : ''}
@@ -7754,7 +7754,7 @@
     <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.1)"><span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;color:#00666f">person</span></div>
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-1.5">
-        <p class="font-headline font-bold text-sm text-on-surface">${u.name}</p>
+        <p class="font-headline font-bold text-sm text-on-surface">${esc(u.name)}</p>
         ${u.verified ? `<span class="material-symbols-outlined fi text-primary" style="font-size:13px">verified</span>` : ''}
       </div>
       <p class="font-label text-xs text-on-surface-variant">${u.role === 'seller' ? 'Vandè' : 'Achtè'} · ${u.status === 'active' ? 'Aktif' : u.status === 'banned' ? 'Bloke' : 'An atant'} · ${u.orders || 0} komand · ${u.sales || 0} lavant</p>
@@ -8272,7 +8272,7 @@
     <div class="flex items-center gap-3 mb-3">
       <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.1)"><span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1;color:#00666f">person</span></div>
       <div class="flex-1">
-        <p class="font-headline font-bold text-sm text-on-surface">${v.name}</p>
+        <p class="font-headline font-bold text-sm text-on-surface">${esc(v.name)}</p>
         <p class="font-label text-xs text-on-surface-variant">${v.phone} · ${v.submittedAt}</p>
         ${v.idType ? `<p class="font-label text-[10px] font-bold text-primary mt-0.5">${{ cin: 'CIN', passport: 'Paspò', permis: 'Lisans' }[v.idType] || 'CIN'}</p>` : ''}
       </div>
@@ -8341,7 +8341,7 @@
 
             if (photo) {
                 const imgUrl = photo.publicUrl || photo.dataUrl;
-                img.innerHTML = `<img alt="Foto pwodwi" src="${esc(imgUrl)}" class="w-full h-full object-contain rounded-xl" style="cursor:zoom-in" onclick="openProductLightbox('${imgUrl.replace(/'/g, "\\'")}')" onerror="this.onerror=null;this.src='';this.parentElement.innerHTML='<div class=\\'flex flex-col items-center gap-2\\'><span class=\\'material-symbols-outlined text-on-surface-variant\\' style=\\'font-size:48px\\'>broken_image</span><p class=\\'font-label text-sm text-on-surface-variant\\'>Image indisponib</p></div>'"/>`;
+                img.innerHTML = `<img alt="Foto pwodwi" src="${imgUrl}" class="w-full h-full object-contain rounded-xl" style="cursor:zoom-in" onclick="openProductLightbox('${imgUrl.replace(/'/g, "\\'")}')" onerror="this.onerror=null;this.src='';this.parentElement.innerHTML='<div class=\\'flex flex-col items-center gap-2\\'><span class=\\'material-symbols-outlined text-on-surface-variant\\' style=\\'font-size:48px\\'>broken_image</span><p class=\\'font-label text-sm text-on-surface-variant\\'>Image indisponib</p></div>'"/>`;
                 img.style.padding = '0';
                 meta.textContent = `${typeLabel} · ${sideLabel} · ${photo.sizeKB ? photo.sizeKB + 'KB · ' : ''}Supabase Storage`;
             } else {
@@ -8524,10 +8524,10 @@
                 return `
                 <div class="bg-surface-container-lowest rounded-xl p-3 amb mb-3">
                     <div class="flex items-start justify-between gap-2 mb-1">
-                        <p class="font-headline font-bold text-sm flex-1 truncate">${o.product_title || 'Pwodwi'}</p>
+                        <p class="font-headline font-bold text-sm flex-1 truncate">${esc(o.product_title || 'Pwodwi')}</p>
                         ${orderStatusBadge(o.status)}
                     </div>
-                    <p class="font-label text-[11px] text-on-surface-variant">#${(o.id || '').slice(0, 8)} · ${o.buyer_name || 'Achtè'} → ${o.seller_name || 'Vandè'}</p>
+                    <p class="font-label text-[11px] text-on-surface-variant">#${(o.id || '').slice(0, 8)} · ${esc(o.buyer_name || 'Achtè')} → ${esc(o.seller_name || 'Vandè')}</p>
                     <p class="font-label text-[11px] mt-1"><strong>Total:</strong> ${fp(o.total_amount || 0)} HTG · <strong>Net vandè:</strong> ${fp(o.net_amount || (o.total_amount - (o.fee_amount||0)))} HTG · <strong>Frè:</strong> ${fp(o.fee_amount || 0)} HTG</p>
                     ${o.moncash_ref ? `<p class="font-label text-[11px] mt-1"><strong>Ref MonCash:</strong> <code style="background:#f4f1eb;padding:2px 6px;border-radius:4px">${o.moncash_ref}</code></p>` : ''}
                     ${o.pickup_location ? `<p class="font-label text-[11px] text-on-surface-variant mt-1"><span class="material-symbols-outlined align-middle" style="font-size:12px">location_on</span> ${o.pickup_location}</p>` : ''}
@@ -8661,11 +8661,11 @@
             if (info) {
                 info.innerHTML = `
                     <div class="flex items-start justify-between gap-2 mb-2">
-                        <p class="font-headline font-bold text-sm flex-1">${o.product_title || 'Pwodwi'}</p>
+                        <p class="font-headline font-bold text-sm flex-1">${esc(o.product_title || 'Pwodwi')}</p>
                         <span class="font-label text-[10px] text-on-surface-variant">#${(o.id || '').slice(0, 8)}</span>
                     </div>
-                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Achtè:</strong> ${o.buyer_name || '—'}</p>
-                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Vandè:</strong> ${o.seller_name || '—'}</p>
+                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Achtè:</strong> ${esc(o.buyer_name || '—')}</p>
+                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Vandè:</strong> ${esc(o.seller_name || '—')}</p>
                     <p class="font-label text-[11px] mt-2"><strong>Total deklare:</strong> <span class="font-headline font-extrabold text-base text-primary">${fp(o.total_amount || 0)} HTG</span></p>
                     ${o.moncash_ref ? `<p class="font-label text-[11px] mt-1"><strong>Ref MonCash:</strong> <code style="background:#f4f1eb;padding:2px 6px;border-radius:4px">${o.moncash_ref}</code></p>` : '<p class="font-label text-[11px] mt-1" style="color:#991b1b"><strong>⚠️ Pa gen referans MonCash</strong></p>'}
                 `;
@@ -8713,7 +8713,7 @@
                         ${v && v.amountMatches ? 'Montan koresponn' : 'Montan pa koresponn'}
                         ${v && v.simulated ? ' · <em>(senile — adaptè poko konekte)</em>' : ''}
                     </p>
-                    ${v && v.reason ? `<p class="font-label text-[10px] text-on-surface-variant mt-0.5">${v.reason}</p>` : ''}
+                    ${v && v.reason ? `<p class="font-label text-[10px] text-on-surface-variant mt-0.5">${esc(v.reason)}</p>` : ''}
                 </div>
             </div>`;
         }
@@ -9074,8 +9074,8 @@
                     '<div class="flex items-center gap-3">' +
                     '<div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.1)"><span class="material-symbols-outlined" style="font-size:20px;color:#00666f">forum</span></div>' +
                     '<div class="flex-1 min-w-0">' +
-                    '<p class="font-headline font-bold text-sm text-on-surface truncate">' + n1 + ' ↔ ' + n2 + '</p>' +
-                    '<p class="font-body text-xs text-on-surface-variant truncate">' + preview + '</p>' +
+                    '<p class="font-headline font-bold text-sm text-on-surface truncate">' + esc(n1) + ' ↔ ' + esc(n2) + '</p>' +
+                    '<p class="font-body text-xs text-on-surface-variant truncate">' + esc(preview) + '</p>' +
                     '</div>' +
                     '<span class="font-label text-[10px] text-on-surface-variant flex-shrink-0">' + ago + '</span>' +
                     '</div></div>';
@@ -9101,7 +9101,7 @@
                 var tm = new Date(m.created_at).toLocaleTimeString('fr', { hour: '2-digit', minute: '2-digit' });
                 html += '<div class="flex ' + side + '">' +
                     '<div class="max-w-[76%] px-4 py-2.5 ' + bg + '">' +
-                    '<p class="font-body text-sm leading-relaxed">' + display + '</p>' +
+                    '<p class="font-body text-sm leading-relaxed">' + esc(display) + '</p>' +
                     '<p class="font-label text-[10px] mt-1 ' + (m.sender_id === c.sender ? 'text-white/60' : 'text-on-surface-variant') + '">' + tm + '</p>' +
                     '</div></div>';
             });
@@ -9834,7 +9834,7 @@
       ${!n.read ? '<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full" style="background:#f99188;border:2px solid #fcf9f4"></span>' : ''}
     </div>
     <div class="flex-1 min-w-0">
-      <p class="font-headline font-bold text-sm text-on-surface ${n.read ? 'opacity-70' : ''}">${n.title}</p>
+      <p class="font-headline font-bold text-sm text-on-surface ${n.read ? 'opacity-70' : ''}">${esc(n.title)}</p>
       <p class="font-body text-xs text-on-surface-variant mt-0.5 leading-relaxed">${n.body || ''}</p>
     </div>
     <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -10536,7 +10536,7 @@
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">${prodPlaceholder(order.product, 48)}</div>
         <div class="flex-1">
-          <p class="font-headline font-bold text-sm text-on-surface">${order.product.t}</p>
+          <p class="font-headline font-bold text-sm text-on-surface">${esc(order.product.t)}</p>
           <p class="font-label text-xs text-on-surface-variant">${order.pickup?.n || 'Pick-up'}</p>
           <p class="font-headline font-extrabold text-sm text-primary">${fp(order.product.p + Math.round(order.product.p * .03))}</p>
         </div>
@@ -10699,7 +10699,7 @@
                         <span class="material-symbols-outlined fi text-primary" style="font-size:22px">shopping_bag</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-headline font-bold text-sm">${order.product_title || 'Pwodwi'}</p>
+                        <p class="font-headline font-bold text-sm">${esc(order.product_title || 'Pwodwi')}</p>
                         <p class="font-label text-[11px] text-on-surface-variant">Komand #${(order.id || '').slice(0, 8)}</p>
                     </div>
                 </div>`;
@@ -10956,11 +10956,11 @@
             if (info) {
                 info.innerHTML = `
                     <div class="flex items-start justify-between gap-2 mb-2">
-                        <p class="font-headline font-bold text-sm flex-1">${o.product_title || 'Pwodwi'}</p>
+                        <p class="font-headline font-bold text-sm flex-1">${esc(o.product_title || 'Pwodwi')}</p>
                         <span class="font-label text-[10px] text-on-surface-variant">#${(o.id || '').slice(0, 8)}</span>
                     </div>
-                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Achtè:</strong> ${o.buyer_name || '—'}</p>
-                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Vandè:</strong> ${o.seller_name || '—'}</p>
+                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Achtè:</strong> ${esc(o.buyer_name || '—')}</p>
+                    <p class="font-label text-[11px] text-on-surface-variant"><strong>Vandè:</strong> ${esc(o.seller_name || '—')}</p>
                     <p class="font-label text-[11px] mt-2"><strong>Total:</strong> <span class="font-headline font-extrabold text-base text-primary">${fp(o.total_amount || 0)} HTG</span></p>
                 `;
             }
@@ -11179,7 +11179,7 @@
                 + data.map(a => `
                 <div class="bg-surface-container-lowest rounded-xl p-3 amb">
                     <div class="flex items-start justify-between gap-2">
-                        <p class="font-headline font-bold text-sm">${a.title}</p>
+                        <p class="font-headline font-bold text-sm">${esc(a.title)}</p>
                         <span class="font-label text-[10px] ${a.active ? 'text-primary' : 'text-on-surface-variant'}">${a.active ? 'Aktif' : 'Fèmen'}</span>
                     </div>
                     <p class="font-body text-xs text-on-surface-variant mt-1">${a.body}</p>
@@ -11201,7 +11201,7 @@
                 <div class="rounded-xl p-3.5 mb-2 flex items-start gap-3" style="background:rgba(0,102,111,.07)">
                     <span class="material-symbols-outlined fi text-primary flex-shrink-0 mt-0.5" style="font-size:20px">campaign</span>
                     <div class="flex-1 min-w-0">
-                        <p class="font-headline font-bold text-sm text-on-surface">${a.title}</p>
+                        <p class="font-headline font-bold text-sm text-on-surface">${esc(a.title)}</p>
                         <p class="font-body text-xs text-on-surface-variant mt-0.5 leading-relaxed">${a.body}</p>
                         <p class="font-label text-[10px] text-on-surface-variant mt-1">${timeAgo(a.created_at)}</p>
                     </div>
@@ -11229,7 +11229,7 @@
     <div class="self-center bg-surface-container-lowest rounded-xl p-3 flex items-center gap-3 w-[82%] amb cursor-pointer" onclick="openProduct(${pidAttr})">
       <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style="background:#f0ede8">${thumb}</div>
       <div class="flex-1 min-w-0">
-        <p class="font-headline font-bold text-xs text-on-surface truncate">${p.t}</p>
+        <p class="font-headline font-bold text-xs text-on-surface truncate">${esc(p.t)}</p>
         <div class="flex items-baseline gap-1 flex-wrap">
           <p class="font-headline font-extrabold text-sm text-primary">${fp(p.p)} HTG</p>
           ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
@@ -11242,7 +11242,7 @@
                 if (m.type === 'voice') return voiceBubble(m);
                 return `<div class="flex ${m.s ? 'justify-end' : 'justify-start'}">
         <div class="max-w-[76%] px-4 py-2.5 ${m.s ? 'bsent' : 'brecv amb'}">
-          <p class="font-body text-sm leading-relaxed">${m.t}</p>
+          <p class="font-body text-sm leading-relaxed">${esc(m.t)}</p>
           <p class="font-label text-[10px] mt-1 ${m.s ? 'text-white/60' : 'text-on-surface-variant'}">${m.tm}</p>
         </div>
       </div>`;
@@ -12904,7 +12904,7 @@
         <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full font-label font-extrabold text-white" style="font-size:9px;background:rgba(0,102,111,.85)">-${savePct}%</div>
       </div>
       <div class="p-2.5">
-        <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.75rem">${fd.t}</p>
+        <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.75rem">${esc(fd.t)}</p>
         <div class="flex items-center gap-2">
           <span class="font-headline font-extrabold text-primary" style="font-size:.8125rem">${fp(fd.p)}</span>
           <span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(fd.oldP)}</span>
@@ -12927,7 +12927,7 @@
             const flashProduct = {
                 id: fd.id, e: fd.e, ec: fd.ec, t: fd.t, p: fd.p, l: fd.l, c: fd.c,
                 r: 0, b: 'FLASH', v: 0, s: fd.stock,
-                desc: `${fd.t} — Pwomosyon espesyal Flash Deal! Pri orijinal: ${fp(fd.oldP)} HTG → Kounye a: ${fp(fd.p)} HTG. Estòk limite (${fd.stock} rete). Kouri achte anvan li fini!`,
+                desc: `${esc(fd.t)} — Pwomosyon espesyal Flash Deal! Pri orijinal: ${fp(fd.oldP)} HTG → Kounye a: ${fp(fd.p)} HTG. Estòk limite (${fd.stock} rete). Kouri achte anvan li fini!`,
                 sizes: []
             };
             if (!PRODUCTS.find(p => p.id === fd.id)) PRODUCTS.push(flashProduct);
@@ -12956,7 +12956,7 @@
             <svg width="32" height="32" viewBox="0 0 24 24" style="color:${color};opacity:.6">${getSVGPath(acc.e)}</svg>
           </div>
           <div class="p-2.5">
-            <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.6875rem">${acc.t}</p>
+            <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.6875rem">${esc(acc.t)}</p>
             <div class="flex items-center justify-between">
               <span class="font-headline font-extrabold text-primary" style="font-size:.75rem">${fp(acc.p)}</span>
               <button onclick="event.stopPropagation();addToLook('${acc.id}','${acc.t.replace(/'/g, "\\'")}',${acc.p})"
@@ -13001,7 +13001,7 @@
           <div class="flex items-center gap-1 mb-0.5">
             ${'★'.repeat(vr.rating)}<span style="font-size:8px;color:rgba(252,249,244,.5)">${'★'.repeat(5 - vr.rating)}</span>
           </div>
-          <p class="font-label font-bold text-white" style="font-size:9px">${vr.reviewer}</p>
+          <p class="font-label font-bold text-white" style="font-size:9px">${esc(vr.reviewer)}</p>
           <p class="font-label text-white/60" style="font-size:8px">${vr.duration}</p>
         </div>
       </div>`).join('')}
@@ -13129,14 +13129,14 @@
         <div class="w-[88px] h-[88px] rounded-full cta flex items-center justify-center amb seller-animate overflow-hidden"
              style="border:4px solid #fcf9f4;box-shadow:0 4px 20px rgba(0,102,111,.2)">
           ${seller.avatarUrl
-            ? `<img src="${esc(seller.avatarUrl)}" alt="${seller.name}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-extrabold text-white text-2xl\\'>${seller.initials}</span>'"/>`
+            ? `<img src="${esc(seller.avatarUrl)}" alt="${esc(seller.name)}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-extrabold text-white text-2xl\\'>${seller.initials}</span>'"/>`
             : `<span class="font-headline font-extrabold text-white text-2xl">${seller.initials}</span>`}
         </div>
         <div class="flex items-center gap-2 mt-3 seller-animate seller-animate-delay-1">
-          <h2 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">${seller.name}</h2>
+          <h2 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">${esc(seller.name)}</h2>
           ${seller.verified ? '<span class="material-symbols-outlined fi" style="font-size:20px;color:#00666f">verified</span>' : ''}
         </div>
-        <p class="font-label text-xs text-on-surface-variant mt-1 seller-animate seller-animate-delay-1">${seller.location}</p>
+        <p class="font-label text-xs text-on-surface-variant mt-1 seller-animate seller-animate-delay-1">${esc(seller.location)}</p>
         ${seller.badges.length ? `
         <div class="flex gap-2 mt-2 seller-animate seller-animate-delay-2">
           ${seller.badges.map(b => `<span class="font-label text-[10px] font-bold px-2.5 py-1 rounded-full" style="background:rgba(0,102,111,.08);color:#00666f">${b}</span>`).join('')}
@@ -13178,7 +13178,7 @@
     <div class="px-5 mt-5 seller-animate seller-animate-delay-3">
       <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Konsènan Boutik la</p>
       <div class="seller-bio">
-        <p class="font-body text-sm text-on-surface-variant leading-relaxed">${seller.bio}</p>
+        <p class="font-body text-sm text-on-surface-variant leading-relaxed">${esc(seller.bio)}</p>
         <div class="flex flex-wrap gap-1.5 mt-3">
           ${seller.specialties.map(s => `<span class="font-label text-[10px] font-bold px-2.5 py-1 rounded-full" style="background:rgba(0,102,111,.08);color:#00666f">${s}</span>`).join('')}
         </div>
@@ -13209,7 +13209,7 @@
       <div class="flex items-center justify-between mb-3">
         <div>
           <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-0.5">Boutik</p>
-          <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">Pwodwi ${seller.name}</h3>
+          <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">Pwodwi ${esc(seller.name)}</h3>
         </div>
         <span class="font-label text-[11px] font-bold px-2.5 py-1 rounded-full" style="background:rgba(0,102,111,.08);color:#00666f">${sellerProducts.length} pwodwi</span>
       </div>
@@ -13241,7 +13241,7 @@
             const offset = [0, 24, -12, 18, -8, 20][i] || 0;
             const imgHeight = 150 + (i % 2) * 30;
             const imgHtml = p.img
-                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${p.t}"/>`
+                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${esc(p.t)}"/>`
                 : prodPlaceholder(p, imgHeight);
             // UUIDs from Supabase are strings — must be quoted in inline
             // onclick handlers, otherwise `openProduct(abc-def-123)` parses
@@ -13263,7 +13263,7 @@
           style="font-size:8px;background:rgba(0,102,111,.85);color:#fff">${p.b}</span>` : ''}
       </div>
       <div class="p-2.5">
-        <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.75rem">${p.t}</p>
+        <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.75rem">${esc(p.t)}</p>
         <div class="flex items-baseline gap-1 flex-wrap">
           <p class="font-headline font-extrabold text-primary" style="font-size:.8125rem">${fp(p.p)}</p>
           ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.5625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
@@ -14257,7 +14257,7 @@
                     : '<div class="w-10 h-10 rounded-full cta flex items-center justify-center flex-shrink-0"><span class="font-headline font-bold text-white text-sm">' + initial + '</span></div>';
                 const since = fol.created_at ? timeAgo(fol.created_at) : '';
                 return '<div class="bg-surface-container-lowest rounded-xl p-3 flex items-center gap-3 amb">' + avatar
-                    + '<div class="flex-1 min-w-0"><p class="font-headline font-bold text-sm text-on-surface truncate">' + name + '</p>'
+                    + '<div class="flex-1 min-w-0"><p class="font-headline font-bold text-sm text-on-surface truncate">' + esc(name) + '</p>'
                     + (since ? '<p class="font-label text-xs text-on-surface-variant">Abonnen depi ' + since + '</p>' : '')
                     + '</div></div>';
             }).join('') + '</div>';
