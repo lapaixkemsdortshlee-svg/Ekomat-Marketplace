@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-02 (session 2) : Audit sécurité → correction P0 (XSS stockés)
+
+Après un audit complet (code statique + advisors Supabase live), on corrige les findings **étape par étape**. **P0 = terminé.**
+
+- **XSS contexte JS (issue #100 — confirmé RÉEL, pas un artefact CodeQL).** Le nom d'affichage choisi par un vendeur/utilisateur était interpolé brut dans des `onclick`, donc du JS arbitraire s'exécutait **dans la session admin** (prise de contrôle admin possible). Corrigé avec un nouveau helper **`jsAttr()`** (échappe JS puis HTML-attribut) appliqué à : `approveVerif`, `rejectVerif`, `openIDModal`, `openRejectSheet`, `toast('${u.name}…')`, `openVideoPlayer('${vr.reviewer}')`, `openConversation`, `openRatingSheet`, `addToLook`, block/unblock user. `jsAttr()` prouvé anti-breakout (test node : 9/9 payloads malicieux round-trip en simple chaîne inerte).
+- **XSS attribut HTML (résidu du sweep esc()).** `alt="${p.t}"` et `src="${src}"` dans le carrousel produit → `esc()`. Affectait tous les acheteurs.
+- Validé : 7 blocs JS sans erreur, 12/12 tests (le fail a11y initial était un timeout de chargement, vert au re-run).
+- Reste sur l'audit : **P1** (durcissement : search_path sur 3 fonctions trigger, REVOKE anon sur RPC admin, CSP, leaked-password) puis **Info/accepté**.
+
+---
+
 ## 2026-07-02 : RÉCAP GLOBAL DE SESSION — Objectifs A/B/C avancés + clôture
 
 Session dense. Les trois objectifs (`docs/QA-PLAN.md`) sont maintenant solides.

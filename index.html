@@ -3892,6 +3892,23 @@
         }
         window.esc = esc;
 
+        // Échappe une valeur non fiable placée DANS une chaîne JS entre
+        // apostrophes, elle-même dans un attribut HTML entre guillemets :
+        //   `onclick="fn('${jsAttr(v.name)}')"`.
+        // On échappe d'abord au niveau JS (\ et ' — qui survivent au décodage
+        // HTML de l'attribut), puis au niveau HTML (& " < >) pour ne pas casser
+        // l'attribut. Ainsi la valeur ne peut jamais sortir de la chaîne ni
+        // injecter du code, même après que le parseur décode l'attribut.
+        function jsAttr(s) {
+            return String(s == null ? '' : s)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/\r/g, '\\r').replace(/\n/g, '\\n')
+                .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        window.jsAttr = jsAttr;
+
         // Computes a positive integer discount % when p.oldP is set and is
         // strictly greater than p.p. Returns 0 if no discount applies.
         function discountPct(p) {
@@ -4431,8 +4448,8 @@
             const carouselHTML = imgs.length === 0
                 ? prodPlaceholder(p, 340)
                 : imgs.map(src => {
-                    const safeSrc = String(src).replace(/'/g, "\\'");
-                    return `<div class="flex-shrink-0 w-full h-full snap-center cursor-pointer flex items-center justify-center" onclick="openProductLightbox('${safeSrc}')"><img src="${src}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/></div>`;
+                    const safeSrc = jsAttr(src);
+                    return `<div class="flex-shrink-0 w-full h-full snap-center cursor-pointer flex items-center justify-center" onclick="openProductLightbox('${safeSrc}')"><img src="${esc(src)}" class="w-full h-full object-cover" alt="${esc(p.t)}" onerror="this.onerror=null;this.style.display='none'"/></div>`;
                 }).join('');
             const dotsHTML = imgs.length > 1
                 ? `<div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" id="detailDots">${imgs.map((_, idx) => `<span class="block rounded-full transition-all" style="width:6px;height:6px;background:${idx === 0 ? 'rgba(252,249,244,.95)' : 'rgba(252,249,244,.5)'}"></span>`).join('')}</div>`
@@ -4944,7 +4961,7 @@
             const c = document.getElementById("fCat")?.value || "mode";
             const ps = PROMPTS[c] || PROMPTS.mode;
             document.getElementById("promptChips").innerHTML = ps.map(p => `
-    <button onclick="addPr('${p.replace(/'/g, "\\'")}')" class="flex-shrink-0 px-3 py-1.5 rounded-full font-label text-[10px] font-bold text-on-surface-variant active:opacity-70" style="background:#e5e2dd">${p}</button>`).join("");
+    <button onclick="addPr('${jsAttr(p)}')" class="flex-shrink-0 px-3 py-1.5 rounded-full font-label text-[10px] font-bold text-on-surface-variant active:opacity-70" style="background:#e5e2dd">${p}</button>`).join("");
             const d = MKT[c];
             if (d && document.getElementById("mktAvgLbl")) document.getElementById("mktAvgLbl").textContent = `Mache: ${fp(d.med)} HTG`;
         }
@@ -5783,7 +5800,7 @@
                     </button>`);
                 }
                 if (['otp_confirmed','released','completed','delivered'].includes(order.status) && !order._rated) {
-                    buttons.push(`<button onclick="openRatingSheet('${id}','${order.seller_id}','${order.product_id}','${(order.seller_name||'Vandè').replace(/'/g,"\\'")}')"
+                    buttons.push(`<button onclick="openRatingSheet('${id}','${order.seller_id}','${order.product_id}','${jsAttr(order.seller_name||'Vandè')}')"
                         class="flex-1 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
                         style="background:rgba(0,102,111,.08);color:#00666f">
                         <span class="material-symbols-outlined align-middle" style="font-size:14px">star</span>
@@ -5834,7 +5851,7 @@
             const otherId = isSeller ? o.buyer_id : o.seller_id;
             const pidAttr = o.product_id ? `'${o.product_id}'` : 'null';
             const otherAttr = otherId ? `'${otherId}'` : 'null';
-            const partnerNameSafe = (partner || '').replace(/'/g, "\\'");
+            const partnerNameSafe = jsAttr(partner || '');
             const amountLabel = isSeller
                 ? `<span class="text-on-surface-variant">Ou resevwa:</span> <strong class="text-primary">${fp(o.net_amount || (o.total_amount - (o.fee_amount||0)))} HTG</strong>`
                 : `<strong class="text-primary">${fp(o.total_amount || 0)} HTG</strong>`;
@@ -7347,7 +7364,7 @@
                         return raw.length > 80 ? raw.slice(0, 80) + '…' : raw;
                     })();
                     const pidAttr = typeof c.productId === 'string' ? `'${c.productId.replace(/'/g, "\\'")}'` : c.productId;
-                    const partnerNameAttr = partnerName.replace(/'/g, "\\'");
+                    const partnerNameAttr = jsAttr(partnerName);
                     const otherIdAttr = `'${c.otherId}'`;
                     return `
       <button onclick="openConversation(${pidAttr}, ${otherIdAttr}, '${partnerNameAttr}')"
@@ -7733,10 +7750,10 @@
     ${v.idType ? `<p class="font-label text-[10px] text-on-surface-variant mb-2">Tip: <strong>${v.idType === 'cin' ? 'CIN' : v.idType === 'passport' ? 'Paspò' : v.idType}</strong></p>` : ''}
     ${v.status === 'pending' ? `
     <div class="flex gap-2">
-      <button onclick="approveVerif('${v.uid}','${v.name}')" class="flex-1 py-2.5 rounded-xl cta font-label font-bold text-sm active:scale-95">
+      <button onclick="approveVerif('${v.uid}','${jsAttr(v.name)}')" class="flex-1 py-2.5 rounded-xl cta font-label font-bold text-sm active:scale-95">
         <span class="material-symbols-outlined align-middle" style="font-size:15px">check_circle</span> Apwouve
       </button>
-      <button onclick="rejectVerif('${v.uid}','${v.name}')" class="flex-1 py-2.5 rounded-xl font-label font-bold text-sm text-secondary active:scale-95" style="background:rgba(152,68,62,.08)">
+      <button onclick="rejectVerif('${v.uid}','${jsAttr(v.name)}')" class="flex-1 py-2.5 rounded-xl font-label font-bold text-sm text-secondary active:scale-95" style="background:rgba(152,68,62,.08)">
         <span class="material-symbols-outlined align-middle" style="font-size:15px">cancel</span> Rejte
       </button>
     </div>`:
@@ -7780,9 +7797,9 @@
       <p class="font-label text-xs text-on-surface-variant">${u.role === 'seller' ? 'Vandè' : 'Achtè'} · ${u.status === 'active' ? 'Aktif' : u.status === 'banned' ? 'Bloke' : 'An atant'} · ${u.orders || 0} komand · ${u.sales || 0} lavant</p>
     </div>
     <div class="flex gap-1.5 flex-shrink-0">
-      ${u.status === 'active' ? `<button onclick="toast('${u.name} bloke')" class="px-2.5 py-1.5 rounded-lg font-label text-[10px] font-bold text-secondary active:opacity-70" style="background:rgba(152,68,62,.08)">Bloke</button>` : ''}
+      ${u.status === 'active' ? `<button onclick="toast('${jsAttr(u.name)} bloke')" class="px-2.5 py-1.5 rounded-lg font-label text-[10px] font-bold text-secondary active:opacity-70" style="background:rgba(152,68,62,.08)">Bloke</button>` : ''}
       ${u.status === 'banned' ? `<span class="font-label text-[10px] font-bold px-2 py-1 rounded-full" style="background:#e5e2dd;color:#3d4949">Bloke</span>` : ''}
-      ${u.role === 'seller' && !u.verified ? `<button onclick="toast('${u.name} verifye')" class="px-2.5 py-1.5 rounded-xl cta font-label text-[10px] font-bold active:scale-95">Apwouve</button>` : ''}
+      ${u.role === 'seller' && !u.verified ? `<button onclick="toast('${jsAttr(u.name)} verifye')" class="px-2.5 py-1.5 rounded-xl cta font-label text-[10px] font-bold active:scale-95">Apwouve</button>` : ''}
     </div>
   </div>`).join("");
         }
@@ -8308,7 +8325,7 @@
                 const photo = v.photos?.[side];
                 return `<div class="aspect-[4/3] rounded-lg overflow-hidden cursor-pointer active:opacity-80 transition-opacity"
                      style="background:#f0ede8;${photo ? '' : 'border:1.5px dashed #bcc9c8'}"
-                     onclick="openIDModal('${v.uid}','${v.name}','${side}')">
+                     onclick="openIDModal('${v.uid}','${jsAttr(v.name)}','${side}')">
           ${photo
                         ? `<img alt="Foto pwodwi" src="${esc(photo.publicUrl || photo.dataUrl)}" class="w-full h-full object-cover" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'w-full h-full flex flex-col items-center justify-center gap-1\\'><span class=\\'material-symbols-outlined text-on-surface-variant\\' style=\\'font-size:20px\\'>broken_image</span><p class=\\'font-label text-[9px] text-on-surface-variant\\'>Image indisponib</p></div>'"/>`
                         : `<div class="w-full h-full flex flex-col items-center justify-center gap-1">
@@ -8321,11 +8338,11 @@
     </div>
     <p class="font-label text-[10px] text-on-surface-variant mb-3">Klike sou yon foto pou wè an gran · Verifye non, dat, foto</p>
     <div class="flex gap-2">
-      <button onclick="approveVerif('${v.uid}','${v.name}')"
+      <button onclick="approveVerif('${v.uid}','${jsAttr(v.name)}')"
               class="flex-1 py-2.5 rounded-xl cta font-label font-bold text-sm active:scale-95">
         <span class="material-symbols-outlined align-middle" style="font-size:14px">check_circle</span> Apwouve
       </button>
-      <button onclick="openRejectSheet('${v.uid}','${v.name}')"
+      <button onclick="openRejectSheet('${v.uid}','${jsAttr(v.name)}')"
               class="flex-1 py-2.5 rounded-xl font-label font-bold text-sm text-secondary active:scale-95"
               style="background:rgba(152,68,62,.08)">
         <span class="material-symbols-outlined align-middle" style="font-size:14px">cancel</span> Rejte
@@ -8965,13 +8982,13 @@
                     } else {
                         badge = '<span class="font-label text-[10px] font-bold px-2 py-1 rounded-full" style="background:#fee2e2;color:#991b1b">Banni</span>';
                     }
-                    actionBtn = '<button onclick="unblockUser(\'' + u.uid + '\',\'' + (u.name || '').replace(/'/g, "\\'") + '\')" class="px-2.5 py-1.5 rounded-lg font-label text-[10px] font-bold active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">Debloke</button>';
+                    actionBtn = '<button onclick="unblockUser(\'' + u.uid + '\',\'' + jsAttr(u.name || '') + '\')" class="px-2.5 py-1.5 rounded-lg font-label text-[10px] font-bold active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">Debloke</button>';
                 } else {
                     badge = u.status === 'pending'
                         ? '<span class="font-label text-[10px] font-bold px-2 py-1 rounded-full" style="background:#e0e7ff;color:#3730a3">An atant</span>'
                         : '';
                     actionBtn = u.status === 'active'
-                        ? '<button onclick="openBlockUserSheet(\'' + u.uid + '\',\'' + (u.name || '').replace(/'/g, "\\'") + '\')" class="px-2.5 py-1.5 rounded-lg font-label text-[10px] font-bold text-secondary active:opacity-70" style="background:rgba(152,68,62,.08)">Bloke</button>'
+                        ? '<button onclick="openBlockUserSheet(\'' + u.uid + '\',\'' + jsAttr(u.name || '') + '\')" class="px-2.5 py-1.5 rounded-lg font-label text-[10px] font-bold text-secondary active:opacity-70" style="background:rgba(152,68,62,.08)">Bloke</button>'
                         : '';
                 }
                 return '<div class="bg-surface-container-lowest rounded-xl p-4 amb flex items-center gap-3">'
@@ -13044,7 +13061,7 @@
             <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.6875rem">${esc(acc.t)}</p>
             <div class="flex items-center justify-between">
               <span class="font-headline font-extrabold text-primary" style="font-size:.75rem">${fp(acc.p)}</span>
-              <button onclick="event.stopPropagation();addToLook('${acc.id}','${acc.t.replace(/'/g, "\\'")}',${acc.p})"
+              <button onclick="event.stopPropagation();addToLook('${acc.id}','${jsAttr(acc.t)}',${acc.p})"
                       class="stl-add-btn" style="font-size:10px;padding:4px 8px">+ Ajoute</button>
             </div>
           </div>
@@ -13075,7 +13092,7 @@
     </div>
     <div class="flex gap-3 overflow-x-auto noscroll pb-1">
       ${VIDEO_REVIEWS.map(vr => `
-      <div class="video-thumb" onclick="openVideoPlayer('${vr.id}','${vr.reviewer}')">
+      <div class="video-thumb" onclick="openVideoPlayer('${vr.id}','${jsAttr(vr.reviewer)}')">
         <div style="width:100%;height:100%;background:linear-gradient(180deg,${vr.color}30,${vr.color}60)"></div>
         <div class="video-thumb-overlay">
           <div class="video-play-icon">
