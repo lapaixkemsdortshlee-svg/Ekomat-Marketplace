@@ -60,6 +60,40 @@ kouch men:
 - **Tès e2e** pa kouvri tout flow — sèlman smoke + a11y. Atak business-
   logik (peman, eskwo) bezwen revizyon manyèl.
 
+## Odit sekirite — 2026-07-02
+
+Odit konplè (kòd estatik + advisors Supabase live). Rezilta yo trete pa lo :
+
+**P0 — XSS estoke (korije, PR #105)**
+- `onclick="fn('${non}')"` : non vandè/itilizatè/reviewer te enterpole brital →
+  JS abitrè te ka kouri **nan sesyon admin lan**. Korije ak nouvo helper
+  `jsAttr()` (echape JS apre sa HTML-atribi ; pwouve anti-breakout, 9/9 payload).
+  Aplike sou approveVerif, rejectVerif, openIDModal, openRejectSheet,
+  `toast(u.name)`, openVideoPlayer, openConversation, openRatingSheet, addToLook,
+  block/unblock.
+- `alt="${p.t}"` / `src="${src}"` nan kawousèl pwodwi → `esc()`.
+- **Règ**: done nan HTML → `esc()` ; done nan `onclick`/chèn JS atribi → `jsAttr()`.
+
+**P1 — Dirsisman (`migration-2026-harden-p1.sql`)**
+- `search_path` fikse (`''`) sou 3 fonksyon trigger ki te rete
+  (`generate_order_number`, `update_updated_at`, `update_updated_at_column`).
+- `REVOKE EXECUTE ... FROM anon` sou RPC admin (`escrow_overview`,
+  `escrow_attention_orders`, `funnel_overview`, `error_overview`) + machin escrow
+  (`advance_order_status`, `try_seller_otp`). Supabase auto-grante `anon`, konsa
+  `REVOKE FROM PUBLIC` pa t ase. Pa t eksplwatab (gad entèn `is_admin`/`auth.uid()`)
+  men prensip mwens privilèj. `log_error` rete anon (kapti erè front anvan login).
+
+**Info / aksepte**
+- `referral_rewards` : RLS san policy → ajoute policy SELECT admin
+  (`migration-2026-referral-rewards-policy.sql`). Ekriti rete fèmen (trigger sèlman).
+- CSP `unsafe-eval` : **aksepte** — nesesè pou CDN Tailwind + Babel onboarding.
+  Diminye ak echapman P0. Retire l sèlman si nou pre-konpile.
+- `pg_trgm`/`pg_net` nan `public` : aksepte (deplasman riskan sou prod).
+- Kle Firebase Web : piblik pa konsepsyon (wè seksyon anwo).
+
+**Aksyon dashboard ki rete** : aktive Leaked Password Protection ; deplwaye
+migrasyon yo (`harden-p1`, `referral-rewards-policy`) ; relanse advisors apre.
+
 ## Wotasyon sekrè
 
 Lè yon sekrè konpwomèt:
