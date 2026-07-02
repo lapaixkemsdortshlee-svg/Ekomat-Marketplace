@@ -7,6 +7,31 @@
 
 ---
 
+## 2026-07-02 : RÉCAP GLOBAL DE SESSION — Objectifs A/B/C avancés + clôture
+
+Session dense. Les trois objectifs (`docs/QA-PLAN.md`) sont maintenant solides.
+
+**PR mergées aujourd'hui : #99 → #103.**
+
+- **#99** — Finition Objectif A + démarrage B : sweep a11y (`alt` sur tous les `<img>`), Open Graph/Twitter, durcissement XSS HTML (helper `esc()` sur ~76 sinks, dont un vrai XSS stocké dans le chat admin). Libération de 3 commandes bloquées → 6426 HTG dus aux vendeurs.
+- **#101** — Parrainage bout-en-bout : le trou était le **crédit parrain** (`referred_by` stocké mais parrain jamais récompensé). `migration-2026-referral-rewards.sql` : trigger qui donne 100 HTG one-time au parrain quand un filleul complète une commande. + invites au bon moment (post-achat/post-vente) + message WhatsApp. + image OG dédiée `og-image.png` 1200×630.
+- **#102** — SEO/AI-SEO : `robots.txt`, `sitemap.xml`, `llms.txt`, 6 landing pages Kreyòl sous `/l/` (contenu unique + JSON-LD), générateur `scripts/gen-landing.mjs`.
+- **#103** — Mesure funnel AARRR : `migration-2026-funnel.sql` (`funnel_overview()` dérivée des tables existantes, gratuite, rétroactive) + carte admin « Kwasans — Antònwa AARRR ».
+
+**Décisions de Thrasher :**
+- Refactor des sinks XSS en contexte JS (`onclick`) → différé, tracké dans **issue #100**.
+- **Ads reportées** (pas d'abonnement payant pour l'instant) → on a fait la mesure gratuite à la place.
+- Déploiements Supabase : Thrasher a confirmé qu'il les fait au fur et à mesure.
+
+**À déployer (SQL Editor) — seule action restante côté Thrasher :**
+`migration-2026-referral-rewards.sql` et `migration-2026-funnel.sql` (+ vérifier `error-logs`/`promo-hardening` si pas encore faits). Puis payer les 6426 HTG aux vendeurs.
+
+**Note technique récurrente :** après chaque merge (squash ou merge commit), le stop-hook signale le commit de merge créé par GitHub (`noreply@github.com`) comme « unverified ». C'est normal : ce n'est pas un de nos commits, il est déjà sur `main`, on ne le réécrit pas. Nos commits à nous sont bien signés `noreply@anthropic.com`.
+
+**Reste pour plus tard :** Objectif A → refactor XSS JS-context (#100) + passe QA navigateur ; Objectif B → ads + leviers organiques quand budget/envie ; routine advisors Supabase ~1×/semaine.
+
+---
+
 ## 2026-07-02 : Objectif B — Mesure du funnel AARRR (gratuit)
 
 - Thrasher a confirmé : **déploiements Supabase déjà faits** (rien en attente de son côté) ; **ads mises de côté** (pas d'abonnement payant pour l'instant).
