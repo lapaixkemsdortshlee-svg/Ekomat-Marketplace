@@ -7,6 +7,23 @@
 
 ---
 
+## 2026-07-02 (session 3) : Extension de l'arsenal de skills (ASO, visuel, décision, recherche, conversion)
+
+Thrasher a fait installer plusieurs skills externes et un skill maison, chacun évalué avant install puis mergé via une petite PR dédiée.
+
+- **`find-skills` activé** comme méta-skill (chercher/installer via `npx skills find` / `add`). Ça bouche le dernier trou : la boîte à outils est maintenant auto-extensible.
+- **Installés + mergés :**
+  - **ASO suite** (Eronred/aso-skills, 39 skills) pour la sortie stores : `app-marketing-context`, `aso-audit`, `keyword-research`, `metadata-optimization`, `android-aso`, `localization`, `screenshot-optimization`, `app-preview-video`, `app-launch`, `app-rejection-recovery`, `rating-prompt-strategy`, etc. (#112)
+  - **visual-skills** (smixs) : `image`/`video` de génération de prompts IA (Nano Banana, GPT Image, Kling, Veo). Ils **remplacent** les anciens `image`/`video` marketing sous ces noms (récupérables via git). Choix validé par Thrasher. (#112)
+  - **launch** (coreyhaines31) (#112)
+  - **markitdown** (Microsoft, wrappé via `uvx`) : convertit PDF/Word/PPT/Excel/images/audio/HTML vers Markdown, sans install permanent (adapté à l'environnement éphémère). Testé sur le PDF du guide de déploiement. (#113)
+  - **claude-council** (TorpedoD) : stress-test de décisions à 5 conseillers + débat + synthèse, tourne dans Claude Code, **sans clé API**. Revue sécu OK avant merge. Pour un fondateur solo qui décide seul. (#114)
+  - **deep-research maison** : recherche multi-sources itérative (query → lecture → apprentissages cités → récursion → rapport) via `WebSearch`/`WebFetch`, **sans clé API ni service payant**. Alternative gratuite à dzhng/deep-research. Modes quick/standard/deep, rapport sous `research/`. (#115)
+- **Évalués puis écartés :** `llm-council` (app autonome + clés API) et `dzhng/deep-research` (Firecrawl + OpenAI payants → remplacé par le skill maison). `superpowers` : vérifié déjà installé (15 skills présents).
+- **Process récurrent :** comme la branche `claude/alita-rllci2` est mergée à chaque fois, on repart de `main` à jour (`git checkout -B ... origin/main`, push force-with-lease), draft PR, CI vérifiée, merge. 4 PR au total (#112 à #115).
+
+---
+
 ## 2026-07-02 (session 2) : 🎯 Objectifs A/B/C ATTEINTS + guide de déploiement mobile
 
 Thrasher acte la clôture. Mis à jour de `context/CONTEXT.md` (section « Objectifs déjà ATTEINTS »).
