@@ -69,6 +69,8 @@ Reste :
 
 - [x] Durcissement XSS (DOM) — helper `esc()` (contexte HTML, ~76 sites) **+ helper `jsAttr()` (contexte JS)** pour les données non fiables interpolées dans `onclick="fn('${...}')"`. Corrigé (issue #100) : noms vendeur/utilisateur/reviewer dans approveVerif/rejectVerif/openIDModal/openRejectSheet/toast/openVideoPlayer/openConversation/openRatingSheet/addToLook/block-unblock + titre produit `alt="${esc(p.t)}"` (résidu du sweep). `jsAttr()` prouvé anti-breakout (9/9 payloads round-trip en chaîne inerte). Reste : passe QA navigateur.
 
+- [x] Durcissement P1 (advisors résiduels) — `supabase/migration-2026-harden-p1.sql` : (1) `search_path` figé (`''`) sur les 3 dernières fonctions trigger (`generate_order_number`, `update_updated_at`, `update_updated_at_column` — corps vérifiés : builtins/refs qualifiés, donc sûr) ; (2) `REVOKE EXECUTE ... FROM anon` sur les RPC admin (`escrow_overview`/`escrow_attention_orders`/`funnel_overview`/`error_overview`) et sur `advance_order_status`/`try_seller_otp` (Supabase auto-grante `anon` ; les gardes internes `is_admin`/`auth.uid()` rendaient ça non exploitable, mais moindre privilège). `log_error` reste anon (capture erreurs front pré-auth). **À déployer** (SQL Editor). CSP `unsafe-eval` gardé (requis par Tailwind CDN + Babel onboarding) — documenté, à retirer si on précompile un jour.
+
 > **Reste hors-code (dashboard Supabase)** : activer « Leaked password protection » (Auth) ; extensions `pg_trgm`/`pg_net` dans `public` laissées telles quelles (déplacement risqué). **Routine** : relancer `get_advisors` (security + performance) après chaque migration.
 
 ## P3 — Prépa MonCash (reporté, débloqué quand Digicel arrive)

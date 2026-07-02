@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-02 (session 2) : Audit sécurité → P1 (durcissement)
+
+P0 mergé (#105). **P1 = préparé** (`migration-2026-harden-p1.sql`, à déployer par Thrasher au SQL Editor). Bodies + grants inspectés via Supabase MCP (read-only) avant d'écrire, pour ne rien casser.
+
+- **search_path figé** (`''`) sur les 3 fonctions trigger encore flaguées (`generate_order_number`, `update_updated_at`, `update_updated_at_column`) — corps vérifiés (builtins / `nextval('public.orders_id_seq')` qualifié), donc sûr.
+- **REVOKE anon** sur les RPC admin (`escrow_overview`, `escrow_attention_orders`, `funnel_overview`, `error_overview`) + `advance_order_status` + `try_seller_otp`. Constat : Supabase **auto-grante `anon`** sur les nouvelles fonctions, donc mon `REVOKE FROM PUBLIC` initial ne suffisait pas. Non exploitable (gardes internes `is_admin`/`auth.uid()`) mais moindre privilège. `log_error` reste anon (voulu).
+- **CSP `unsafe-eval`** : gardé — requis par le CDN Tailwind + Babel de `onboarding.html`. Documenté ; à retirer seulement si on précompile.
+- **Restent hors-code (dashboard)** : activer Leaked Password Protection ; extensions `pg_trgm`/`pg_net` dans public (déplacement risqué, laissé). → ce sera le lot « Info/accepté ».
+
+---
+
 ## 2026-07-02 (session 2) : Audit sécurité → correction P0 (XSS stockés)
 
 Après un audit complet (code statique + advisors Supabase live), on corrige les findings **étape par étape**. **P0 = terminé.**
