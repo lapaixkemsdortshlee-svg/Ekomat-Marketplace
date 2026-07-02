@@ -7,6 +7,15 @@
 
 ---
 
+## 2026-07-02 (session 2) : harden-p1c — retirer les fonctions trigger de l'API
+
+Advisors re-vérifiés après `harden-p1b` : `advance_order_status`/`try_seller_otp` bien retirées de `anon` ✅. Restaient des WARN `0028`/`0029` sur des **fonctions trigger** exposées inutilement comme RPC. → `migration-2026-harden-p1c.sql` : `REVOKE EXECUTE FROM PUBLIC, anon, authenticated` sur `grant_referral_reward`, `handle_new_user`, `promo_codes_inc_used`, `update_seller_rating`, `rls_auto_enable`, `generate_order_number`, `update_updated_at`, `update_updated_at_column`.
+- **Sûr** : une fonction trigger n'a pas besoin du privilège EXECUTE pour se déclencher (Postgres ne le vérifie pas). Vérifié aussi qu'aucune n'est appelée en `rpc()` dans le repo. **À déployer.**
+- Laissées volontairement : `log_error`/`increment_views` (anon voulu), `validate_promo_code` (RPC checkout), `is_admin` (utilisée dans les policies RLS).
+- Décisions Thrasher : Leaked Password Protection = **plus tard** (plan pro) ; `pg_trgm`/`pg_net` + `0029` sur les vraies RPC = accepté.
+
+---
+
 ## 2026-07-02 (session 2) : Advisors post-déploiement — complément harden-p1b
 
 Thrasher a déployé les migrations. Re-run des advisors sécurité :
