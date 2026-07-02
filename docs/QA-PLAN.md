@@ -97,9 +97,9 @@ Reste :
 - [x] Message de partage en Kreyòl optimisé (WhatsApp first) — `_referralShareText()` réécrit (WhatsApp-first, valeur des deux côtés, emoji, lien) + copie du sheet mise à jour (« Toulède genyen »).
 
 ### SEO & visibilité
-- [~] Audit SEO technique — **Open Graph / Twitter + apple-touch-icon + canonical ajoutés** (aperçu de partage WhatsApp/Facebook) ; **image OG dédiée `og-image.png` 1200×630** (carte de marque : wordmark, tagline Kreyòl, badges eskwo/vandè/MonCash, drapeau haïtien) + `twitter:card=summary_large_image` + `og:image:width/height/alt` ; tests dans `tests/ui.spec.mjs` (dont asset servi). Reste : sitemap, perf mobile.
-- [ ] AI-SEO : être cité par les assistants (llms.txt, contenu structuré)
-- [ ] Pages d'atterrissage par catégorie / ville
+- [x] Audit SEO technique — **Open Graph / Twitter + apple-touch-icon + canonical** ; **image OG dédiée `og-image.png` 1200×630** + `twitter:card=summary_large_image` ; **`robots.txt` + `sitemap.xml`** (8 URLs) ; tests dans `tests/ui.spec.mjs` (assets servis). Reste : perf mobile.
+- [x] AI-SEO : être cité par les assistants — **`llms.txt`** (résumé bilingue Kreyòl/EN : fonctionnement escrow, catégories, villes, pages clés) + **JSON-LD structuré** (BreadcrumbList + CollectionPage/Organization) sur chaque landing page.
+- [x] Pages d'atterrissage par catégorie / ville — 6 landing pages Kreyòl sous `/l/` (Elektwonik, Mòd, Bote/Kosmetik, Atizana + Pòtoprens, Cap-Haïtien), contenu unique, cross-liées, CTA vers l'app. Générées par `scripts/gen-landing.mjs` (extensible via le tableau `PAGES`). Servies en statique (Vercel sert les fichiers avant le rewrite catch-all).
 
 ### Acquisition payante (quand prêt)
 - [ ] Stratégie ads Meta/Google ciblée diaspora + Haïti
