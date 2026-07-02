@@ -225,6 +225,25 @@
             }
         }
 
+        /* ── Success state: icon entrance + confetti celebration ── */
+        @keyframes succIn {
+            0%   { opacity: 0; transform: scale(.4); }
+            60%  { opacity: 1; transform: scale(1.15); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes confettiFall {
+            0%   { transform: translateY(-12vh) rotate(0deg);   opacity: 1; }
+            100% { transform: translateY(88vh)  rotate(720deg); opacity: 0; }
+        }
+        .succ-anim { animation: succIn .5s cubic-bezier(.18,.89,.32,1.28) both; }
+        .confetti-pc {
+            position: fixed; top: 0; border-radius: 2px;
+            pointer-events: none; will-change: transform, opacity;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .succ-anim { animation: none; }
+        }
+
         @keyframes slideup {
             from {
                 opacity: 0;
@@ -2602,7 +2621,7 @@
     </div>
 
     <!-- Success overlay -->
-    <div id="successOverlay"
+    <div id="successOverlay" role="status" aria-live="polite" aria-atomic="true"
         class="hidden fixed inset-0 z-[200] flex flex-col items-center justify-center px-8 text-center"
         style="background:#fcf9f4;animation:fu .3s ease">
         <div id="succEmoji" class="mb-5 flex justify-center"><span class="material-symbols-outlined"
@@ -10128,12 +10147,34 @@
         window.requestFCMPermission = requestFCMPermission;
 
         // Push notifications handled by Supabase Realtime
-        function showSuccess(emoji, title, body, escrow, btnLabel, invite) {
+        // Selebrasyon konfeti self-contained (san depandans). Respekte
+        // prefers-reduced-motion. Sèvi sèlman nan gwo moman kè kontan yo
+        // (vann fèt / livrezon konfime), pou peye emosyon an san fatige.
+        function fireConfetti() {
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const colors = ['#00666f', '#97422b', '#E0A82E', '#00209F', '#D21034', '#0aa06e'];
+            const layer = document.createElement('div');
+            layer.style.cssText = 'position:fixed;inset:0;z-index:210;pointer-events:none;overflow:hidden';
+            document.body.appendChild(layer);
+            for (let i = 0; i < 44; i++) {
+                const pc = document.createElement('div');
+                const size = 7 + Math.random() * 6;
+                const dur = 2.2 + Math.random() * 1.4;
+                pc.className = 'confetti-pc';
+                pc.style.cssText = `left:${Math.random() * 100}vw;width:${size}px;height:${size * 1.5}px;`
+                    + `background:${colors[i % colors.length]};`
+                    + `animation:confettiFall ${dur}s cubic-bezier(.25,.46,.45,.94) ${Math.random() * 0.25}s forwards`;
+                layer.appendChild(pc);
+            }
+            setTimeout(() => layer.remove(), 4200);
+        }
+
+        function showSuccess(emoji, title, body, escrow, btnLabel, invite, celebrate) {
             const ov = document.getElementById("successOverlay"); ov.classList.remove("hidden");
             const iconMap = { "verified_icon": "verified", "hourglass_icon": "hourglass_top", "check": "check_circle", "default": "check_circle" };
             const icoName = iconMap[emoji] || "check_circle";
             const icoColor = { "verified_icon": "#00666f", "hourglass_icon": "#97422b" }[emoji] || "#00666f";
-            document.getElementById("succEmoji").innerHTML = `<span class="material-symbols-outlined fi" style="font-size:72px;color:${icoColor}">${icoName}</span>`;
+            document.getElementById("succEmoji").innerHTML = `<span class="material-symbols-outlined fi succ-anim" style="font-size:72px;color:${icoColor}">${icoName}</span>`;
             document.getElementById("succTitle").textContent = title;
             document.getElementById("succBody").innerHTML = body.replace(/\n/g, "<br/>");
             document.getElementById("succEscrow").textContent = escrow;
@@ -10150,6 +10191,10 @@
                     inv.onclick = null;
                 }
             }
+            // Peye emosyon an nan moman festif yo (vann/livrezon).
+            if (celebrate) fireConfetti();
+            // A11y: mete focus sou bouton prensipal la pou Enter fèmen ekran an.
+            try { document.getElementById("succBtn").focus({ preventScroll: true }); } catch (e) {}
         }
 
         function closeSuccess() { document.getElementById("successOverlay").classList.add("hidden"); }
@@ -11000,7 +11045,7 @@
                 showSuccess('check', 'Vann fèt! 🎉',
                     'Livrezon konfime. Lajan an ap libere pou ou.\nMèsi dèske w ap fè AyitiMarket grandi!',
                     'Envite yon zanmi vann tou — chak moun ki achte ak envitasyon w ba ou 100 HTG rabè.',
-                    'Byen resevwa', true);
+                    'Byen resevwa', true, true);
                 // Notify admins: escrow ready to release
                 db.from('profiles').select('id').eq('role', 'admin').then(({ data: admins }) => {
                     (admins || []).forEach(a => db.from('notifications').insert({
