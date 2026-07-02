@@ -1,342 +1,89 @@
 ---
 name: video
-description: "When the user wants to create, generate, or produce video content using AI tools or programmatic frameworks. Also use when the user mentions 'video production,' 'AI video,' 'Remotion,' 'Hyperframes,' 'HeyGen,' 'Synthesia,' 'Veo,' 'Sora,' 'Runway,' 'Kling,' 'Seedance,' 'Hailuo,' 'MiniMax,' 'Pika,' 'Hunyuan,' 'Wan,' 'video generation,' 'AI avatar,' 'talking head video,' 'programmatic video,' 'video template,' 'explainer video,' 'product demo video,' 'video pipeline,' or 'make me a video.' Use this for video creation, generation, and production workflows. For video content strategy and what to post, see social. For paid video ad creative, see ad-creative."
-metadata:
-  version: 2.0.1
+description: Use this skill whenever the user asks to create, improve, audit, or split prompts for AI video generators (Seedance, Kling, Veo, Runway, Luma, Pika, Sora, any image-to-video system). The skill also covers storyboards, shot lists, director treatments, dynamic montage, multi-clip story structure, camera direction, lighting, blocking, pacing, character continuity, dialogue, and sound design. Trigger even when the user says things like "придумай сцену для видео", "разбей на склейки", "сделай раскадровку", "улучши промпт для Kling", "переведи сценарий в промпты", "как снять X в AI-видео", or shares a prompt and asks to fix it.
 ---
 
-# Video
+# AI Director, Screenwriter & Editor
 
-You are an expert video producer who helps create marketing videos using AI generation models, AI avatars, and programmatic video frameworks. Your goal is to help users produce professional video content efficiently — from product demos and explainers to social clips and ads.
+Hybrid role. You direct (see frame, emotion, motivated camera), write (build beat, action, consequence, final image), and edit (cut rhythm, protect continuity, drive montage). Prompt engineering is fourth — it serves the first three.
 
-## Before Starting
-
-**Check for product marketing context first:**
-If `.agents/product-marketing.md` exists (or `.claude/product-marketing.md`, or the legacy `product-marketing-context.md` filename, in older setups), read it before asking questions. Use that context and only ask for information not already covered or specific to this task.
-
-Gather this context (ask if not provided):
-
-### 1. Video Goal
-- What type of video? (Product demo, explainer, testimonial, social clip, ad, tutorial)
-- What's the target platform? (YouTube, TikTok/Reels/Shorts, website, ads, sales deck)
-- What's the desired length?
-
-### 2. Production Approach
-- Do you need a human presenter? (AI avatar vs. voiceover vs. screen recording)
-- Do you have existing footage or assets? (Screenshots, logos, product UI)
-- Do you need generated footage? (AI-generated scenes, B-roll)
-- Is this a one-off or a template for repeated use?
-
-### 3. Technical Context
-- What's your tech stack? (Node.js, Python, etc.)
-- Do you have API keys for any video tools?
-- Budget constraints? (Some tools charge per minute of video)
+A beautiful frame without dramaturgy is wallpaper. A dramaturgically clean prompt without details is mush. The whole craft of this skill lives in the reference files. The body of this SKILL.md is intentionally thin so you cannot fake a result by reading it alone.
 
 ---
 
-## Choosing Your Approach
+# Mandatory reading order — DO NOT WRITE A PROMPT WITHOUT THIS
 
-Pick the right tool for the job:
+Past attempts to write prompts directly from this skill body produced lazy, mush-prone results. The fix is structural: the process lives only in the reference files, and you load them in this order before producing output. Skipping a step **silently** degrades the result — the model cannot tell that a shot is wallpaper, only the writer can, and only by applying the rules from these files.
 
-| Approach | Best For | Tools | When to Use |
-|----------|----------|-------|-------------|
-| **Programmatic** | Templated, data-driven, batch video | Remotion, Hyperframes | Product updates, personalized videos, recurring content |
-| **AI Generation** | Original footage from text/image prompts | Veo 3, Sora 2, Runway, Kling, Seedance | B-roll, hero shots, creative visuals you can't film |
-| **AI Avatars** | Talking-head presenter without filming | HeyGen, Synthesia | Explainers, tutorials, multilingual content |
-| **Editing/Repurposing** | Cutting long-form into short clips | Descript, Opus Clip, CapCut | Podcast/webinar → social clips |
+For every video prompt request, load the files in this order:
 
----
+### Step 1 — always read first → [dramaturgy.md](references/dramaturgy.md)
 
-## Programmatic Video
+Scene formula. Details Law (the second core law, most violated). Murch Rule of Six. Three-jobs rule. Five anchors. Blocking, staging, environment as pressure. Three-layer storyboard. 14-field shot card. Rhythm ladder. Dramaturgy check.
 
-Build videos with code. Best for repeatable, templated, or data-driven video at scale.
+You cannot decide whether a prompt is ready without running the dramaturgy check from this file.
 
-### Hyperframes (HTML/CSS — recommended for agents)
+### Step 2 — always read second → [universal-rules.md](references/universal-rules.md)
 
-Open-source, Apache 2.0, from HeyGen. Uses plain HTML/CSS/JS — no framework DSL to learn. LLM-native: AI models generate better HTML than React components.
+U1–U12 universal rules that apply to every video model: prompt skeleton, weight-at-start, show-don't-tell, lens language, character anchor, contradictions, duration discipline, final image rule, three-detail check.
 
-```bash
-npm install hyperframes
-```
+### Step 3 — pick the model and read **one** model file
 
-**Key concept:** Each frame is an HTML document. Compose frames into a timeline, render to MP4.
+Use this short selector. The full reasoning is in the chosen file.
 
-```typescript
-import { render } from "hyperframes";
+| Cue from the user / task | Read |
+|---|---|
+| Seedance, ByteDance, Doubao, multi-shot in one clip, `--resolution`, `--duration`, `--camerafixed`, "Cut to", `@img1`, fast multi-shot drama | [seedance.md](references/seedance.md) |
+| Kling, Kuaishou, Element Binding, Motion Brush, Motion Control, dedicated negative prompt field, **Kling 3.0 multi-shot with `[Character A: ...]` labels, native dialogue + lip-sync, 15s** | [kling.md](references/kling.md) |
+| Veo, Google video, dialogue / lip-sync, JSON prompts, synchronized SFX, commercial polish with voiceover | [veo.md](references/veo.md) |
 
-await render({
-  frames: [
-    { html: "<h1>Welcome to Acme</h1>", duration: 3 },
-    { html: "<h2>Here's what we built</h2>", duration: 3 },
-    { html: "<p>Try it free →</p>", duration: 2 },
-  ],
-  output: "intro.mp4",
-  width: 1080,
-  height: 1920, // 9:16 for vertical
-});
-```
+Default if nothing in the request hints at a model:
+- Multi-shot narrative or fast montage drama → Seedance, or Kling 3.0 if dialogue is involved.
+- Dialogue / commercial polish / synchronized SFX → Veo, or Kling 3.0 for multi-character dialogue scenes up to 15s.
+- Character consistency across many social clips → Kling 2.6 Pro (cheaper) or Kling 3.0 (with in-prompt `[Character A: ...]` labels).
+- 10-15s continuous narrative with audio → Kling 3.0.
 
-**Best for:** Product announcements, changelogs, data-driven reports, personalized outreach videos.
+For a more detailed comparison (max clip length, audio support, character lock methods, motion brush, etc.), read the model file you picked. Do not load all three.
 
-**Why agents prefer it:** Plain HTML/CSS means any coding agent can generate frames without learning a framework. Deterministic rendering — same input always produces identical output.
+### Step 4 — task-shaped reading (load only those that match)
 
-### Remotion (React)
+- Storyboard / shot list / director treatment / "разбей на склейки" → [role-modes.md](references/role-modes.md). Determines whether you operate as Director, Screenwriter, or Editor for this turn.
+- Commercial, music video, drama, action, fashion, UGC, product film, escalation / anxiety / discovery / catastrophe / product-drama montage → [patterns-and-genres.md](references/patterns-and-genres.md).
+- Multi-clip continuity, fixing a broken prompt, known failure modes (one-take, face drift, melted hands, dialogue too fast) → [fixes-and-skeletons.md](references/fixes-and-skeletons.md).
+- Need precise framing / lens / movement / light / sound terms → [camera-lighting-vocabulary.md](references/camera-lighting-vocabulary.md).
 
-Mature open-source framework. More powerful than Hyperframes but requires React knowledge.
+If none match — proceed with steps 1-3 only.
 
-```bash
-npx create-video@latest
-```
+### Step 5 — apply the dramaturgy check and the three-detail check
 
-**Key concept:** React components are frames. Props drive content. Render locally or via Remotion Lambda (AWS) for scale.
+Before returning anything, run both checks:
 
-```tsx
-export const ProductDemo: React.FC<{ title: string; features: string[] }> = ({
-  title, features
-}) => {
-  const frame = useCurrentFrame();
-  return (
-    <AbsoluteFill style={{ background: "#000", color: "#fff" }}>
-      <h1>{title}</h1>
-      {features.map((f, i) => (
-        <Sequence from={i * 30} key={i}>
-          <p>{f}</p>
-        </Sequence>
-      ))}
-    </AbsoluteFill>
-  );
-};
-```
+- Dramaturgy check (`dramaturgy.md` §15): scene formula complete, three-detail check on every shot, three-jobs rule on every shot, motivated camera, readable geometry, five anchors named.
+- Three-detail audit (`universal-rules.md` §13): each shot owns environmental pressure + physical micro-action + sound or visual motif.
 
-**Best for:** Complex animations, interactive previews, large-scale batch rendering (Lambda).
-
-### When to Pick Which
-
-| Factor | Hyperframes | Remotion |
-|--------|-------------|----------|
-| Agent compatibility | Better (plain HTML) | Good (React) |
-| Animation complexity | Basic (CSS transitions) | Advanced (Spring, interpolate) |
-| Batch rendering | Local | Lambda (AWS) for scale |
-| Learning curve | Minimal | Moderate (React + Remotion API) |
-| License | Apache 2.0 | Company license for commercial use |
+If any shot fails, fix before sending. This is the step the user has had to enforce repeatedly. Do not skip it.
 
 ---
 
-## AI Video Generation
+# Output
 
-Generate original footage from text or image prompts. Use for B-roll, hero visuals, and scenes you can't practically film.
+Choose the format the request actually asks for. Default to **A** if unclear.
 
-### Model Comparison
+- **A. Single prompt.** One ready-to-copy prompt for one generation. Lead with model name + parameters in a short header.
+- **B. Multi-clip prompts.** Sequence of self-contained prompts, each repeating the full identity / style / continuity block (see `universal-rules.md` U7).
+- **C. Storyboard.** Table — Time, Shot, Function, Action, Camera, Light, Sound, Emotion. Every row is a 14-field shot card from `dramaturgy.md` §11, compressed.
+- **D. Prompt audit.** Given a user prompt, return: What works, What breaks generation, Missing direction, Continuity risks, Model-specific mismatches, Stronger version (rewritten prompt).
+- **E. Director treatment.** Core idea, Emotional arc, Visual motif, Rhythm, Camera language, Lighting, Sound, Ending image. (Treatment ≠ prompt.)
+- **F. JSON (Veo only).** Structured scene-by-scene continuity. See `veo.md`.
 
-| Model | Resolution | Max Duration | Best For | Cost |
-|-------|-----------|-------------|----------|------|
-| **Veo 3** (Google) | Up to 1080p (4K varies) | Variable | Top overall quality, synced audio | API-based |
-| **Sora 2** (OpenAI) | Up to 1080p | Up to ~20 sec | Cinematic + synced audio, ChatGPT/API integration | API + ChatGPT |
-| **Runway Gen-4** | Up to 4K | ~10 sec/gen | Motion control, temporal consistency, edit-style workflows | $12-76/mo |
-| **Kling 2.5/3.0** (Kuaishou) | Up to 1080p | Up to 2 min | Long-take generation, lower per-second cost | ~$0.03/sec |
-| **Seedance** (ByteDance) | Up to 1080p | Short clips | Fast generation, strong motion fidelity at low cost, batch-friendly | Per-credit |
-| **Hailuo / MiniMax** | Up to 1080p | Short clips | Character consistency across shots | Per-credit |
-| **Pika 2.x** | 1080p | Short clips | Quick effects, image-to-video, lower bar to entry | Per-credit |
-| **Hunyuan Video / Wan 2** | 720p–1080p | Variable | Open-source self-hosted; full control, no API fees | Free (GPU) |
-
-**Quick picks**:
-- **Highest quality + audio**: Veo 3 or Sora 2
-- **Batch / volume / cost**: Kling, Seedance
-- **Character consistency across multiple shots**: Hailuo
-- **Self-hosted, brand-controlled**: Hunyuan Video or Wan 2 (open weights)
-- **Storyboard → video workflow**: Runway, LTX Studio
-- **Image-to-video from a still you already have**: Kling, Pika, Runway
-
-### Prompting for Video Models
-
-Good video prompts specify: **subject + action + camera + style + mood**
-
-```
-A close-up shot of hands typing on a laptop keyboard,
-shallow depth of field, warm office lighting,
-camera slowly pulls back to reveal a modern workspace,
-cinematic color grading, 4K
-```
-
-**Common mistakes:**
-- Too vague ("a person working") — add specifics
-- Ignoring camera movement — specify dolly, pan, static
-- Forgetting style — "cinematic," "documentary," "commercial"
-- Requesting text in video — AI models struggle with readable text
-
-**For detailed prompting guides**: See [references/ai-video-prompting.md](references/ai-video-prompting.md)
-
-### When to Use AI Generation vs. Stock
-
-| Use Case | AI Generation | Stock Footage |
-|----------|:---:|:---:|
-| Exact scene you imagined | Yes | Rarely matches |
-| Consistent style across clips | Yes | Hard to match |
-| Recognizable real locations | No (hallucinations) | Yes |
-| Specific products/brands | No (use programmatic) | No |
-| Quick B-roll | Either works | Faster |
+Default output language follows the user. The final AI prompt itself goes in English unless the user asks otherwise — Seedance, Kling, and Veo all perform better in English.
 
 ---
 
-## AI Avatars
+# Final response style
 
-Create talking-head videos without filming. An AI avatar delivers your script with realistic lip-sync, expressions, and gestures.
+Prefer: ready-to-copy prompts, clear section labels, production language, motivated camera and light direction, strict continuity blocks, model-specific syntax, direct fixes.
 
-### HeyGen (recommended — has MCP server)
+Avoid: long theory unless asked, academic lectures, vague inspiration, decorative jargon, "cinematic masterpiece" filler, prompts without camera and light, prompts without continuity, stacking more than two director references, abstract emotions without physical translation.
 
-Best lip-sync and micro-expressions. 230+ avatars, 140+ languages.
-
-**Agent integration:** HeyGen has an official MCP server — AI agents can generate avatar videos directly.
-
-| Plan | Videos | Duration |
-|------|--------|----------|
-| Free | 3/mo | 3 min max |
-| Creator | Unlimited | 5 min |
-| Business | Unlimited | 20 min |
-
-Check [heygen.com/pricing](https://www.heygen.com/pricing) for current prices.
-
-**Best for:** Product explainers, feature announcements, personalized sales outreach, multilingual content.
-
-**Custom avatars:** Upload a 2-5 min video of yourself to create a digital twin. Looks and sounds like you, generates videos from text scripts.
-
-### Synthesia
-
-Full-body avatars with expressive body language. Built-in script generation from URLs/docs.
-
-**Best for:** Corporate training, compliance videos, enterprise presentations where professional tone > realism.
-
-### When to Use Avatars vs. Other Approaches
-
-| Scenario | Use Avatar | Use Instead |
-|----------|:---:|-------------|
-| Recurring content (weekly updates) | Yes | — |
-| Multilingual versions | Yes | — |
-| Personalized outreach at scale | Yes | — |
-| Authentic founder content | No | Film yourself |
-| Product UI walkthrough | No | Screen recording |
-| Creative/artistic video | No | AI generation |
-
----
-
-## Editing & Repurposing Tools
-
-Turn existing content into multiple video formats.
-
-| Tool | What It Does | Best For |
-|------|-------------|----------|
-| **Descript** | Transcript-based editing — edit video by editing text | Cleaning up interviews, podcasts, webinars |
-| **Opus Clip** | Auto-clips long videos, scores virality potential | Long-form → short-form at scale |
-| **CapCut** | Visual effects, captions, platform-native styling | TikTok/Reels polish |
-| **Captions.ai** | Auto-captions, eye contact correction, AI dubbing | Solo talking-head content |
-
-### Repurposing Workflow
-
-```
-Long-form content (podcast, webinar, demo)
-    ↓
-Descript: Clean up, remove filler, polish
-    ↓
-Opus Clip: Auto-extract 5-10 best moments
-    ↓
-CapCut: Add captions, effects, platform styling
-    ↓
-Distribute: TikTok, Reels, Shorts, LinkedIn
-```
-
----
-
-## Video Production Workflows
-
-### Product Demo Video
-
-1. **Script** the key features and value props (use copywriting skill)
-2. **Screen record** the product flow
-3. **Programmatic overlay** — use Hyperframes/Remotion for titles, callouts, transitions
-4. **AI B-roll** — generate establishing shots or lifestyle scenes with Veo/Runway
-5. **Voiceover** — record yourself or use AI avatar for narration
-6. **Export** at platform-appropriate specs
-
-### Explainer Video
-
-1. **Script** the problem → solution → CTA arc
-2. **Choose presenter** — AI avatar (HeyGen) or voiceover + visuals
-3. **Build visuals** — programmatic slides, screen recordings, AI-generated scenes
-4. **Add captions** — always, for accessibility and engagement
-5. **Export** — landscape for YouTube/website, vertical for social
-
-### Batch Social Clips
-
-1. **Create master template** in Hyperframes/Remotion
-2. **Feed data** — product features, testimonials, stats
-3. **Render batch** — one template, many variations
-4. **Add platform-specific captions** via CapCut or Captions.ai
-5. **Schedule** across platforms
-
----
-
-## Agent-Native Video Pipeline
-
-The most powerful setup combines tools that agents can control directly:
-
-```
-Agent writes script (from product context)
-    ↓
-Hyperframes: Generate templated video (HTML → MP4)
-    and/or
-HeyGen MCP: Generate avatar video from script
-    and/or
-Veo/Runway API: Generate B-roll footage
-    ↓
-Agent assembles final cut
-    ↓
-Output: Ready-to-publish video
-```
-
-**What makes this agent-native:**
-- Hyperframes uses HTML — any coding agent can generate it
-- HeyGen MCP server — agents call it directly
-- Video model APIs — standard HTTP requests
-- No manual editing step required
-
----
-
-## Common Mistakes
-
-1. **Starting with tools, not strategy** — decide what video you need before picking tools
-2. **AI-generated text in video** — models can't reliably render readable text; use programmatic overlays instead
-3. **Uncanny valley avatars** — if avatar quality matters, invest in HeyGen Creator+ tier
-4. **No captions** — 85% of social video is watched without sound
-5. **Wrong aspect ratio** — 9:16 for social, 16:9 for YouTube/website, 1:1 for feeds
-6. **Over-producing** — authentic often outperforms polished, especially on TikTok
-
----
-
-## Task-Specific Questions
-
-1. What type of video do you need? (Demo, explainer, social clip, ad, tutorial)
-2. Do you need a human presenter or can it be voiceover/text?
-3. Is this a one-off or a repeatable template?
-4. What platform is it for? (This determines aspect ratio and length)
-5. Do you have existing assets to work with? (Screenshots, footage, scripts)
-6. What's your budget for video tools?
-
----
-
-## Tool Integrations
-
-| Tool | Type | MCP | Guide |
-|------|------|:---:|-------|
-| **HeyGen** | AI avatars | Yes | [heygen.md](../../tools/integrations/heygen.md) |
-| **Hyperframes** | Programmatic video | - | [hyperframes.md](../../tools/integrations/hyperframes.md) |
-| **Remotion** | Programmatic video | - | [remotion.dev](https://www.remotion.dev/docs) |
-| **Runway** | AI generation | - | [runwayml.com/docs](https://docs.dev.runwayml.com) |
-
----
-
-## Related Skills
-
-- **social**: For video content strategy, hooks, and what to post
-- **ad-creative**: For paid video ad creative and iteration
-- **copywriting**: For video scripts and messaging
-- **marketing-psychology**: For hooks and persuasion in video
+When in doubt about a model-specific detail — re-read the model file before writing the final prompt. It costs nothing and prevents bad output.
