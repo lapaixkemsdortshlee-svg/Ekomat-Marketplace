@@ -4614,15 +4614,15 @@
                         });
                         renderFeedCards(g, data);
                     } else {
-                        g.innerHTML = emptyState('storefront', 'Pa gen pwodwi disponib', 'Okenn pwodwi pa pibliye ankò. Retounen pita!');
+                        g.innerHTML = emptyState('storefront', 'Pa gen pwodwi disponib', 'Okenn pwodwi pa pibliye ankò. Retounen pita!', { label: 'Aktyalize', icon: 'refresh', onclick: 'renderFeed()' });
                     }
                 }).catch(e => {
                     console.warn('[Feed] Supabase erè:', e.message);
-                    g.innerHTML = emptyState('cloud_off', 'Erè koneksyon', 'Nou pa ka chaje pwodwi yo. Verifye entènèt ou epi eseye ankò.');
+                    g.innerHTML = errorState('Erè koneksyon', 'Nou pa ka chaje pwodwi yo. Verifye entènèt ou epi eseye ankò.', 'renderFeed()');
                 });
             } else {
                 // Supabase not loaded yet — show empty state
-                g.innerHTML = emptyState('cloud_off', 'Backend pa disponib', 'Koneksyon Supabase pa rive. Tanpri eseye ankò.');
+                g.innerHTML = errorState('Backend pa disponib', 'Koneksyon Supabase pa rive. Tanpri eseye ankò.', 'renderFeed()');
             }
 
             if (A.user) {
@@ -4640,7 +4640,7 @@
             }
             const final = applyFeedFilters(list);
             if (final.length === 0) {
-                g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.');
+                g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.', { label: 'Reyinisyalize filtè', icon: 'restart_alt', onclick: 'resetFeedFilters()' });
                 return;
             }
             g.innerHTML = final.map((p, i) => feedCard(p, i)).join("");
@@ -4648,12 +4648,12 @@
 
         function renderFeedCards(g, products) {
             if (!products || products.length === 0) {
-                g.innerHTML = emptyState('storefront', 'Pa gen pwodwi disponib', 'Okenn pwodwi pa pibliye ankò.');
+                g.innerHTML = emptyState('storefront', 'Pa gen pwodwi disponib', 'Okenn pwodwi pa pibliye ankò.', { label: 'Aktyalize', icon: 'refresh', onclick: 'renderFeed()' });
                 return;
             }
             const final = applyFeedFilters(products);
             if (final.length === 0) {
-                g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.');
+                g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.', { label: 'Reyinisyalize filtè', icon: 'restart_alt', onclick: 'resetFeedFilters()' });
                 return;
             }
             g.innerHTML = final.map((p, i) => feedCard(p, i)).join("");
@@ -4760,8 +4760,29 @@
             return html;
         }
 
-        function emptyState(icon, title, desc) {
-            return '<div class="col-span-2 text-center py-16 px-6"><span class="material-symbols-outlined" style="font-size:48px;color:#bcc9c8">' + icon + '</span><p class="font-headline font-bold text-base text-on-surface mt-3">' + title + '</p><p class="font-label text-xs text-on-surface-variant mt-1.5 max-w-xs mx-auto">' + desc + '</p></div>';
+        // Eta vid / erè. `action` opsyonèl = { label, onclick, icon } pou
+        // yon bouton CTA (egzanp "Eseye ankò" oswa "Dekouvri pwodwi"), konsa
+        // yon eta vid pa dwe janm bloke itilizatè a — toujou gen yon pwochen pa.
+        function emptyState(icon, title, desc, action) {
+            const btn = action
+                ? '<button onclick="' + action.onclick + '" class="mt-5 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl cta font-label font-bold text-sm active:scale-95">'
+                    + (action.icon ? '<span class="material-symbols-outlined" style="font-size:16px">' + action.icon + '</span>' : '')
+                    + action.label + '</button>'
+                : '';
+            return '<div class="col-span-2 text-center py-16 px-6">'
+                + '<div class="mx-auto mb-3 flex items-center justify-center rounded-full" style="width:80px;height:80px;background:rgba(0,102,111,.07)">'
+                + '<span class="material-symbols-outlined" style="font-size:40px;color:#7fa8ab">' + icon + '</span></div>'
+                + '<p class="font-headline font-bold text-base text-on-surface">' + title + '</p>'
+                + '<p class="font-label text-xs text-on-surface-variant mt-1.5 max-w-xs mx-auto">' + desc + '</p>'
+                + btn + '</div>';
+        }
+
+        // Eta erè chajman: menm kad ak emptyState men ak yon bouton "Eseye
+        // ankò" ki rele fonksyon chajman an ankò (retryCall = yon apèl JS,
+        // egz. "loadUserOrdersFromSupabase()").
+        function errorState(title, desc, retryCall) {
+            return emptyState('cloud_off', title, desc,
+                retryCall ? { label: 'Eseye ankò', icon: 'refresh', onclick: retryCall } : null);
         }
 
         function scoreP(p) {
@@ -5718,9 +5739,10 @@
                 if (error) throw error;
                 if (!data || data.length === 0) {
                     list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center">
-                        <span class="material-symbols-outlined text-on-surface-variant mb-2" style="font-size:48px">receipt_long</span>
+                        <div class="mx-auto mb-3 flex items-center justify-center rounded-full" style="width:80px;height:80px;background:rgba(0,102,111,.07)"><span class="material-symbols-outlined" style="font-size:40px;color:#7fa8ab">receipt_long</span></div>
                         <h3 class="font-headline font-bold text-base text-on-surface mb-1">Pa gen komand</h3>
                         <p class="font-body text-sm text-on-surface-variant">${isSeller ? 'Kliyan yo poko komande pwodwi ou.' : 'Ou poko fè okenn komand.'}</p>
+                        ${!isSeller ? `<button onclick="navTo('feed')" class="mt-5 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl cta font-label font-bold text-sm active:scale-95"><span class="material-symbols-outlined" style="font-size:16px">storefront</span>Dekouvri pwodwi</button>` : ''}
                     </div>`;
                     return;
                 }
@@ -5737,7 +5759,7 @@
                 list.innerHTML = data.map(o => renderOrderCard(o, isSeller)).join('');
             } catch(e) {
                 console.warn('[Orders]', e.message);
-                list.innerHTML = '<div class="text-center text-on-surface-variant py-8">Erè nan chaje komand yo</div>';
+                list.innerHTML = errorState('Erè nan chaje komand yo', 'Nou pa t ka jwenn komand ou yo. Eseye ankò.', 'loadUserOrdersFromSupabase()');
             }
         }
         window.loadUserOrdersFromSupabase = loadUserOrdersFromSupabase;
@@ -7412,9 +7434,10 @@
                 el.innerHTML = `<div class="px-5 pt-6 space-y-2">${itemsHTML}</div>`;
             } catch(e) {
                 console.warn('[Inbox]', e.message);
-                el.innerHTML = '<div class="px-5 pt-6 text-center text-on-surface-variant">Erè nan chaje mesaj yo</div>';
+                el.innerHTML = '<div class="px-5 pt-6">' + errorState('Erè nan chaje mesaj yo', 'Nou pa t ka jwenn mesaj ou yo. Eseye ankò.', 'loadInboxFromSupabase()') + '</div>';
             }
         }
+        window.loadInboxFromSupabase = loadInboxFromSupabase;
 
         // Open a conversation from the inbox — works for both buyer and seller
         async function openConversation(productId, otherId, otherName) {
@@ -9162,7 +9185,7 @@
                 .order('created_at', { ascending: false })
                 .limit(200);
             if (error || !data) {
-                if (el) el.innerHTML = '<p class="text-center font-body text-sm text-on-surface-variant py-8">Pa ka chaje konvèsasyon</p>';
+                if (el) el.innerHTML = errorState('Pa ka chaje konvèsasyon', 'Nou pa t ka jwenn konvèsasyon yo. Eseye ankò.', 'loadAdminConversations()');
                 return;
             }
             var threads = {};
