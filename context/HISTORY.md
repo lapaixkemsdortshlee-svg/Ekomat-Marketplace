@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-02 (session 2) : Audit sécurité → Info/accepté (clôture audit)
+
+Dernier lot. P0 (#105) et P1 (#106) mergés. Ici on traite/documente le reste.
+
+- **`referral_rewards` RLS sans policy** (INFO) → `migration-2026-referral-rewards-policy.sql` : policy SELECT admin (audit des récompenses possible ; écritures restent fermées, trigger only). Résout l'advisor.
+- **`SECURITY.md`** : ajout d'une section « Odit sekirite 2026-07-02 » qui documente P0/P1/Info + les risques **acceptés** avec rationale : CSP `unsafe-eval` (requis Tailwind/Babel), `pg_trgm`/`pg_net` dans public (déplacement risqué), clé Firebase Web (publique par design).
+- **Actions dashboard restantes** (Thrasher) : activer Leaked Password Protection ; déployer les migrations `harden-p1` + `referral-rewards-policy` ; relancer les advisors après.
+- **Audit clôturé** : les 3 lots (P0/P1/Info) traités.
+
+---
+
 ## 2026-07-02 (session 2) : Audit sécurité → P1 (durcissement)
 
 P0 mergé (#105). **P1 = préparé** (`migration-2026-harden-p1.sql`, à déployer par Thrasher au SQL Editor). Bodies + grants inspectés via Supabase MCP (read-only) avant d'écrire, pour ne rien casser.
