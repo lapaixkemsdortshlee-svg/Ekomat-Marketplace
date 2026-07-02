@@ -74,7 +74,7 @@ test.describe('Otantifikasyon (san backend)', () => {
 });
 
 test('fichye antre + asset kle yo sèvi', async ({ request }) => {
-    for (const path of ['/', '/onboarding.html', '/icon-192.png', '/icon-512.png']) {
+    for (const path of ['/', '/onboarding.html', '/icon-192.png', '/icon-512.png', '/og-image.png']) {
         const r = await request.get(path);
         expect(r.status(), `${path} dwe sèvi`).toBeLessThan(400);
     }
