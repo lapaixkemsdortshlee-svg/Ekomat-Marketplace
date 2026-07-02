@@ -67,6 +67,8 @@ Reste :
 - [x] Durcissement des fonctions (advisors sécurité) — `search_path` figé sur toutes les fonctions `SECURITY DEFINER`, et RPC escrow privilégiées verrouillées (`escrow_dispatch_alerts` cron-only ; `escrow_overview`/`escrow_attention_orders`/`error_overview` = authenticated + garde `is_admin`). Voir `supabase/migration-2026-harden-functions.sql`. Validé sur Postgres 16.
 - [x] Fuite d'énumération des codes promo (trouvée en QA live) — la policy `promo_codes_public_select` exposait tous les codes actifs. Corrigé : SELECT public limité aux codes `referral`, + RPC `validate_promo_code()` (SECURITY DEFINER) pour valider un code au checkout sans exposer la table ; client branché dessus. Voir `supabase/migration-2026-promo-hardening.sql`. Validé sur Postgres 16 (8 scénarios).
 
+- [~] Durcissement XSS (DOM) — helper `esc()` + échappement des données non fiables interpolées dans `innerHTML` (~76 sites : images, titres, noms, bio, messages, avis…). Reste : sinks en **contexte JS** (`onclick="fn('${...}')"`) à refactorer via data-attributes ; passe QA navigateur recommandée.
+
 > **Reste hors-code (dashboard Supabase)** : activer « Leaked password protection » (Auth) ; extensions `pg_trgm`/`pg_net` dans `public` laissées telles quelles (déplacement risqué). **Routine** : relancer `get_advisors` (security + performance) après chaque migration.
 
 ## P3 — Prépa MonCash (reporté, débloqué quand Digicel arrive)
@@ -95,7 +97,7 @@ Reste :
 - [ ] Message de partage en Kreyòl optimisé (WhatsApp first)
 
 ### SEO & visibilité
-- [ ] Audit SEO technique (meta, OG, sitemap, perf mobile)
+- [~] Audit SEO technique — **Open Graph / Twitter + apple-touch-icon + canonical ajoutés** (aperçu de partage WhatsApp/Facebook) ; test dans `tests/ui.spec.mjs`. Reste : sitemap, image OG dédiée 1200×630, perf mobile.
 - [ ] AI-SEO : être cité par les assistants (llms.txt, contenu structuré)
 - [ ] Pages d'atterrissage par catégorie / ville
 

@@ -7,6 +7,25 @@
 
 ---
 
+## 2026-07-02 : Durcissement XSS (DOM) — sweep esc()
+
+- CodeQL signalait un baseline XSS (données vendeur/achtè interpolées dans `innerHTML`), re-attribué à la PR #99 à cause du gros diff single-file. Confirmé réel : ex. conversations admin où **noms + contenu des messages** allaient dans `innerHTML` sans échappement → XSS stocké visible par l'admin.
+- Ajout d'un helper `esc()` (échappe `& < > " '`) + application sur ~76 sites : URLs d'image (`src`), titres produit, descriptions, noms acheteur/vendeur/utilisateur, bio, location, avis (reviewer), raisons, contenu des messages, titres de notif/annonce.
+- **Contexte JS préservé** : les `onclick="fn('${...}')"` (verif/review) n'ont PAS été « esc »-és (échappement HTML inadapté en contexte JS d'attribut) — laissés bruts et **notés pour un refactor dédié** (passer par data-attributes plutôt que d'interpoler dans le JS inline).
+- Validé : 0 erreur de syntaxe (7 blocs), 9/9 smoke+ui tests passent. Pas testé au navigateur réel (sandbox ne joint pas Supabase) → une passe QA navigateur reste recommandée.
+- Note : le compteur « new alerts » de CodeQL est instable sur ce fichier 1 Mo (il re-signale le baseline à chaque gros diff) ; les PR précédentes touchant `index.html` avaient le même et ont été mergées.
+
+---
+
+## 2026-07-01 : Sweep a11y + libération commandes + démarrage Objectif B (SEO)
+
+- **Sweep a11y** : `alt` ajouté aux 11 `<img>` restants (logos splash, photos produit, avatars chat/partenaire, photos de vérification vendeur). Plus aucun `<img>` sans `alt`.
+- **Libération commandes bloquées** : 3 commandes `otp_confirmed` (livrées depuis avril/mai, jamais libérées) libérées via l'admin → **6426 HTG** à verser aux vendeurs (versement MonCash manuel, stub). 0 commande bloquée restante.
+- **Objectif B démarré — SEO** : balises **Open Graph / Twitter** + `apple-touch-icon` + `canonical` ajoutées dans `<head>` (aperçu de partage WhatsApp/Facebook). Test OG dans `tests/ui.spec.mjs`. 6/6 tests UI passent. Reste : sitemap, image OG dédiée 1200×630, perf mobile.
+- `service_role` régénérée par Thrasher (ok).
+
+---
+
 ## 2026-07-01 : Flux escrow validé LIVE en prod (P0 débloqué)
 
 - Thrasher a donné la clé `service_role` (à régénérer après) ; les comptes admin/vendeur se connectaient via Google (pas de mot de passe email), d'où les échecs. J'ai défini des mots de passe temporaires via l'admin API.
