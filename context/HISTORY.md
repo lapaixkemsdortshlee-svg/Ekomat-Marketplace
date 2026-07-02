@@ -7,6 +7,15 @@
 
 ---
 
+## 2026-07-02 (session 2) : Advisors post-déploiement — complément harden-p1b
+
+Thrasher a déployé les migrations. Re-run des advisors sécurité :
+- ✅ Résolu : `referral_rewards` (policy admin), `search_path` sur les 3 fonctions trigger, et `anon` retiré de `escrow_overview`/`escrow_attention_orders`/`funnel_overview`/`error_overview`.
+- ⚠️ Résidu trouvé : `advance_order_status` et `try_seller_otp` restaient `anon`-exécutables car elles gardaient un grant **PUBLIC** (anon ∈ PUBLIC) que `REVOKE FROM anon` ne pouvait pas masquer. → `migration-2026-harden-p1b.sql` : `REVOKE ... FROM PUBLIC, anon` + `GRANT authenticated`. **À déployer.**
+- 🟡 Accepté (by design) : les WARN `0029 authenticated_security_definer` (les RPC DOIVENT être appelables par les users connectés — gardes internes), `pg_trgm`/`pg_net` dans public, et `log_error`/`increment_views`/`validate_promo_code`/`is_admin` anon (voulu : erreurs front, vues publiques, self-reject). Reste dashboard : activer Leaked Password Protection.
+
+---
+
 ## 2026-07-02 (session 2) : Audit sécurité → Info/accepté (clôture audit)
 
 Dernier lot. P0 (#105) et P1 (#106) mergés. Ici on traite/documente le reste.
