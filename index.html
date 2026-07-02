@@ -3872,6 +3872,14 @@
 
         function fp(n) { return Number(n).toLocaleString("fr"); }
         function sl(ms) { return new Promise(r => setTimeout(r, ms)); }
+        // Échappe les données non fiables (noms, titres, URLs vendeur/achtè…)
+        // avant de les interpoler dans du HTML (innerHTML) — anti DOM-XSS.
+        // Sûr en contexte texte ET attribut (échappe aussi " et ').
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        window.esc = esc;
 
         // Computes a positive integer discount % when p.oldP is set and is
         // strictly greater than p.p. Returns 0 if no discount applies.
@@ -4413,7 +4421,7 @@
                 ? prodPlaceholder(p, 340)
                 : imgs.map(src => {
                     const safeSrc = String(src).replace(/'/g, "\\'");
-                    return `<div class="flex-shrink-0 w-full h-full snap-center cursor-pointer flex items-center justify-center" onclick="openProductLightbox('${safeSrc}')"><img src="${src}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/></div>`;
+                    return `<div class="flex-shrink-0 w-full h-full snap-center cursor-pointer flex items-center justify-center" onclick="openProductLightbox('${safeSrc}')"><img src="${esc(src)}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/></div>`;
                 }).join('');
             const dotsHTML = imgs.length > 1
                 ? `<div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10" id="detailDots">${imgs.map((_, idx) => `<span class="block rounded-full transition-all" style="width:6px;height:6px;background:${idx === 0 ? 'rgba(252,249,244,.95)' : 'rgba(252,249,244,.5)'}"></span>`).join('')}</div>`
@@ -4465,7 +4473,7 @@
                         location: cached.location || p.l || '',
                     };
                     const avatarHtml = seller.avatarUrl
-                        ? `<img src="${seller.avatarUrl}" alt="${seller.name}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-bold text-white text-sm\\'>${initials}</span>'"/>`
+                        ? `<img src="${esc(seller.avatarUrl)}" alt="${seller.name}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-bold text-white text-sm\\'>${initials}</span>'"/>`
                         : `<span class="font-headline font-bold text-white text-sm">${initials}</span>`;
                     return `<div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-3 cursor-pointer active:bg-surface-container-low transition-colors" onclick="openSellerProfile('${seller.id}')">
         <div class="w-11 h-11 rounded-full cta flex items-center justify-center flex-shrink-0 overflow-hidden">${avatarHtml}</div>
@@ -4775,7 +4783,7 @@
             const offset = [0, 24, -12, 18, -8, 20][i] || 0;
             const isFav = A.favs.has(p.id);
             const imgHtml = p.img
-                ? `<img src="${p.img}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/>`
+                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/>`
                 : prodPlaceholder(p, 140 + (i % 2) * 20);
             const spid = typeof p.id === 'string' ? `'${p.id}'` : p.id;
 
@@ -4817,7 +4825,7 @@
             const offset = [0, 32, -16, 24, -8, 40, -24, 16][i % 8];
             const imgHeight = 160 + (i % 3) * 40;
             const imgHtml = p.img
-                ? `<img src="${p.img}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/>`
+                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${p.t}" onerror="this.onerror=null;this.style.display='none'"/>`
                 : prodPlaceholder(p, imgHeight);
             // Bug D: light up a Flash Deal badge on cards whose product is
             // currently inside an active flash_deals row. FLASH_DEALS is
@@ -5081,7 +5089,7 @@
             uploadedPhotos.forEach((p, i) => {
                 html += `
     <div class="aspect-square rounded-lg overflow-hidden relative group" style="background:#f0ede8">
-      <img alt="Foto pwodwi" src="${p.dataUrl}" class="w-full h-full object-cover"/>
+      <img alt="Foto pwodwi" src="${esc(p.dataUrl)}" class="w-full h-full object-cover"/>
       <!-- Overlay info -->
       <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity" style="background:rgba(28,28,25,.45)">
         <p class="font-label text-[9px] font-bold text-white">${p.sizeKB} KB</p>
@@ -5481,7 +5489,7 @@
     <div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-4 mb-5">
       <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style="background:#f0ede8">
         ${(p.img || (p.images && p.images[0]))
-          ? `<img src="${p.img || p.images[0]}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=prodPlaceholder(${JSON.stringify({e:p.e,ec:p.ec,id:p.id}).replace(/"/g,'&quot;')},80)"/>`
+          ? `<img src="${esc(p.img || p.images[0])}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=prodPlaceholder(${JSON.stringify({e:p.e,ec:p.ec,id:p.id}).replace(/"/g,'&quot;')},80)"/>`
           : prodPlaceholder(p, 80)}
       </div>
       <div class="flex-1">
@@ -6006,7 +6014,7 @@
             const pidAttr = typeof p.id === 'string' ? `'${String(p.id).replace(/'/g, "\\'")}'` : p.id;
             const imgSrc = p.img || (p.images && p.images[0]) || null;
             const thumb = imgSrc
-                ? `<img src="${imgSrc}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=window.prodPlaceholder?prodPlaceholder(${JSON.stringify({e:p.e,ec:p.ec}).replace(/"/g,'&quot;')},40):''"/>`
+                ? `<img src="${esc(imgSrc)}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=window.prodPlaceholder?prodPlaceholder(${JSON.stringify({e:p.e,ec:p.ec}).replace(/"/g,'&quot;')},40):''"/>`
                 : prodPlaceholder(p, 40);
             document.getElementById("chatMsgs").innerHTML = `
     <div class="self-center bg-surface-container-lowest rounded-xl p-3 flex items-center gap-3 w-[82%] amb cursor-pointer" onclick="openProduct(${pidAttr})">
@@ -6860,7 +6868,7 @@
                 const pidAttr = `'${String(p.id).replace(/'/g, "\\'")}'`;
                 const imgSrc = p.img || (p.images && p.images[0]);
                 const imgEl = imgSrc
-                    ? `<img src="${imgSrc}" alt="" onerror="this.onerror=null;this.style.display='none'" class="w-full h-full object-cover"/>`
+                    ? `<img src="${esc(imgSrc)}" alt="" onerror="this.onerror=null;this.style.display='none'" class="w-full h-full object-cover"/>`
                     : prodPlaceholder(p, 56);
                 const statusBadge = p.status === 'pending_review'
                     ? `<span class="font-label text-[9px] px-1.5 py-0.5 rounded-full" style="background:rgba(151,66,43,.12);color:#97422b">⏳ An atant admin</span>`
@@ -7326,7 +7334,7 @@
       <button onclick="openConversation(${pidAttr}, ${otherIdAttr}, '${partnerNameAttr}')"
         class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-container-lowest active:bg-surface-container-low amb text-left">
         <div class="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center" style="background:linear-gradient(135deg,#00666f,#00818c)">
-          ${partner.avatar_url ? `<img alt="Foto pwofil" src="${partner.avatar_url}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'font-headline font-bold text-white text-sm\\'>${initials}</span>'"/>` : `<span class="font-headline font-bold text-white text-sm">${initials}</span>`}
+          ${partner.avatar_url ? `<img alt="Foto pwofil" src="${esc(partner.avatar_url)}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'font-headline font-bold text-white text-sm\\'>${initials}</span>'"/>` : `<span class="font-headline font-bold text-white text-sm">${initials}</span>`}
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between gap-2">
@@ -7609,7 +7617,7 @@
                     return `<div class="bg-surface-container-lowest rounded-xl p-3 amb">
                         <div class="flex items-start gap-3">
                             <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style="background:#f0ede8">
-                                ${img ? `<img src="${img}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.style.display='none'"/>` : `<div class="w-full h-full flex items-center justify-center"><span class="material-symbols-outlined text-on-surface-variant" style="font-size:24px">image</span></div>`}
+                                ${img ? `<img src="${esc(img)}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.style.display='none'"/>` : `<div class="w-full h-full flex items-center justify-center"><span class="material-symbols-outlined text-on-surface-variant" style="font-size:24px">image</span></div>`}
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="font-headline font-bold text-sm text-on-surface truncate">${p.title || 'Pwodwi'}</p>
@@ -7697,9 +7705,9 @@
       <span class="font-label text-[10px] font-bold px-2 py-1 rounded-full ${v.status === 'pending' ? 'pill-pending' : v.status === 'approved' ? 'pill-approved' : 'pill-rejected'}">${v.status === 'pending' ? 'An Atant' : v.status === 'approved' ? 'Apwouve' : 'Rejte'}</span>
     </div>
     <div class="flex gap-2 mb-3 flex-wrap">
-      ${v.photos?.front ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.front.publicUrl || v.photos.front.dataUrl).replace(/'/g, "\\'")}')"><img alt="Pyès idantite (devan)" src="${v.photos.front.publicUrl || v.photos.front.dataUrl}" class="w-full h-full object-cover"/></div>` : ''}
-      ${v.photos?.back ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.back.publicUrl || v.photos.back.dataUrl).replace(/'/g, "\\'")}')"><img alt="Pyès idantite (dèyè)" src="${v.photos.back.publicUrl || v.photos.back.dataUrl}" class="w-full h-full object-cover"/></div>` : ''}
-      ${v.photos?.selfie ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.selfie.publicUrl || v.photos.selfie.dataUrl).replace(/'/g, "\\'")}')"><img alt="Selfie verifikasyon" src="${v.photos.selfie.publicUrl || v.photos.selfie.dataUrl}" class="w-full h-full object-cover"/></div>` : ''}
+      ${v.photos?.front ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.front.publicUrl || v.photos.front.dataUrl).replace(/'/g, "\\'")}')"><img alt="Pyès idantite (devan)" src="${esc(v.photos.front.publicUrl || v.photos.front.dataUrl)}" class="w-full h-full object-cover"/></div>` : ''}
+      ${v.photos?.back ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.back.publicUrl || v.photos.back.dataUrl).replace(/'/g, "\\'")}')"><img alt="Pyès idantite (dèyè)" src="${esc(v.photos.back.publicUrl || v.photos.back.dataUrl)}" class="w-full h-full object-cover"/></div>` : ''}
+      ${v.photos?.selfie ? `<div class="w-20 h-14 rounded-lg overflow-hidden cursor-pointer" onclick="openProductLightbox('${(v.photos.selfie.publicUrl || v.photos.selfie.dataUrl).replace(/'/g, "\\'")}')"><img alt="Selfie verifikasyon" src="${esc(v.photos.selfie.publicUrl || v.photos.selfie.dataUrl)}" class="w-full h-full object-cover"/></div>` : ''}
       ${!v.photos?.front && !v.photos?.back && !v.photos?.selfie ? `<div class="flex-1 rounded-lg p-3 flex items-center gap-2" style="background:#f6f3ee"><span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">badge</span><div><p class="font-label text-xs font-bold text-on-surface">${v.idType || 'ID'}</p><p class="font-label text-[10px] text-on-surface-variant">Pa gen foto disponib</p></div></div>` : ''}
     </div>
     ${v.idType ? `<p class="font-label text-[10px] text-on-surface-variant mb-2">Tip: <strong>${v.idType === 'cin' ? 'CIN' : v.idType === 'passport' ? 'Paspò' : v.idType}</strong></p>` : ''}
@@ -7789,7 +7797,7 @@
             const slot = document.getElementById(slotId);
             if (slot) {
                 slot.innerHTML = `
-      <img alt="Foto" src="${dataUrl}" class="w-full h-full object-cover rounded-xl"/>
+      <img alt="Foto" src="${esc(dataUrl)}" class="w-full h-full object-cover rounded-xl"/>
       <div class="absolute inset-0 flex items-end justify-start p-2 pointer-events-none" style="border-radius:.75rem">
         <span class="font-label text-[9px] font-bold px-2 py-0.5 rounded-full" style="background:rgba(0,102,111,.88);color:#fff">${Math.round(finalFile.size / 1024)}KB</span>
       </div>`;
@@ -8282,7 +8290,7 @@
                      style="background:#f0ede8;${photo ? '' : 'border:1.5px dashed #bcc9c8'}"
                      onclick="openIDModal('${v.uid}','${v.name}','${side}')">
           ${photo
-                        ? `<img alt="Foto pwodwi" src="${photo.publicUrl || photo.dataUrl}" class="w-full h-full object-cover" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'w-full h-full flex flex-col items-center justify-center gap-1\\'><span class=\\'material-symbols-outlined text-on-surface-variant\\' style=\\'font-size:20px\\'>broken_image</span><p class=\\'font-label text-[9px] text-on-surface-variant\\'>Image indisponib</p></div>'"/>`
+                        ? `<img alt="Foto pwodwi" src="${esc(photo.publicUrl || photo.dataUrl)}" class="w-full h-full object-cover" onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\\'w-full h-full flex flex-col items-center justify-center gap-1\\'><span class=\\'material-symbols-outlined text-on-surface-variant\\' style=\\'font-size:20px\\'>broken_image</span><p class=\\'font-label text-[9px] text-on-surface-variant\\'>Image indisponib</p></div>'"/>`
                         : `<div class="w-full h-full flex flex-col items-center justify-center gap-1">
                  <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">badge</span>
                  <p class="font-label text-[9px] text-on-surface-variant">${{ front: 'Fas', back: 'Do', selfie: 'Selfie' }[side]}</p>
@@ -8333,7 +8341,7 @@
 
             if (photo) {
                 const imgUrl = photo.publicUrl || photo.dataUrl;
-                img.innerHTML = `<img alt="Foto pwodwi" src="${imgUrl}" class="w-full h-full object-contain rounded-xl" style="cursor:zoom-in" onclick="openProductLightbox('${imgUrl.replace(/'/g, "\\'")}')" onerror="this.onerror=null;this.src='';this.parentElement.innerHTML='<div class=\\'flex flex-col items-center gap-2\\'><span class=\\'material-symbols-outlined text-on-surface-variant\\' style=\\'font-size:48px\\'>broken_image</span><p class=\\'font-label text-sm text-on-surface-variant\\'>Image indisponib</p></div>'"/>`;
+                img.innerHTML = `<img alt="Foto pwodwi" src="${esc(imgUrl)}" class="w-full h-full object-contain rounded-xl" style="cursor:zoom-in" onclick="openProductLightbox('${imgUrl.replace(/'/g, "\\'")}')" onerror="this.onerror=null;this.src='';this.parentElement.innerHTML='<div class=\\'flex flex-col items-center gap-2\\'><span class=\\'material-symbols-outlined text-on-surface-variant\\' style=\\'font-size:48px\\'>broken_image</span><p class=\\'font-label text-sm text-on-surface-variant\\'>Image indisponib</p></div>'"/>`;
                 img.style.padding = '0';
                 meta.textContent = `${typeLabel} · ${sideLabel} · ${photo.sizeKB ? photo.sizeKB + 'KB · ' : ''}Supabase Storage`;
             } else {
@@ -10477,7 +10485,7 @@
             const p = PRODUCTS.find(x => x.id == productId);
             if (!p || !p.img) return;
             el.style.background = '#f0ede8';
-            el.innerHTML = `<img alt="Foto pwodwi" src="${p.img}" style="width:100%;height:100%;object-fit:cover"
+            el.innerHTML = `<img alt="Foto pwodwi" src="${esc(p.img)}" style="width:100%;height:100%;object-fit:cover"
                        onload="this.style.opacity=1" style="opacity:0;transition:opacity .3s"/>`;
             setTimeout(() => { const img = el.querySelector('img'); if (img) img.style.opacity = '1'; }, 50);
         }
@@ -11214,7 +11222,7 @@
             const pidAttr = typeof p.id === 'string' ? `'${String(p.id).replace(/'/g, "\\'")}'` : p.id;
             const imgSrc = p.img || (p.images && p.images[0]) || null;
             const thumb = imgSrc
-                ? `<img src="${imgSrc}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=window.prodPlaceholder?prodPlaceholder(${JSON.stringify({e:p.e,ec:p.ec,id:p.id}).replace(/"/g,'&quot;')},40):''"/>`
+                ? `<img src="${esc(imgSrc)}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=window.prodPlaceholder?prodPlaceholder(${JSON.stringify({e:p.e,ec:p.ec,id:p.id}).replace(/"/g,'&quot;')},40):''"/>`
                 : prodPlaceholder(p, 40);
 
             document.getElementById('chatMsgs').innerHTML = `
@@ -12169,7 +12177,7 @@
       <!-- Aperçu kat LocationIQ -->
       <div onclick="openSharedLocation(${lat},${lng})" style="cursor:pointer;position:relative">
         ${liveBadge}
-        <img src="${staticMap}" alt="Kat lokalizasyon" style="width:100%;height:120px;object-fit:cover;display:block"
+        <img src="${esc(staticMap)}" alt="Kat lokalizasyon" style="width:100%;height:120px;object-fit:cover;display:block"
              onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'"/>
         <div style="height:120px;background:linear-gradient(135deg,#e8f4f4,#d4ede8);display:none;align-items:center;justify-content:center">
           <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
@@ -13121,7 +13129,7 @@
         <div class="w-[88px] h-[88px] rounded-full cta flex items-center justify-center amb seller-animate overflow-hidden"
              style="border:4px solid #fcf9f4;box-shadow:0 4px 20px rgba(0,102,111,.2)">
           ${seller.avatarUrl
-            ? `<img src="${seller.avatarUrl}" alt="${seller.name}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-extrabold text-white text-2xl\\'>${seller.initials}</span>'"/>`
+            ? `<img src="${esc(seller.avatarUrl)}" alt="${seller.name}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-extrabold text-white text-2xl\\'>${seller.initials}</span>'"/>`
             : `<span class="font-headline font-extrabold text-white text-2xl">${seller.initials}</span>`}
         </div>
         <div class="flex items-center gap-2 mt-3 seller-animate seller-animate-delay-1">
@@ -13233,7 +13241,7 @@
             const offset = [0, 24, -12, 18, -8, 20][i] || 0;
             const imgHeight = 150 + (i % 2) * 30;
             const imgHtml = p.img
-                ? `<img src="${p.img}" class="w-full h-full object-cover" alt="${p.t}"/>`
+                ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${p.t}"/>`
                 : prodPlaceholder(p, imgHeight);
             // UUIDs from Supabase are strings — must be quoted in inline
             // onclick handlers, otherwise `openProduct(abc-def-123)` parses
@@ -13326,7 +13334,7 @@
                         if (tt) tt.textContent = realName;
                         if (chatAvEl) {
                             if (data.avatar_url) {
-                                chatAvEl.innerHTML = `<img src="${data.avatar_url}" alt="${realName}" class="w-full h-full object-cover rounded-full" onerror="this.parentElement.innerHTML='<span class=\\'font-headline font-bold text-white text-xs\\'>${(realName||'V').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</span>'"/>`;
+                                chatAvEl.innerHTML = `<img src="${esc(data.avatar_url)}" alt="${realName}" class="w-full h-full object-cover rounded-full" onerror="this.parentElement.innerHTML='<span class=\\'font-headline font-bold text-white text-xs\\'>${(realName||'V').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</span>'"/>`;
                             } else {
                                 const ini = (realName || 'V').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'V';
                                 chatAvEl.innerHTML = `<span class="font-headline font-bold text-white text-xs">${ini}</span>`;
