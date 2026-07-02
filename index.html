@@ -4586,6 +4586,7 @@
             })();
 
             track("view", p.c);
+            bumpInterest(p.c, 5, p.sellerId, 3);
             // Rann pwodwi similè yo apre yon ti délai
             setTimeout(() => renderSimilarProducts(p), 80);
             // Wire up the carousel dot indicator now that the DOM exists
@@ -4698,6 +4699,7 @@
                 out.sort((a, b) => (b.r || 0) - (a.r || 0));
             } else {
                 out = out.map(p => ({ ...p, score: scoreP(p) })).sort((a, b) => b.score - a.score);
+                out = exploreInterleave(out);
             }
             return out;
         }
@@ -4785,14 +4787,101 @@
                 retryCall ? { label: 'Eseye ankò', icon: 'refresh', onclick: retryCall } : null);
         }
 
+        // ══════════════════════════════════════════════════════════
+        //  MODÈL ENTÈRÈ RESAN — biyè konfimasyon nan feed la
+        //  iv = vektè entèrè pa kategori, sv = afinite vandè. Toude
+        //  desann ak yon demi-vi konsa entèrè ki PI RESAN an domine:
+        //  se sa ki fè feed la "konprann vit" sa moun nan renmen kounye
+        //  a (menm lojik ak Pinterest/Shein). Rejim: ekilibre (~25%
+        //  eksplorasyon) pou ofrè lòt vandè yo rete vizib.
+        // ══════════════════════════════════════════════════════════
+        const INTEREST_HALFLIFE_MS = 172800000; // 2 jou → entèrè a pèdi mwatye
+        const FEED_BIAS = 9;        // fòs biyè konfimasyon (entèrè resan/kategori)
+        const FEED_SELLER_W = 4;    // afinite vandè
+        const FEED_EXPLORE_P = 0.25; // ~25% nan plas yo rezève pou dekouvèt (anti echo-chamber)
+
+        function decayInterest() {
+            const pr = A.prof; if (!pr) return;
+            const now = Date.now();
+            const dt = now - (pr.ivTs || now);
+            if (dt <= 0) { pr.ivTs = now; return; }
+            const factor = Math.pow(0.5, dt / INTEREST_HALFLIFE_MS);
+            if (factor >= 0.999) return;
+            const shrink = (obj) => {
+                if (!obj) return;
+                for (const k in obj) { obj[k] *= factor; if (obj[k] < 0.05) delete obj[k]; }
+            };
+            shrink(pr.iv); shrink(pr.sv);
+            pr.ivTs = now;
+        }
+
+        function bumpInterest(cat, amt, sellerId, sellerAmt) {
+            const pr = A.prof; if (!pr) return;
+            if (!cat && !sellerId) return;
+            decayInterest();
+            if (cat && amt) { if (!pr.iv) pr.iv = {}; pr.iv[cat] = (pr.iv[cat] || 0) + amt; }
+            if (sellerId && sellerAmt) { if (!pr.sv) pr.sv = {}; pr.sv[sellerId] = (pr.sv[sellerId] || 0) + sellerAmt; }
+            pr.ivTs = Date.now();
+            A.prof = pr;
+            try { localStorage.setItem('aym_v3', JSON.stringify(pr)); } catch (e) {}
+        }
+
+        // Rechèch = entansyon fò. Kategori(yo) ki domine nan rezilta yo
+        // di nou sou kisa moun nan konsantre (menm si li tape tèks lib).
+        function bumpInterestFromResults(products) {
+            if (!products || !products.length) return;
+            const counts = {};
+            products.slice(0, 12).forEach(p => { if (p.c) counts[p.c] = (counts[p.c] || 0) + 1; });
+            const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+            if (sorted[0]) bumpInterest(sorted[0], 6);
+            if (sorted[1]) bumpInterest(sorted[1], 3);
+        }
+
+        // Rele depi doSearch (oninput = chak frap), men dedouble pa
+        // requèt konsa yon sèl rechèch pa konte plizyè fwa.
+        function _searchIntent(products, query) {
+            if (!query || query.length < 3) return;
+            if (A._lastSearchBumped === query) return;
+            A._lastSearchBumped = query;
+            bumpInterestFromResults(products);
+        }
+
         function scoreP(p) {
-            let s = 0; const pr = A.prof;
+            const pr = A.prof || {};
+            decayInterest();
+            let s = 0;
             if (pr.vc && pr.vc[p.c]) s += pr.vc[p.c] * 5;
             if (pr.fc && pr.fc[p.c]) s += pr.fc[p.c] * 10;
+            // Biyè konfimasyon: entèrè RESAN an (rechèch/ouvèti/panye/favori)
+            // domine. sqrt konprese pou yon sèl kategori pa monte san limit.
+            if (pr.iv && pr.iv[p.c] > 0) s += Math.sqrt(pr.iv[p.c]) * FEED_BIAS;
+            if (pr.sv && p.sellerId && pr.sv[p.sellerId] > 0) s += Math.sqrt(pr.sv[p.sellerId]) * FEED_SELLER_W;
             if (p.b === "Reko IA") s += 20;
             if (p.l === "Pétion-Ville" || p.l === "Delmas") s += 10;
-            s += Math.log(p.v + 1) * 2 + p.s * 1.5 + Math.random() * 3;
+            s += Math.log((p.v || 0) + 1) * 2 + (p.s || 0) * 1.5 + Math.random() * 4;
             return s;
+        }
+
+        // Eksplorasyon epsilon-greedy: apre klasman pa entèrè, rezève
+        // ~FEED_EXPLORE_P nan plas yo pou yon pwodwi o aza soti nan rès
+        // katalòg la. Konsa feed la privilejye sa moun nan renmen SAN vin
+        // yon echo-chamber — lòt vandè yo rete gen chans parèt.
+        function exploreInterleave(sorted) {
+            if (!sorted || sorted.length < 8) return sorted;
+            const pool = sorted.slice();
+            const result = [];
+            while (pool.length) {
+                if (result.length > 0 && pool.length > 4 && Math.random() < FEED_EXPLORE_P) {
+                    // Chwazi nan ke dekouvèt la (mwatye anba) — konsa
+                    // eksplorasyon an fè monte pwodwi biyè a t ap antere,
+                    // pa plis nan menm sa ki deja an tèt la.
+                    const start = Math.floor(pool.length / 2);
+                    result.push(pool.splice(start + Math.floor(Math.random() * (pool.length - start)), 1)[0]);
+                } else {
+                    result.push(pool.shift());
+                }
+            }
+            return result;
         }
 
 
@@ -4957,7 +5046,7 @@
 
         function toggleFav(id) {
             A.favs.has(id) ? A.favs.delete(id) : A.favs.add(id);
-            const p = PRODUCTS.find(x => x.id === id); if (p) track("fav", p.c);
+            const p = PRODUCTS.find(x => x.id === id); if (p) { track("fav", p.c); bumpInterest(p.c, 6, p.sellerId, 3); }
             const btn = document.getElementById("fav" + id);
             if (btn) { const on = A.favs.has(id); const ic = btn.querySelector("span"); ic.style.fontVariationSettings = `"FILL" ${on ? 1 : 0},"wght" 400`; ic.classList.toggle('fi', on === 1 || on === true); ic.style.color = on ? "#f99188" : "#3d4949"; }
             toast(A.favs.has(id) ? "Ajoute nan favori" : "Retire nan favori");
@@ -6393,6 +6482,7 @@
             if (!p) { toast('Pwodwi pa jwenn'); return; }
             if (typeof p.s === 'number' && p.s <= 0) { toast('Pwodwi sa epuize'); return; }
 
+            bumpInterest(p.c, 10, p.sellerId, 4);
             const existing = A.cart.find(c => c.id === productId);
             const newQty = existing ? Math.min(existing.qty + 1, Math.max(p.s || 99, 1)) : 1;
             if (existing) { existing.qty = newQty; }
@@ -11479,6 +11569,7 @@
 
             if (local.length > 0) {
                 res.innerHTML = local.map((p, i) => feedCard(p, i)).join("");
+                _searchIntent(local, query);
             } else {
                 // Show loading while Supabase searches
                 res.innerHTML = skeletonFeedCards(4);
@@ -11515,6 +11606,7 @@
                             });
                             if (merged.length > 0) {
                                 res.innerHTML = merged.map((p, i) => feedCard(p, i)).join("");
+                                _searchIntent(merged, query);
                             }
                         }
                         if (merged.length === 0 && local.length === 0) {
