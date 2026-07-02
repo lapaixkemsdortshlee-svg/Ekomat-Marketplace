@@ -107,7 +107,7 @@ Reste :
 - [ ] Tracking conversions branché (analytics) avant de dépenser
 
 ### Mesure
-- [ ] Funnel AARRR de base instrumenté (acquisition → activation → rétention → referral)
+- [x] Funnel AARRR de base instrumenté (acquisition → activation → rétention → referral → revenue) — `supabase/migration-2026-funnel.sql` : RPC `funnel_overview()` (admin-only, lecture seule) **dérivée des tables existantes** (`profiles`, `orders`, `promo_codes`), donc rétroactive, zéro pipeline d'events à maintenir. Carte admin « Kwasans — Antònwa AARRR » (`renderFunnelHealth()`) dans l'onglet Verifikasyon. Métriques : enskri (+7j), achtè, activés (1ère livraison), repeat %, GMV, commission, panier moyen, acquis par referral, récompenses accordées. Validé sur Postgres 16 (calculs corrects, garde `is_admin`). **Gratuit** (pas d'events Vercel payants). Reste : ads (reporté, coût).
 
 ---
 

@@ -7,6 +7,21 @@
 
 ---
 
+## 2026-07-02 : Objectif B — Mesure du funnel AARRR (gratuit)
+
+- Thrasher a confirmé : **déploiements Supabase déjà faits** (rien en attente de son côté) ; **ads mises de côté** (pas d'abonnement payant pour l'instant).
+- Choix : mesurer avant de dépenser. Ajout de `supabase/migration-2026-funnel.sql` — RPC `funnel_overview()` (admin-only, lecture seule) qui calcule tout l'AARRR **à partir des tables existantes** (`profiles`, `orders`, `promo_codes`) : donc rétroactif, aucun pipeline d'events à maintenir, 100% gratuit (pas d'events Vercel qui coûtent).
+  - Acquisition : total users, +7j/+30j, acquis par referral.
+  - Activation : achtè (≥1 commande), activés (aha = 1ère livraison otp/released/completed), taux signup→achtè.
+  - Rétention : repeat buyers (≥2 commandes) + %.
+  - Referral : signups parrainés + codes de récompense accordés.
+  - Revenue : GMV, net vendeurs, commissions, commandes payées, panier moyen.
+- Carte admin « Kwasans — Antònwa AARRR » (`renderFunnelHealth()`) dans l'onglet Verifikasyon, à côté de Sante Sistèm/Escrow (même pattern que `escrow_overview`/`error_overview`).
+- Validé : logique testée sur Postgres 16 (chiffres corrects sur jeu de données seed, garde `is_admin` rejette non-admin), 7 blocs JS sans erreur, 12/12 tests.
+- Reste sur Objectif B : acquisition payante (ads, reporté pour cause de coût) + leviers organiques.
+
+---
+
 ## 2026-07-02 : Objectif B — SEO (sitemap + llms.txt + landing pages Kreyòl)
 
 - **`robots.txt` + `sitemap.xml`** (8 URLs : accueil, onboarding, 6 landing pages) à la racine.
