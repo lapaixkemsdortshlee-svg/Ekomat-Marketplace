@@ -385,6 +385,12 @@
       "skillPath": "skills/programmatic-seo/SKILL.md",
       "computedHash": "0bbdcbacfbe46fd78d774041ee49afd313505bb435b775dc246f4b8e6981d797"
     },
+    "prompt-master": {
+      "source": "nidhinjs/prompt-master",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "066569806dfbd7c0e785ba20453373d393ffae84b68db4ad53e7b020c87fe373"
+    },
     "prospecting": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
