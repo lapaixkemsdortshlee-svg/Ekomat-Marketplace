@@ -11865,20 +11865,30 @@
             }
         }
 
-        // Chèche boutik / vandè pa non (display_name) ak/oswa pa zòn (profiles.location)
+        // Chèche boutik / vandè pa non (display_name) ak/oswa pa zòn (profiles.location).
+        // Eseye RPC rechèch flou (pg_trgm, tolere fot òtograf) dabò; retonbe sou
+        // yon rechèch ILIKE dirèk si migration search_sellers poko deplwaye.
         async function searchSellers(query, zone) {
             const box = document.getElementById("searchSellers");
             if (!box) return;
             if ((!query && !zone) || typeof db === 'undefined' || !db) { box.innerHTML = ""; return; }
             try {
-                let sq = db.from('profiles')
-                    .select('id, display_name, avatar_url, verified_seller, rating_avg, review_count, location')
-                    .eq('role', 'seller');
-                if (query) sq = sq.ilike('display_name', '%' + query + '%');
-                if (zone) sq = sq.eq('location', zone);
-                const { data, error } = await sq.limit(8);
-                if (error || !data) { box.innerHTML = ""; return; }
-                const rows = data.filter(s => s.display_name);
+                let rows = null;
+                // 1) Rechèch flou via RPC (pi bon: tolere fot tankou "Bhoutik" → "Boutik")
+                const rpc = await db.rpc('search_sellers', { q: query || '', zone: zone || '' });
+                if (!rpc.error && Array.isArray(rpc.data)) {
+                    rows = rpc.data;
+                } else {
+                    // 2) Fallback: rechèch pasyèl dirèk (migration poko la)
+                    let sq = db.from('profiles')
+                        .select('id, display_name, avatar_url, verified_seller, rating_avg, review_count, location')
+                        .eq('role', 'seller').eq('status', 'active');
+                    if (query) sq = sq.ilike('display_name', '%' + query + '%');
+                    if (zone) sq = sq.eq('location', zone);
+                    const fb = await sq.limit(8);
+                    rows = fb.error ? [] : (fb.data || []);
+                }
+                rows = (rows || []).filter(s => s.display_name);
                 if (rows.length === 0) { box.innerHTML = ""; return; }
                 box.innerHTML = '<p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Boutik / Vandè</p>' +
                     rows.map(sellerSearchRow).join("");
