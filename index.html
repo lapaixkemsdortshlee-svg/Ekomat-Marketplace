@@ -1898,10 +1898,11 @@
 ══════════════════════════════════════════════════════ -->
     <div class="screen pb-32 max-w-lg mx-auto" id="s-seller">
         <div id="sellerProfileContent"></div>
-        <!-- Barre kontak fiks — rete an plas pandan itilizatè a ap defile -->
-        <div class="fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-6 pointer-events-none"
-             style="background:linear-gradient(180deg,rgba(252,249,244,0),#fcf9f4 45%)">
-            <div class="max-w-lg mx-auto pointer-events-auto">
+        <!-- Barre kontak fiks — solid (pa gen transparans ki kite kontni an
+             parèt anba l), separe klè ak yon lonbraj anlè. -->
+        <div class="fixed bottom-0 left-0 right-0 z-40 px-4 pt-3 pb-4"
+             style="background:#fcf9f4;box-shadow:0 -6px 18px rgba(28,28,25,.10)">
+            <div class="max-w-lg mx-auto">
                 <button onclick="openChatForSeller(A.currentSeller)"
                         class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl cta font-headline font-bold text-base active:scale-[.98] amb">
                     <span class="material-symbols-outlined fi" style="font-size:20px">chat</span>
@@ -4548,7 +4549,7 @@
         ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through pb-1" style="font-size:.875rem">${fpc(p.oldP)}</span><span class="font-label font-bold rounded-full px-2 py-0.5 mb-0.5" style="font-size:.6875rem;background:rgba(151,66,43,.12);color:#97422b">-${discountPct(p)}%</span>` : ''}
         <span class="font-label text-xs text-on-surface-variant pb-1">${p.s <= 2 ? `${p.s} rete` : `An estòk (${p.s})`}</span>
       </div>
-      ${p.sizes.length ? `<div><p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Tay</p><div class="flex flex-wrap gap-2">${p.sizes.map((sz, i) => `<button class="szb w-12 h-10 rounded-lg font-label font-bold text-sm ${i === 0 ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'}" onclick="selSz(this)">${sz}</button>`).join('')}</div></div>` : ''}
+      ${p.sizes && p.sizes.length ? `<div><p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Tay</p><div class="flex flex-wrap gap-2">${p.sizes.map((sz, i) => `<button class="szb w-12 h-10 rounded-lg font-label font-bold text-sm ${i === 0 ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'}" onclick="selSz(this)">${sz}</button>`).join('')}</div></div>` : ''}
       ${(() => {
                     const cached = SELLERS[p.sellerId] || {};
                     const initials = cached.initials || (p.sellerName || 'V').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -5906,14 +5907,14 @@
             catch (_) { return new Set(); }
         }
         async function hideOrderFromHistory(id) {
-            if (!confirm('Retire komann sa a nan istorik ou?\n\nLi p ap efase kay vandè a ni nan resi eskwo a — se sèlman nan vi pa w.')) return;
+            if (!confirm('Kache komann sa a nan istorik ou?\n\nLi PA efase — li rete kay vandè a ak nan resi eskwo a. Se sèlman nan vi pa w li disparèt.')) return;
             const s = getHiddenOrders();
             s.add(String(id));
             try { localStorage.setItem('aym_hidden_orders', JSON.stringify([...s])); } catch (_) {}
             // Pèsiste pa-kont (tout aparèy) via RPC — localStorage rete kòm
             // kachèt imedya + sekou anvan migrasyon an deplwaye.
             if (db) { try { await db.rpc('hide_order', { p_order_id: id }); } catch (_) {} }
-            toast('Komann retire nan istorik ou');
+            toast('Komann kache nan istorik ou');
             loadUserOrdersFromSupabase();
         }
         window.hideOrderFromHistory = hideOrderFromHistory;
@@ -6017,8 +6018,8 @@
                     buttons.push(`<button onclick="hideOrderFromHistory('${id}')"
                         class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
                         style="background:rgba(60,73,73,.06);color:#3d4949">
-                        <span class="material-symbols-outlined align-middle" style="font-size:14px">delete</span>
-                        Efase
+                        <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility_off</span>
+                        Kache
                     </button>`);
                 }
             } else {
@@ -8937,28 +8938,28 @@
                     </div>`;
                 const maxStage = Math.max(1, ac.total_users||0);
                 const stages = [
-                    ['Enskri', (ac.total_users||0)+' · +'+(ac.new_7d||0)+'/7j', (ac.total_users||0)/maxStage],
-                    ['Achtè', (act.buyers||0)+' · '+(act.signup_to_buyer_pct||0)+'%', (act.buyers||0)/maxStage],
-                    ['Aktive', (act.activated||0)+' · 1ye livrezon', (act.activated||0)/maxStage],
-                    ['Repete', (ret.repeat_buyers||0)+' · '+(ret.repeat_pct||0)+'%', (ret.repeat_buyers||0)/maxStage],
+                    ['Moun ki enskri', (ac.total_users||0)+' · +'+(ac.new_7d||0)+' nan 7 jou', (ac.total_users||0)/maxStage],
+                    ['Moun ki achte', (act.buyers||0)+' · '+(act.signup_to_buyer_pct||0)+'%', (act.buyers||0)/maxStage],
+                    ['Moun ki resevwa', (act.activated||0)+' · 1ye livrezon', (act.activated||0)/maxStage],
+                    ['Moun ki achte ankò', (ret.repeat_buyers||0)+' · '+(ret.repeat_pct||0)+'%', (ret.repeat_buyers||0)/maxStage],
                 ];
                 const maxRev = Math.max(1, rv.gmv_htg||0);
                 const revs = [
-                    ['GMV', fp(rv.gmv_htg||0)+' HTG', (rv.gmv_htg||0)/maxRev],
-                    ['Komisyon', fp(rv.fees_htg||0)+' HTG', (rv.fees_htg||0)/maxRev],
+                    ['Total lavant', fp(rv.gmv_htg||0)+' HTG', (rv.gmv_htg||0)/maxRev],
+                    ['Komisyon nou', fp(rv.fees_htg||0)+' HTG', (rv.fees_htg||0)/maxRev],
                 ];
                 box.innerHTML = `
                     <div class="rounded-xl p-3" style="background:#97422b0d;border:1px solid #97422b33">
                         <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] mb-3" style="color:#97422b">
                             <span class="material-symbols-outlined align-middle" style="font-size:13px">insights</span>
-                            Kwasans — Antònwa AARRR</p>
+                            Kijan biznis la ap grandi</p>
                         ${stages.map((s,i)=>hbar(s[0],s[1],s[2],i)).join('')}
-                        <p class="font-label text-[9px] font-bold uppercase tracking-[.12em] text-on-surface-variant mt-3 mb-2">Revni</p>
+                        <p class="font-label text-[9px] font-bold uppercase tracking-[.12em] text-on-surface-variant mt-3 mb-2">Lajan ki antre</p>
                         ${revs.map((r,i)=>hbar(r[0],r[1],r[2],i+4)).join('')}
                         <div class="flex flex-wrap gap-2 mt-2">
-                            ${chip('Panyen mwayen', fp(rv.aov_htg||0)+' HTG', '#00666f')}
-                            ${chip('Vini pa refè', ac.referral_acquired||0, '#97422b')}
-                            ${chip('Rekonpans', rf.rewards_granted||0, '#97422b')}
+                            ${chip('Mwayèn pa kòmand', fp(rv.aov_htg||0)+' HTG', '#00666f')}
+                            ${chip('Vini ak envitasyon', ac.referral_acquired||0, '#97422b')}
+                            ${chip('Rekonpans bay', rf.rewards_granted||0, '#97422b')}
                         </div>
                     </div>`;
             } catch (e) {
@@ -9438,7 +9439,7 @@
         // ── Admin: Feedback Inbox ──
         async function openAdminFeedback() {
             var html = '<div class="fixed inset-0 z-[200] bg-black/50 flex items-end justify-center" id="adminFeedbackOverlay" onclick="if(event.target===this)this.remove()">' +
-                '<div class="w-full max-w-md bg-surface rounded-t-[1.5rem] max-h-[85vh] flex flex-col">' +
+                '<div class="w-full max-w-md bg-surface rounded-t-[1.5rem] h-[85vh] flex flex-col">' +
                 '<div class="flex items-center justify-between px-4 py-3 border-b" style="border-color:rgba(188,201,200,.15)">' +
                 '<p class="font-headline font-bold text-sm text-on-surface">Feedback Itilizatè yo</p>' +
                 '<button onclick="document.getElementById(\'adminFeedbackOverlay\').remove()" class="w-8 h-8 rounded-full flex items-center justify-center amb"><span class="material-symbols-outlined" style="font-size:18px">close</span></button>' +
