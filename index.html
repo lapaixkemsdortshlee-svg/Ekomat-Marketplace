@@ -5841,6 +5841,7 @@
         <p class="font-body text-xs text-on-surface-variant mt-0.5">Tout komand yo — pi resan yo anwo</p>
       </div>
     </div>
+    <div id="hiddenToggle" class="mb-3"></div>
     <div id="ordersList" class="space-y-3">${skeletonCards(3)}</div>`;
             loadUserOrdersFromSupabase();
         }
@@ -5859,9 +5860,16 @@
                     : q.eq('buyer_id', A.user.uid);
                 const { data, error } = await filtered;
                 if (error) throw error;
-                // Achtè: kache komann li chwazi retire nan istorik li a.
-                const hidden = isSeller ? null : getHiddenOrders();
-                const rows = hidden ? (data || []).filter(o => !hidden.has(String(o.id)) && !o.buyer_hidden) : data;
+                // Achtè: kache komann li chwazi (localStorage + buyer_hidden).
+                // Yon toggle pèmèt li wè/demaske yo.
+                const all = data || [];
+                let rows = all;
+                if (!isSeller) {
+                    const hidden = getHiddenOrders();
+                    all.forEach(o => { o._hidden = hidden.has(String(o.id)) || !!o.buyer_hidden; });
+                    _renderHiddenToggle(all.filter(o => o._hidden).length);
+                    rows = A.showHidden ? all : all.filter(o => !o._hidden);
+                }
                 if (!rows || rows.length === 0) {
                     list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center">
                         <div class="mx-auto mb-3 flex items-center justify-center rounded-full" style="width:80px;height:80px;background:rgba(0,102,111,.07)"><span class="material-symbols-outlined" style="font-size:40px;color:#7fa8ab">receipt_long</span></div>
@@ -5889,25 +5897,76 @@
         }
         window.loadUserOrdersFromSupabase = loadUserOrdersFromSupabase;
 
-        // ── Istorik komann: achtè ka retire yon komann fini nan pwòp
-        // vi li (kache lokal). Resi eskwo a, kote vandè a, ak odit admin
-        // lan RETE entak — yon dosye finansye pa dwe efase nèt. ──
+        // ── Istorik komann: achtè ka KACHE yon komann fini nan pwòp vi li
+        // (pa efase — resi eskwo a, kote vandè a ak odit admin rete entak).
+        // Li ka DEMASKE l nenpòt kilè. localStorage + RPC (pa-kont). ──
         function getHiddenOrders() {
             try { return new Set(JSON.parse(localStorage.getItem('aym_hidden_orders') || '[]')); }
             catch (_) { return new Set(); }
         }
-        async function hideOrderFromHistory(id) {
-            if (!confirm('Kache komann sa a nan istorik ou?\n\nLi PA efase — li rete kay vandè a ak nan resi eskwo a. Se sèlman nan vi pa w li disparèt.')) return;
-            const s = getHiddenOrders();
-            s.add(String(id));
+        function _saveHiddenOrders(s) {
             try { localStorage.setItem('aym_hidden_orders', JSON.stringify([...s])); } catch (_) {}
-            // Pèsiste pa-kont (tout aparèy) via RPC — localStorage rete kòm
-            // kachèt imedya + sekou anvan migrasyon an deplwaye.
+        }
+        async function hideOrderFromHistory(id) {
+            const ok = await appConfirm({
+                icon: 'visibility_off',
+                title: 'Kache komann sa a?',
+                body: 'Li PA efase — li rete kay vandè a ak nan resi eskwo a. Se sèlman nan vi pa w li disparèt. Ou ka demaske l nenpòt kilè.',
+                okLabel: 'Wi, kache l', cancelLabel: 'Non',
+            });
+            if (!ok) return;
+            const s = getHiddenOrders(); s.add(String(id)); _saveHiddenOrders(s);
             if (db) { try { await db.rpc('hide_order', { p_order_id: id }); } catch (_) {} }
-            toast('Komann kache nan istorik ou');
+            toast('Komann kache — ou ka demaske l pita');
             loadUserOrdersFromSupabase();
         }
         window.hideOrderFromHistory = hideOrderFromHistory;
+
+        async function unhideOrderFromHistory(id) {
+            const s = getHiddenOrders(); s.delete(String(id)); _saveHiddenOrders(s);
+            if (db) { try { await db.rpc('unhide_order', { p_order_id: id }); } catch (_) {} }
+            toast('Komann parèt ankò nan istorik ou');
+            loadUserOrdersFromSupabase();
+        }
+        window.unhideOrderFromHistory = unhideOrderFromHistory;
+
+        function toggleShowHidden() { A.showHidden = !A.showHidden; loadUserOrdersFromSupabase(); }
+        window.toggleShowHidden = toggleShowHidden;
+
+        function _renderHiddenToggle(count) {
+            const el = document.getElementById('hiddenToggle');
+            if (!el) return;
+            if (!count && !A.showHidden) { el.innerHTML = ''; return; }
+            el.innerHTML = '<button onclick="toggleShowHidden()" class="w-full flex items-center justify-center gap-2 py-2 rounded-xl active:scale-[.99]" style="background:rgba(60,73,73,.06);color:#3d4949">'
+                + '<span class="material-symbols-outlined" style="font-size:16px">' + (A.showHidden ? 'visibility_off' : 'visibility') + '</span>'
+                + '<span class="font-label text-xs font-bold">' + (A.showHidden ? 'Sispann montre komann kache yo' : ('Wè komann kache yo (' + count + ')')) + '</span></button>';
+        }
+
+        // Modal konfimasyon estile (ranplase confirm() natif la). Promise<bool>.
+        function appConfirm(opts) {
+            return new Promise(resolve => {
+                const o = opts || {};
+                const ov = document.createElement('div');
+                ov.className = 'fixed inset-0 z-[300] flex items-center justify-center px-6';
+                ov.style.cssText = 'background:rgba(28,28,25,.55);backdrop-filter:blur(3px);animation:chartFade .2s ease both';
+                const done = (val) => { ov.remove(); resolve(val); };
+                ov.innerHTML = '<div class="w-full max-w-sm rounded-2xl p-5 amb" style="background:#fcf9f4;box-shadow:0 20px 50px rgba(28,28,25,.3)">'
+                    + (o.icon ? '<div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:rgba(0,102,111,.1)"><span class="material-symbols-outlined fi text-primary" style="font-size:24px">' + o.icon + '</span></div>' : '')
+                    + '<h3 class="font-headline font-extrabold text-lg text-on-surface text-center tracking-tight">' + esc(o.title || 'Konfime') + '</h3>'
+                    + (o.body ? '<p class="font-body text-sm text-on-surface-variant text-center mt-2 leading-relaxed">' + esc(o.body).replace(/\n/g, '<br/>') + '</p>' : '')
+                    + '<div class="flex gap-3 mt-5">'
+                    + '<button data-act="cancel" class="flex-1 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant active:scale-95">' + esc(o.cancelLabel || 'Anile') + '</button>'
+                    + '<button data-act="ok" class="flex-1 py-3 rounded-xl cta font-label font-bold text-sm active:scale-95">' + esc(o.okLabel || 'Konfime') + '</button>'
+                    + '</div></div>';
+                ov.addEventListener('click', (e) => {
+                    if (e.target === ov) return done(false);
+                    const act = e.target.closest('[data-act]');
+                    if (act) done(act.getAttribute('data-act') === 'ok');
+                });
+                document.body.appendChild(ov);
+            });
+        }
+        window.appConfirm = appConfirm;
 
         // ══════════════════════════════════════════════════════════
         //  ESCROW UI — step-by-step tracker + role-specific actions
@@ -6005,7 +6064,14 @@
                 // Komann fini — achtè ka retire l nan istorik li (kache lokal;
                 // resi eskwo a ak kote vandè a rete entak).
                 if (['released','completed','delivered','cancelled','refunded'].includes(order.status)) {
-                    buttons.push(`<button onclick="hideOrderFromHistory('${id}')"
+                    buttons.push(order._hidden
+                        ? `<button onclick="unhideOrderFromHistory('${id}')"
+                        class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                        style="background:rgba(0,102,111,.08);color:#00666f">
+                        <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility</span>
+                        Demaske
+                    </button>`
+                        : `<button onclick="hideOrderFromHistory('${id}')"
                         class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
                         style="background:rgba(60,73,73,.06);color:#3d4949">
                         <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility_off</span>

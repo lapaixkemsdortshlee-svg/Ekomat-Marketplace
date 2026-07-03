@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aym-v28';
+const CACHE_NAME = 'aym-v29';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -42,6 +42,24 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+
+  // HTML shell (navigation, /, *.html): NETWORK-FIRST so un nouveau
+  // déploiement arrive tout de suite sur l'appareil (fallback cache hors
+  // ligne). Avant, le cache-first servait un index.html périmé — les
+  // correctifs ne "prenaient" pas tant que le cache ne bustait pas.
+  if (url.origin === self.location.origin &&
+      (request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html'))) {
+    event.respondWith(
+      fetch(request).then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(request).then(c => c || caches.match('/index.html')))
+    );
+    return;
+  }
 
   // Supabase API calls: Network only (never cache dynamic data)
   if (url.hostname.includes('supabase.co')) {
