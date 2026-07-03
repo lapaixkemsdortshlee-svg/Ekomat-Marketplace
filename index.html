@@ -244,6 +244,21 @@
             .succ-anim { animation: none; }
         }
 
+        /* ── Charts animés (stats vendeur/admin qui "bougent") ── */
+        @keyframes barGrowX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        @keyframes barGrowY { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        @keyframes chartDraw { to { stroke-dashoffset: 0; } }
+        @keyframes chartFade { from { opacity: 0; } to { opacity: 1; } }
+        .bar-grow-x { transform-origin: left center; animation: barGrowX .8s cubic-bezier(.22,.61,.36,1) both; }
+        .bar-grow-y { transform-origin: bottom; animation: barGrowY .7s cubic-bezier(.22,.61,.36,1) both; }
+        .chart-draw { stroke-dasharray: var(--dash); stroke-dashoffset: var(--dash); animation: chartDraw 1s ease forwards; }
+        .chart-fade { animation: chartFade .8s ease both; }
+        @media (prefers-reduced-motion: reduce) {
+            .bar-grow-x, .bar-grow-y { animation: none; transform: none; }
+            .chart-draw { animation: none; stroke-dashoffset: 0; }
+            .chart-fade { animation: none; }
+        }
+
         @keyframes slideup {
             from {
                 opacity: 0;
@@ -6983,15 +6998,14 @@
             if (!values.length) return '';
             const max = Math.max(1, ...values);
             const stepX = w / Math.max(1, values.length - 1);
-            const points = values.map((v, i) => {
-                const x = i * stepX;
-                const y = h - (v / max) * (h - 4) - 2;
-                return x.toFixed(1) + ',' + y.toFixed(1);
-            }).join(' ');
+            const pts = values.map((v, i) => [i * stepX, h - (v / max) * (h - 4) - 2]);
+            const points = pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+            let len = 0;
+            for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]);
             const areaPoints = '0,' + h + ' ' + points + ' ' + w + ',' + h;
             return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
-                <polygon points="${areaPoints}" fill="rgba(0,102,111,.12)"/>
-                <polyline points="${points}" fill="none" stroke="#00666f" stroke-width="2" stroke-linejoin="round"/>
+                <polygon points="${areaPoints}" fill="rgba(0,102,111,.12)" class="chart-fade"/>
+                <polyline points="${points}" fill="none" stroke="#00666f" stroke-width="2" stroke-linejoin="round" class="chart-draw" style="--dash:${Math.ceil(len) || w}"/>
             </svg>`;
         }
         function _barsSvg(rows, w, h) {
@@ -7006,7 +7020,7 @@
                         <span style="color:#00666f;font-weight:700">${fp(r.sales)} HTG</span>
                     </div>
                     <div style="height:6px;background:#e5e2dd;border-radius:999px;overflow:hidden;margin-top:3px">
-                        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#00666f,#00818c)"></div>
+                        <div class="bar-grow-x" style="width:${pct}%;height:100%;border-radius:999px;background:linear-gradient(90deg,#00666f,#00818c);animation-delay:${(i*0.08).toFixed(2)}s"></div>
                     </div>
                 </div>`;
             }).join('');
@@ -8908,33 +8922,43 @@
                 if (!data) { box.innerHTML = ''; return; }
                 const ac = data.acquisition || {}, act = data.activation || {},
                       ret = data.retention || {}, rf = data.referral || {}, rv = data.revenue || {};
-                const cell = (label, value, sub) => `
-                    <div class="bg-surface-container-lowest rounded-xl p-2 amb text-center">
-                        <p class="font-label text-[9px] text-on-surface-variant uppercase tracking-wide">${label}</p>
-                        <p class="font-headline font-extrabold text-base leading-tight">${value}</p>
-                        ${sub ? `<p class="font-label text-[9px] text-on-surface-variant">${sub}</p>` : ''}
-                    </div>`;
                 const chip = (label, value, color) =>
                     `<span class="font-label text-[11px] font-bold px-2 py-1 rounded-lg" style="background:${color}1a;color:${color}">${label}: ${value}</span>`;
+                // Bar orizontal anime — yon sèl tenti teal (grandè = mezi la).
+                const hbar = (label, valTxt, ratio, i) => `
+                    <div style="margin-bottom:9px">
+                        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+                            <span class="font-label text-[11px] font-bold text-on-surface">${label}</span>
+                            <span class="font-label text-[11px]"><strong style="color:#00666f">${valTxt}</strong></span>
+                        </div>
+                        <div style="height:9px;background:#e5e2dd;border-radius:999px;overflow:hidden">
+                            <div class="bar-grow-x" style="width:${Math.max(2, ratio*100).toFixed(1)}%;height:100%;border-radius:999px;background:linear-gradient(90deg,#00666f,#00818c);animation-delay:${(i*0.1).toFixed(2)}s"></div>
+                        </div>
+                    </div>`;
+                const maxStage = Math.max(1, ac.total_users||0);
+                const stages = [
+                    ['Enskri', (ac.total_users||0)+' · +'+(ac.new_7d||0)+'/7j', (ac.total_users||0)/maxStage],
+                    ['Achtè', (act.buyers||0)+' · '+(act.signup_to_buyer_pct||0)+'%', (act.buyers||0)/maxStage],
+                    ['Aktive', (act.activated||0)+' · 1ye livrezon', (act.activated||0)/maxStage],
+                    ['Repete', (ret.repeat_buyers||0)+' · '+(ret.repeat_pct||0)+'%', (ret.repeat_buyers||0)/maxStage],
+                ];
+                const maxRev = Math.max(1, rv.gmv_htg||0);
+                const revs = [
+                    ['GMV', fp(rv.gmv_htg||0)+' HTG', (rv.gmv_htg||0)/maxRev],
+                    ['Komisyon', fp(rv.fees_htg||0)+' HTG', (rv.fees_htg||0)/maxRev],
+                ];
                 box.innerHTML = `
                     <div class="rounded-xl p-3" style="background:#97422b0d;border:1px solid #97422b33">
-                        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] mb-2" style="color:#97422b">
+                        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] mb-3" style="color:#97422b">
                             <span class="material-symbols-outlined align-middle" style="font-size:13px">insights</span>
                             Kwasans — Antònwa AARRR</p>
-                        <div class="grid grid-cols-4 gap-2 mb-2">
-                            ${cell('Enskri', ac.total_users||0, '+'+(ac.new_7d||0)+' / 7j')}
-                            ${cell('Achtè', act.buyers||0, (act.signup_to_buyer_pct||0)+'%')}
-                            ${cell('Aktive', act.activated||0, '1ye livrezon')}
-                            ${cell('Repete', ret.repeat_buyers||0, (ret.repeat_pct||0)+'%')}
-                        </div>
-                        <div class="flex flex-wrap gap-2 mb-2">
-                            ${chip('GMV', fp(rv.gmv_htg||0)+' HTG', '#065f46')}
-                            ${chip('Komisyon', fp(rv.fees_htg||0)+' HTG', '#00666f')}
+                        ${stages.map((s,i)=>hbar(s[0],s[1],s[2],i)).join('')}
+                        <p class="font-label text-[9px] font-bold uppercase tracking-[.12em] text-on-surface-variant mt-3 mb-2">Revni</p>
+                        ${revs.map((r,i)=>hbar(r[0],r[1],r[2],i+4)).join('')}
+                        <div class="flex flex-wrap gap-2 mt-2">
                             ${chip('Panyen mwayen', fp(rv.aov_htg||0)+' HTG', '#00666f')}
-                        </div>
-                        <div class="flex flex-wrap gap-2">
                             ${chip('Vini pa refè', ac.referral_acquired||0, '#97422b')}
-                            ${chip('Rekonpans bay', rf.rewards_granted||0, '#97422b')}
+                            ${chip('Rekonpans', rf.rewards_granted||0, '#97422b')}
                         </div>
                     </div>`;
             } catch (e) {
