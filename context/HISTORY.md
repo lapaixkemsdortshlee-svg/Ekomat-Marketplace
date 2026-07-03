@@ -7,6 +7,35 @@
 
 ---
 
+## 2026-07-03 (session 2) : Recherche boutique/vendeur — 3 PR mergées (nom, flou pg_trgm, filtre catégorie/zone, écran « Tout Boutik »)
+
+Session lancée par `/prime`. Point de départ : Thrasher voulait qu'un utilisateur puisse chercher précisément le nom d'une boutique OU d'un vendeur, dans une zone précise. On a d'abord challengé l'hypothèse (esprit council/brainstorming) avant de coder. Chaque lot testé (7 blocs JS + 12/12 Playwright + vérif navigateur offline + validation SQL en lecture seule sur la vraie base via Supabase MCP) puis mergé via sa propre PR. Branche `claude/prime-11fc5t`, on repart de `main` à chaque fois.
+
+**Découvertes qui ont recadré le design (en lisant la vraie donnée) :**
+- **« boutique » et « vendeur » = le même champ** `display_name` (pas de table boutique séparée). Le « OU » de l'hypothèse était en fait une seule recherche.
+- La recherche existante ne cherchait **que les produits** (le placeholder « vandè » était mensonger).
+- La colonne `categories` sur `profiles` **n'existe pas** : le code de vérification vendeur tentait d'y écrire en silence sans succès. → on **dérive** les catégories d'un vendeur de ses produits actifs.
+- Les `location` vendeur sont du **texte libre** (ex. « Village Eden, Commune de Delmas »), donc le filtre zone en match exact ratait tout → corrigé en `ILIKE`.
+
+**PR mergées :**
+- **#132** — Recherche par nom boutique/vendeur (section « Boutik / Vandè » dans la feuille de recherche, résultats cliquables vers l'écran boutique existant) + filtre zone optionnel + **zone rendue éditable** dans le profil vendeur (avant : figée à l'inscription). Bug latent `merged` hors scope corrigé au passage. 100% client-side.
+- **#133** — Recherche **floue `pg_trgm`** (`word_similarity > 0.4` + `ILIKE`, ex. « Berli » trouve « Berlly Lapaix ») via RPC `search_sellers(q, zone)` SECURITY INVOKER (RLS s'applique, zéro escalade), `search_path` figé, index GIN trigram. Client **résilient** : tente le RPC, retombe sur l'`ILIKE` direct si la migration n'est pas déployée.
+- **#134** — **Filtre catégorie** (produits + boutiques, catégories dérivées des produits, affichées en étiquettes) + **fix zone `ILIKE`** + **écran « Tout Boutik »** (écran séparé ouvert via bouton « Gade tout boutik » dans la recherche, filtres zone+catégorie, pas de nouveau tab dans la barre de nav) + **note Alita** (objectif long terme n8n). RPC `search_sellers(q, zone, cat)` v2 (EXISTS sur produits, retourne les catégories dérivées) qui **remplace** la v1 de #133.
+
+**Décisions de Thrasher :**
+- Recherche sur le nom **public** seulement (`display_name`), pas le nom personnel (vie privée).
+- Filtre zone **optionnel** + recherche **floue** (pas exacte).
+- Zone rendue éditable côté vendeur.
+- Onglet « Boutik » = **écran séparé** depuis la recherche (pas un 5e tab dans la barre de nav).
+- Nouvel **objectif long terme** ajouté à `CONTEXT.md` : automatiser toutes les tâches admin par l'IA via **n8n** (à l'avenir, pas maintenant).
+
+**À déployer côté Thrasher (SQL Editor) :**
+- `migration-2026-seller-search-cat.sql` — version **finale et autonome** du RPC : elle **remplace** `migration-2026-seller-search.sql` (#133), donc déployer **uniquement celle-là**. Sans elle, le fallback ILIKE tourne (mais sans filtre catégorie ni flou).
+
+**Note infra récurrente :** la QA navigateur ne peut pas joindre Supabase depuis le sandbox → validation faite en 3 couches (syntaxe JS, Playwright offline, et logique SQL testée en **lecture seule sur la vraie base prod** via Supabase MCP, aucune écriture). La QA UI réelle reste à faire par Thrasher sur le preview/prod.
+
+---
+
 ## 2026-07-03 : Grosse session UX/produit — 12 PR mergées (états UX, reco feed, parrainage, E2E, admin, masquage, graphiques)
 
 Session très dense, lancée par `/prime`. Chaque lot testé (7 blocs JS + 12/12 smoke + vérif navigateur) puis mergé via sa propre PR. On repart de `main` à chaque fois (branche `claude/prime-mfsxam`).
