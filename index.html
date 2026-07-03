@@ -2990,10 +2990,11 @@
                 <strong>ou menm ou touche 100 HTG</strong> rabè sou pwochen kòmand pa w. Toulède genyen! 🎁
             </p>
         </div>
-        <div id="referralCodeBox" class="p-4 rounded-xl text-center mb-4" style="background:rgba(0,102,111,.08);border:1.5px solid #00666f">
+        <div id="referralCodeBox" class="p-4 rounded-xl text-center mb-2" style="background:rgba(0,102,111,.08);border:1.5px solid #00666f">
             <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-1">Kòd refè ou</p>
             <p id="referralCode" class="font-headline font-extrabold text-2xl text-primary" style="letter-spacing:.1em">…</p>
         </div>
+        <p id="referralRemaining" class="font-label text-xs text-center text-on-surface-variant mb-4"></p>
         <div class="space-y-2 mb-4">
             <button id="referralCopyBtn" onclick="referralCopy()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">
                 <span class="material-symbols-outlined" style="font-size:18px">content_copy</span>
@@ -9799,6 +9800,7 @@
                 await db.from('promo_codes').insert({
                     code, discount_type: 'percent', discount_value: 10,
                     scope: 'referral', referrer_id: A.user.uid, active: true,
+                    max_uses: 3,
                 });
             } catch (e) {
                 console.warn('[myReferralCode]', e && e.message);
@@ -9874,12 +9876,50 @@
         async function openReferralSheet() {
             openSheet('referralSheet');
             const codeEl = document.getElementById('referralCode');
+            const remEl = document.getElementById('referralRemaining');
             if (codeEl) codeEl.textContent = 'Ap jenere…';
+            if (remEl) remEl.textContent = '';
             const code = await myReferralCode();
             if (codeEl) codeEl.textContent = code || '—';
-            if (!code) toast('Pa ka jenere kòd refè ou — eseye ankò');
+            if (!code) { toast('Pa ka jenere kòd refè ou — eseye ankò'); return; }
+            await _renderReferralRemaining(code);
         }
         window.openReferralSheet = openReferralSheet;
+
+        // Lojik pi (testab): konbyen redemption ki rete + tèks la.
+        function _referralRemainingLabel(used, cap) {
+            const remaining = Math.max(0, (cap || 3) - (used || 0));
+            return {
+                remaining,
+                done: remaining <= 0,
+                text: remaining > 0
+                    ? 'Rete ' + remaining + '/' + (cap || 3) + ' moun ka sèvi ak kòd ou'
+                    : 'Ou rive nan limit — ' + (cap || 3) + ' moun deja sèvi ak kòd ou 🎉',
+            };
+        }
+
+        // Kòd refè a limite a 3 moun (max_uses=3). Montre konbyen ki rete
+        // epi dezaktive pataj la lè 3 moun fin sèvi avè l.
+        async function _renderReferralRemaining(code) {
+            const remEl = document.getElementById('referralRemaining');
+            const shareBtns = ['referralCopyBtn', 'referralWhatsBtn', 'referralSmsBtn']
+                .map(id => document.getElementById(id));
+            let cap = 3, used = 0;
+            try {
+                const { data } = await db.from('promo_codes')
+                    .select('used_count, max_uses').eq('code', code).maybeSingle();
+                if (data) { cap = data.max_uses || 3; used = data.used_count || 0; }
+            } catch (_) { /* annilo — montre valè pa defo */ }
+            const info = _referralRemainingLabel(used, cap);
+            if (remEl) remEl.textContent = info.text;
+            const done = info.done;
+            shareBtns.forEach(b => {
+                if (!b) return;
+                b.disabled = done;
+                b.style.opacity = done ? '.5' : '';
+                b.style.pointerEvents = done ? 'none' : '';
+            });
+        }
 
         async function referralCopy() {
             const code = document.getElementById('referralCode')?.textContent;

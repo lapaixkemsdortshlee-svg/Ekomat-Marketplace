@@ -130,8 +130,14 @@ test('axe: ekran otantifye yo pa gen vyolasyon kritik', async ({ page }) => {
 // achtè + vandè + admin, ak netwayaj).
 //
 // Rès la (UI navigatè):
-test.fixme('kòd pwomo (UI): aplike yon kòd valab nan checkout', async () => {
-    // Achtè -> checkout -> #orderPromoInput = kòd valab -> total redwi.
-    // Sèvi validate_promo_code() RPC (gade migration-2026-promo-hardening).
-    // A ranpli lè migration promo a deplwaye an pwodiksyon.
+// Parennaj (promo): kòd refè pèsonèl + kontè limit 3 moun. Frape vrè
+// Supabase la (jenere/li kòd la + li used_count/max_uses).
+test('parennaj (UI): kòd refè + kontè limit 3 moun', async ({ page }) => {
+    await login(page, EMAIL, PASSWORD);
+    await page.evaluate(() => window.openReferralSheet && window.openReferralSheet());
+    const code = page.locator('#referralCode');
+    await expect(code).toBeVisible({ timeout: 15_000 });
+    await expect(code).toHaveText(/^AYIM-/, { timeout: 15_000 });
+    // Kontè limit 3 moun nan afiche (swa "Rete X/3 moun" swa "limit").
+    await expect(page.locator('#referralRemaining')).toContainText(/moun/, { timeout: 15_000 });
 });
