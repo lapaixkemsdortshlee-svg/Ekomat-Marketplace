@@ -5724,12 +5724,6 @@
     </div>
     <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Zòn Kolekte</p>
     <div class="space-y-2 mb-4">
-      ${(typeof MY_ADDRESSES !== 'undefined' && MY_ADDRESSES.length > 0)
-        ? `<select id="orderAddrSelect" onchange="pickSavedAddressForOrder(this.value)" class="si w-full">
-             <option value="">— Chwazi yon adrès anrejistre —</option>
-             ${MY_ADDRESSES.map(a => `<option value="${a.id}" ${a.is_default ? 'selected' : ''}>${a.label} · ${(a.address_text || '').slice(0, 40)}</option>`).join('')}
-           </select>`
-        : ''}
       ${zone && zone.label
         ? `<div class="flex items-center gap-3 p-3.5 rounded-xl bg-surface-container-lowest" style="border:1.5px solid #00666f">
              <span class="material-symbols-outlined fi text-primary" style="font-size:18px">where_to_vote</span>
@@ -5750,10 +5744,6 @@
         style="background:rgba(0,102,111,.08);color:#00666f">
         <span class="material-symbols-outlined fi" style="font-size:18px">my_location</span>
         <span class="font-label text-sm font-bold">Detekte zòn mwen</span>
-      </button>
-      <button onclick="openAddressesSheet()" class="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl active:scale-[.99] transition-transform" style="background:rgba(0,102,111,.04);color:#00666f">
-        <span class="material-symbols-outlined" style="font-size:14px">home_pin</span>
-        <span class="font-label text-xs">Jere adrès mwen</span>
       </button>
     </div>
     <div class="flex items-start gap-3 p-4 rounded-xl mb-4" style="background:rgba(0,102,111,.06)">
@@ -6460,13 +6450,8 @@
             } else {
                 items.push({ i: "location_on", l: "Zòn Kolekte", s: "Detekte zòn ou", a: "openPickupPicker()" });
             }
-            // Adrès anrejistre miltip (kay, biwo, etc.)
-            const _addrCount = (typeof MY_ADDRESSES !== 'undefined') ? MY_ADDRESSES.length : 0;
-            items.push({
-                i: "home_pin", l: "Adrès mwen",
-                s: _addrCount ? (_addrCount + ' adrès anrejistre') : 'Ajoute adrès kay, biwo…',
-                a: "openAddressesSheet()",
-            });
+            // NÒT: ansyen antre "Adrès mwen" (adrès miltip) retire — li te
+            // fè doub ak "Zòn Kolekte" ki se sèl sous verite pou pickup la.
             // Refer-a-friend
             items.push({
                 i: "card_giftcard", l: "Envit yon zanmi",
