@@ -5855,7 +5855,7 @@
                 if (error) throw error;
                 // Achtè: kache komann li chwazi retire nan istorik li a.
                 const hidden = isSeller ? null : getHiddenOrders();
-                const rows = hidden ? (data || []).filter(o => !hidden.has(String(o.id))) : data;
+                const rows = hidden ? (data || []).filter(o => !hidden.has(String(o.id)) && !o.buyer_hidden) : data;
                 if (!rows || rows.length === 0) {
                     list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center">
                         <div class="mx-auto mb-3 flex items-center justify-center rounded-full" style="width:80px;height:80px;background:rgba(0,102,111,.07)"><span class="material-symbols-outlined" style="font-size:40px;color:#7fa8ab">receipt_long</span></div>
@@ -5895,6 +5895,9 @@
             const s = getHiddenOrders();
             s.add(String(id));
             try { localStorage.setItem('aym_hidden_orders', JSON.stringify([...s])); } catch (_) {}
+            // Pèsiste pa-kont (tout aparèy) via RPC — localStorage rete kòm
+            // kachèt imedya + sekou anvan migrasyon an deplwaye.
+            if (db) { try { await db.rpc('hide_order', { p_order_id: id }); } catch (_) {} }
             toast('Komann retire nan istorik ou');
             loadUserOrdersFromSupabase();
         }
@@ -8869,8 +8872,8 @@
                 const recentHtml = recent.length
                     ? recent.slice(0, 5).map(r => `
                         <div class="flex items-start gap-2 py-1 border-t" style="border-color:#e5e2dd">
-                            <span class="font-label text-[10px] px-1.5 py-0.5 rounded" style="background:#f4f1eb;color:#6d7979">${r.source || '?'}</span>
-                            <span class="font-label text-[11px] text-on-surface-variant flex-1 truncate">${(r.message || '').replace(/</g,'&lt;')}</span>
+                            <span class="font-label text-[10px] px-1.5 py-0.5 rounded flex-shrink-0" style="background:#f4f1eb;color:#6d7979">${r.source || '?'}</span>
+                            <span class="font-label text-[11px] text-on-surface-variant flex-1 break-words" style="word-break:break-word">${(r.message || '').replace(/</g,'&lt;')}</span>
                         </div>`).join('')
                     : `<p class="font-label text-[11px]" style="color:#065f46">✓ Pa gen erè resan</p>`;
                 box.innerHTML = `
