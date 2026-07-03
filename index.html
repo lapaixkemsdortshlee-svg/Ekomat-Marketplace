@@ -2572,9 +2572,8 @@
                 <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">close</span>
             </button>
         </div>
-        <!-- Filtre zòn (opsyonèl) -->
+        <!-- Filtre zòn + kategori (opsyonèl) -->
         <div class="flex items-center gap-2 mb-4">
-            <span class="material-symbols-outlined text-on-surface-variant pl-1" style="font-size:18px">place</span>
             <select id="searchZone" onchange="doSearch(document.getElementById('searchInput').value)" class="si flex-1">
                 <option value="">Tout zòn</option>
                 <option value="Pétion-Ville">Pétion-Ville</option>
@@ -2586,6 +2585,18 @@
                 <option value="Cap-Haïtien">Cap-Haïtien</option>
                 <option value="Les Cayes">Les Cayes</option>
                 <option value="Autre">Lòt</option>
+            </select>
+            <select id="searchCat" onchange="doSearch(document.getElementById('searchInput').value)" class="si flex-1">
+                <option value="">Tout kategori</option>
+                <option value="mode">Mòd</option>
+                <option value="beaute">Bote</option>
+                <option value="cosmetique">Kosmetik</option>
+                <option value="electronique">Elektwonik</option>
+                <option value="gaming">Gaming</option>
+                <option value="accessoire">Akseswa</option>
+                <option value="artisanat">Atizana</option>
+                <option value="maison">Kay</option>
+                <option value="bebe">Bebe</option>
             </select>
         </div>
         <!-- Rezilta boutik / vandè -->
@@ -11778,10 +11789,11 @@
             if (!res) return;
 
             const zone = (document.getElementById("searchZone")?.value || '').trim();
+            const cat = (document.getElementById("searchCat")?.value || '').trim();
             const query = (q || '').toLowerCase().trim();
 
-            // Anyen chwazi (ni tèks, ni zòn) → montre tendans
-            if (!query && !zone) {
+            // Anyen chwazi (ni tèks, ni zòn, ni kategori) → montre tendans
+            if (!query && !zone && !cat) {
                 res.innerHTML = "";
                 const sb = document.getElementById("searchSellers");
                 if (sb) sb.innerHTML = "";
@@ -11792,8 +11804,8 @@
             // Kache tendans lè ap chèche
             if (trends) trends.classList.add('hidden');
 
-            // Chèche boutik / vandè an paralèl (pa non ak/oswa zòn)
-            searchSellers(query, zone);
+            // Chèche boutik / vandè an paralèl (pa non ak/oswa zòn ak/oswa kategori)
+            searchSellers(query, zone, cat);
 
             const zoneL = zone.toLowerCase();
             // Chèche nan done lokal dabò (rapid)
@@ -11804,7 +11816,8 @@
                     (p.desc && p.desc.toLowerCase().includes(query)) ||
                     (p.l && p.l.toLowerCase().includes(query));
                 const matchZ = !zone || (p.l && p.l.toLowerCase().includes(zoneL));
-                return matchQ && matchZ;
+                const matchC = !cat || p.c === cat;
+                return matchQ && matchZ && matchC;
             });
 
             if (local.length > 0) {
@@ -11825,6 +11838,9 @@
                 }
                 if (zone) {
                     pq = pq.ilike('location', '%' + zone + '%');
+                }
+                if (cat) {
+                    pq = pq.eq('category', cat);
                 }
                 pq.limit(12)
                     .then(({ data, error }) => {
@@ -11868,23 +11884,25 @@
         // Chèche boutik / vandè pa non (display_name) ak/oswa pa zòn (profiles.location).
         // Eseye RPC rechèch flou (pg_trgm, tolere fot òtograf) dabò; retonbe sou
         // yon rechèch ILIKE dirèk si migration search_sellers poko deplwaye.
-        async function searchSellers(query, zone) {
+        async function searchSellers(query, zone, cat) {
             const box = document.getElementById("searchSellers");
             if (!box) return;
-            if ((!query && !zone) || typeof db === 'undefined' || !db) { box.innerHTML = ""; return; }
+            if ((!query && !zone && !cat) || typeof db === 'undefined' || !db) { box.innerHTML = ""; return; }
             try {
                 let rows = null;
-                // 1) Rechèch flou via RPC (pi bon: tolere fot tankou "Bhoutik" → "Boutik")
-                const rpc = await db.rpc('search_sellers', { q: query || '', zone: zone || '' });
+                // 1) Rechèch flou via RPC (pi bon: tolere fot tankou "Bhoutik" → "Boutik",
+                //    zòn an sous-chèn, filtre kategori dedwi de pwodwi yo)
+                const rpc = await db.rpc('search_sellers', { q: query || '', zone: zone || '', cat: cat || '' });
                 if (!rpc.error && Array.isArray(rpc.data)) {
                     rows = rpc.data;
                 } else {
-                    // 2) Fallback: rechèch pasyèl dirèk (migration poko la)
+                    // 2) Fallback: rechèch pasyèl dirèk (migration poko la — pa gen filtre
+                    //    kategori isit, li mache sèlman via RPC la)
                     let sq = db.from('profiles')
                         .select('id, display_name, avatar_url, verified_seller, rating_avg, review_count, location')
                         .eq('role', 'seller').eq('status', 'active');
                     if (query) sq = sq.ilike('display_name', '%' + query + '%');
-                    if (zone) sq = sq.eq('location', zone);
+                    if (zone) sq = sq.ilike('location', '%' + zone + '%');
                     const fb = await sq.limit(8);
                     rows = fb.error ? [] : (fb.data || []);
                 }
@@ -11908,11 +11926,22 @@
                 ? '<span class="material-symbols-outlined fi" style="font-size:14px;color:#00666f" title="Verifye">verified</span>'
                 : '';
             const meta = (loc ? loc + ' · ' : '') + (rating > 0 ? '★ ' + rating.toFixed(1) + ' (' + rc + ')' : 'Pa gen nòt');
+            // Kategori dedwi de pwodwi vandè a (soti nan RPC search_sellers)
+            const catLabels = Array.isArray(s.categories) && s.categories.length
+                ? s.categories.slice(0, 3).map(cid => {
+                    const m = (window.SELLER_CATS_MAP || []).find(c => c.id === cid);
+                    return esc(m ? m.label : cid);
+                }).join(' · ')
+                : '';
+            const catLine = catLabels
+                ? '<p class="font-label text-[10px] text-on-surface-variant truncate mt-0.5">' + catLabels + '</p>'
+                : '';
             return '<button onclick="openSellerFromSearch(\'' + jsAttr(s.id) + '\')" class="w-full flex items-center gap-3 p-2.5 rounded-xl active:bg-surface-container-low amb mb-1.5 text-left">' +
                 avatar +
                 '<div class="flex-1 min-w-0">' +
                 '<p class="font-headline font-bold text-sm text-on-surface truncate flex items-center gap-1">' + name + ' ' + verified + '</p>' +
                 '<p class="font-body text-xs text-on-surface-variant truncate">' + meta + '</p>' +
+                catLine +
                 '</div>' +
                 '<span class="material-symbols-outlined text-on-surface-variant flex-shrink-0" style="font-size:20px">chevron_right</span>' +
                 '</button>';
@@ -11929,6 +11958,8 @@
             if (input) input.value = '';
             const zone = document.getElementById('searchZone');
             if (zone) zone.value = '';
+            const cat = document.getElementById('searchCat');
+            if (cat) cat.value = '';
             doSearch('');
         }
 
