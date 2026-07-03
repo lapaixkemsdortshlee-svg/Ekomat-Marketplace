@@ -2057,6 +2057,49 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════
+     SCREEN — TOUT BOUTIK (parcouri boutik yo pa zòn/kategori)
+══════════════════════════════════════════════════════ -->
+    <div class="screen pb-32 max-w-lg mx-auto" id="s-shops">
+        <div class="sticky top-0 z-20 px-4 pt-4 pb-3" style="background:var(--surface,#faf8f5);border-bottom:1px solid #e5e2dd">
+            <div class="flex items-center gap-3 mb-3">
+                <button onclick="goBack()" class="active:opacity-60" aria-label="Retounen">
+                    <span class="material-symbols-outlined text-on-surface" style="font-size:24px">arrow_back</span>
+                </button>
+                <h2 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">Tout Boutik</h2>
+            </div>
+            <input id="shopsSearchInput" oninput="renderShops()" autocomplete="off"
+                placeholder="Chèche non boutik…" class="si mb-2"/>
+            <div class="flex items-center gap-2">
+                <select id="shopsZone" onchange="renderShops()" class="si flex-1">
+                    <option value="">Tout zòn</option>
+                    <option value="Pétion-Ville">Pétion-Ville</option>
+                    <option value="Delmas">Delmas</option>
+                    <option value="Tabarre">Tabarre</option>
+                    <option value="Carrefour">Carrefour</option>
+                    <option value="Port-au-Prince">Port-au-Prince Centre</option>
+                    <option value="Croix-des-Bouquets">Croix-des-Bouquets</option>
+                    <option value="Cap-Haïtien">Cap-Haïtien</option>
+                    <option value="Les Cayes">Les Cayes</option>
+                    <option value="Autre">Lòt</option>
+                </select>
+                <select id="shopsCat" onchange="renderShops()" class="si flex-1">
+                    <option value="">Tout kategori</option>
+                    <option value="mode">Mòd</option>
+                    <option value="beaute">Bote</option>
+                    <option value="cosmetique">Kosmetik</option>
+                    <option value="electronique">Elektwonik</option>
+                    <option value="gaming">Gaming</option>
+                    <option value="accessoire">Akseswa</option>
+                    <option value="artisanat">Atizana</option>
+                    <option value="maison">Kay</option>
+                    <option value="bebe">Bebe</option>
+                </select>
+            </div>
+        </div>
+        <div id="shopsList" class="px-4 pt-3"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
      SCREEN — KLIYAN ABONNEN (Followers)
 ══════════════════════════════════════════════════════ -->
     <div class="screen pb-32 max-w-lg mx-auto" id="s-followers">
@@ -2605,6 +2648,14 @@
         <div id="searchRes" class="masonry mb-4"></div>
         <!-- Tendans (visible quand pa gen rechèch) -->
         <div id="searchTrends">
+            <button onclick="openShopsScreen()" class="w-full flex items-center gap-3 p-3 rounded-xl mb-4 active:scale-[.98] amb" style="background:rgba(0,102,111,.08);border:1px solid rgba(0,102,111,.18)">
+                <span class="material-symbols-outlined text-primary" style="font-size:22px">storefront</span>
+                <div class="flex-1 text-left">
+                    <p class="font-headline font-bold text-sm text-on-surface">Gade tout boutik</p>
+                    <p class="font-label text-[11px] text-on-surface-variant">Parcouri boutik yo pa zòn ak kategori</p>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">chevron_right</span>
+            </button>
             <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">Tendans</p>
             <div class="flex flex-wrap gap-2 mb-4">
                 <button onclick="searchTrend('Wòb')" class="bg-surface-container-lowest rounded-full px-3.5 py-2 font-body text-sm text-on-surface-variant active:bg-surface-container-high amb">Wòb</button>
@@ -11951,6 +12002,53 @@
         function openSellerFromSearch(id) {
             closeSheets();
             openSellerProfile(id);
+        }
+
+        // ── Ekran "Tout Boutik": parcouri boutik yo pa zòn/kategori ──
+        function openShopsScreen() {
+            closeSheets();
+            A.stack.push(A.tab);
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+            document.getElementById('s-shops').classList.add('on');
+            document.getElementById('bottomNav')?.classList.add('hidden');
+            document.getElementById('fab')?.classList.add('hidden');
+            document.getElementById('topbar')?.classList.add('hidden');
+            document.getElementById('backbtn')?.classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'instant' });
+            renderShops();
+        }
+
+        async function renderShops() {
+            const list = document.getElementById('shopsList');
+            if (!list) return;
+            if (typeof db === 'undefined' || !db) { list.innerHTML = ''; return; }
+            const q = (document.getElementById('shopsSearchInput')?.value || '').trim();
+            const zone = (document.getElementById('shopsZone')?.value || '').trim();
+            const cat = (document.getElementById('shopsCat')?.value || '').trim();
+            list.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8">Ap chaje boutik yo…</p>';
+            try {
+                let rows = null;
+                // Menm RPC flou ak rechèch la (q vid = tout boutik, filtre pa zòn/kategori)
+                const rpc = await db.rpc('search_sellers', { q: q, zone: zone, cat: cat });
+                if (!rpc.error && Array.isArray(rpc.data)) {
+                    rows = rpc.data;
+                } else {
+                    // Fallback san RPC (pa gen filtre kategori)
+                    let sq = db.from('profiles')
+                        .select('id, display_name, avatar_url, verified_seller, rating_avg, review_count, location')
+                        .eq('role', 'seller').eq('status', 'active');
+                    if (q) sq = sq.ilike('display_name', '%' + q + '%');
+                    if (zone) sq = sq.ilike('location', '%' + zone + '%');
+                    const fb = await sq.limit(50);
+                    rows = fb.error ? [] : (fb.data || []);
+                }
+                rows = (rows || []).filter(s => s.display_name);
+                if (rows.length === 0) {
+                    list.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-10">Okenn boutik jwenn pou filtè sa yo.</p>';
+                    return;
+                }
+                list.innerHTML = rows.map(sellerSearchRow).join('');
+            } catch (e) { list.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-10">Yon erè rive. Eseye ankò.</p>'; }
         }
 
         function clearSearch() {
