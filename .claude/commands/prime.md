@@ -12,8 +12,9 @@ Quand je lance `/prime` au début d'une session, exécute la séquence suivante 
 
 Lis dans cet ordre, en intégralité :
 1. `CLAUDE.md` (le fichier racine du workspace)
-2. `context/CONTEXT.md` (mon contexte personnel et professionnel)
-3. `context/HISTORY.md` (l'historique de mes sessions précédentes)
+2. `CLAUDE-sparring-partner.md` (mode sparring partner : ta posture par défaut)
+3. `context/CONTEXT.md` (mon contexte personnel et professionnel)
+4. `context/HISTORY.md` (l'historique de mes sessions précédentes)
 
 ### Étape 2 : Résumer ta compréhension
 
