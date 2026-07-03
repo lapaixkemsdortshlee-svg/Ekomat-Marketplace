@@ -47,6 +47,7 @@ Je construis **AyitiMarket**, une marketplace multi-vendeurs pensée pour la com
 ### Objectifs long terme (1 à 3 ans)
 
 - Faire d'AyitiMarket la marketplace de référence en Haïti et pour la diaspora.
+- **Automatiser toutes les tâches admin par l'IA dans l'app, via n8n** (orchestration IA des flux admin : vérifications, escrow, modération, paiements, alertes...). À l'avenir, pas maintenant.
 
 ---
 
