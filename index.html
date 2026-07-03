@@ -5860,16 +5860,13 @@
                     : q.eq('buyer_id', A.user.uid);
                 const { data, error } = await filtered;
                 if (error) throw error;
-                // Achtè: kache komann li chwazi (localStorage + buyer_hidden).
-                // Yon toggle pèmèt li wè/demaske yo.
+                // Kache komann fini (localStorage + kolòn kache pa-wòl la).
+                // Yon toggle pèmèt wè/demaske yo — pou ACHTÈ AK VANDÈ.
                 const all = data || [];
-                let rows = all;
-                if (!isSeller) {
-                    const hidden = getHiddenOrders();
-                    all.forEach(o => { o._hidden = hidden.has(String(o.id)) || !!o.buyer_hidden; });
-                    _renderHiddenToggle(all.filter(o => o._hidden).length);
-                    rows = A.showHidden ? all : all.filter(o => !o._hidden);
-                }
+                const hidden = getHiddenOrders();
+                all.forEach(o => { o._hidden = hidden.has(String(o.id)) || (isSeller ? !!o.seller_hidden : !!o.buyer_hidden); });
+                _renderHiddenToggle(all.filter(o => o._hidden).length);
+                let rows = A.showHidden ? all : all.filter(o => !o._hidden);
                 if (!rows || rows.length === 0) {
                     list.innerHTML = `<div class="flex flex-col items-center justify-center py-12 text-center">
                         <div class="mx-auto mb-3 flex items-center justify-center rounded-full" style="width:80px;height:80px;background:rgba(0,102,111,.07)"><span class="material-symbols-outlined" style="font-size:40px;color:#7fa8ab">receipt_long</span></div>
@@ -5888,6 +5885,14 @@
                         const ratedSet = new Set((rated || []).map(r => r.product_id));
                         rows.forEach(o => { if (ratedSet.has(o.product_id)) o._rated = true; });
                     }
+                }
+                // Foto pwodwi yo pou kat komann yo (batch) — pou achtè ak vandè.
+                const imgPids = [...new Set(rows.filter(o => o.product_id).map(o => o.product_id))];
+                if (imgPids.length > 0) {
+                    const { data: prods } = await db.from('products').select('id, images').in('id', imgPids);
+                    const imgMap = {};
+                    (prods || []).forEach(p => { imgMap[p.id] = (p.images && p.images[0]) || null; });
+                    rows.forEach(o => { o._img = imgMap[o.product_id] || null; });
                 }
                 list.innerHTML = rows.map(o => renderOrderCard(o, isSeller)).join('');
             } catch(e) {
@@ -6061,23 +6066,6 @@
                         Envit yon zanmi
                     </button>`);
                 }
-                // Komann fini — achtè ka retire l nan istorik li (kache lokal;
-                // resi eskwo a ak kote vandè a rete entak).
-                if (['released','completed','delivered','cancelled','refunded'].includes(order.status)) {
-                    buttons.push(order._hidden
-                        ? `<button onclick="unhideOrderFromHistory('${id}')"
-                        class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
-                        style="background:rgba(0,102,111,.08);color:#00666f">
-                        <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility</span>
-                        Demaske
-                    </button>`
-                        : `<button onclick="hideOrderFromHistory('${id}')"
-                        class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
-                        style="background:rgba(60,73,73,.06);color:#3d4949">
-                        <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility_off</span>
-                        Kache
-                    </button>`);
-                }
             } else {
                 // SELLER actions
                 if (order.status === 'payment_verified') {
@@ -6103,6 +6091,23 @@
                     </button>`);
                 }
             }
+            // Komann fini — achtè AK vandè ka kache/demaske l nan pwòp vi yo
+            // (pa efase — dosye a rete entak pou lòt pati a ak odit admin).
+            if (['released','completed','delivered','cancelled','refunded'].includes(order.status)) {
+                buttons.push(order._hidden
+                    ? `<button onclick="unhideOrderFromHistory('${id}')"
+                    class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                    style="background:rgba(0,102,111,.08);color:#00666f">
+                    <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility</span>
+                    Demaske
+                </button>`
+                    : `<button onclick="hideOrderFromHistory('${id}')"
+                    class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                    style="background:rgba(60,73,73,.06);color:#3d4949">
+                    <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility_off</span>
+                    Kache
+                </button>`);
+            }
             return buttons.length
                 ? `<div class="flex flex-wrap gap-2 mt-3">${buttons.join('')}</div>`
                 : '';
@@ -6121,8 +6126,10 @@
             return `
 <div class="bg-surface-container-lowest rounded-xl p-3 amb">
     <div class="flex items-start gap-3">
-        <div class="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:rgba(0,102,111,.08)">
-            <span class="material-symbols-outlined fi text-primary" style="font-size:22px">shopping_bag</span>
+        <div class="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center" style="background:rgba(0,102,111,.08)">
+            ${o._img
+                ? `<img src="${esc(o._img)}" alt="${esc(o.product_title || 'Pwodwi')}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'material-symbols-outlined fi text-primary\\' style=\\'font-size:22px\\'>shopping_bag</span>'"/>`
+                : `<span class="material-symbols-outlined fi text-primary" style="font-size:22px">shopping_bag</span>`}
         </div>
         <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between gap-2">
