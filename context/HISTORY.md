@@ -7,6 +7,44 @@
 
 ---
 
+## 2026-07-03 : Grosse session UX/produit — 12 PR mergées (états UX, reco feed, parrainage, E2E, admin, masquage, graphiques)
+
+Session très dense, lancée par `/prime`. Chaque lot testé (7 blocs JS + 12/12 smoke + vérif navigateur) puis mergé via sa propre PR. On repart de `main` à chaque fois (branche `claude/prime-mfsxam`).
+
+**Expérience & états UI**
+- **#117** — Loading states: loaders contextuels (skeleton/spinner/barre selon le contexte) + couche « psychologie du chargement » (texte rassurant dynamique au-delà de 5s) branchée sur les flux argent/escrow qui n'avaient aucun feedback réseau. Helpers `btnBusy`, `withDelayedMessage`, `showBusy`.
+- **#118** — État de succès: icône animée à l'entrée + célébration **confetti** self-contained (gated `prefers-reduced-motion`) sur « Vann fèt! » + a11y (`role=status`, focus).
+- **#119** — États erreur + vide: `errorState()` avec bouton « Eseye ankò » (retry), `emptyState()` enrichi avec CTA + illustration.
+
+**Croissance & algo**
+- **#120** — Moteur de reco **feed à biais de confirmation** (type Pinterest/Shein), régime **équilibré (~25% exploration)**: vecteur d'intérêt récent `iv`/`sv` sur `A.prof` avec décroissance (demi-vie 2j), signaux recherche/ouverture/panier/favori, epsilon-greedy pour l'exploration. 100% client-side, aucune migration.
+- **#121** — Parrainage **limité à 3 personnes** (`max_uses=3`, compteur « Rete X/3 ») + **test E2E promo** activé + **auto-run E2E** sur chaque déploiement Vercel (`deployment_status`).
+
+**Infra QA**
+- **Débloqué la QA E2E automatique**: le sandbox ne peut pas joindre Supabase depuis un navigateur (le proxy egress reset le TLS du navigateur; `curl`/MCP passent). Solution: GitHub Secrets (`AYM_E2E_URL/EMAIL/PASSWORD`) + **token Vercel Protection Bypass** (l'URL prod était derrière un « Security Checkpoint »). Depuis, le workflow tourne seul sur chaque preview.
+
+**Admin & vendeur**
+- **#123** — 5 correctifs admin/vendeur: barre « Kontakte vandè » fixe, fix erreur onglet Pwodwi (`products.seller_name` inexistante), onglets admin en icônes + nouvel onglet **Estatistik**, KPI **« Itilizatè »** (total inscrits).
+- **#126** — **Graphiques animés** vendeur (sparkline « Lavant pa jou » qui se dessine + barres top-produits) et admin (funnel AARRR + revenu en barres). Skill `dataviz` utilisé; une seule teinte teal (magnitude), pas de dépendance.
+- **#127** — Libellés admin en **Kreyòl simple** (« Kwasans — Antònwa AARRR » → « Kijan biznis la ap grandi »), + crash `p.sizes.length` gardé, + feedback admin en grand, + barre vendeur solide.
+- **#128** — **Confusion localisation tranchée**: gardé « Zòn Kolekte » (pivot du flux pickup/escrow), retiré « Adrès mwen » (couche multi-adresses redondante — app pickup-based).
+
+**Historique de commande — masquage (pas suppression)**
+- **#124** — Boutons de commande qui respirent (flex-wrap) + masquage local (localStorage).
+- **#125** — Masquage **par compte** (colonne `buyer_hidden` + RPC `hide_order`, cross-device) + message d'erreur admin dé-tronqué.
+- **#129** — **Vraie cause du « le fix ne prend pas » trouvée**: le service worker servait `index.html` en cache-first sans bump de version → l'appareil tournait l'ancien code (d'où le TypeError `p.sizes` qui « revenait »). Corrigé: `sw.js` en **network-first** pour le HTML + bump `aym-v29`. + **modal stylé** `appConfirm` (remplace le `confirm()` natif) + **démasquage** (bouton « Demaske » + toggle « Wè komann kache yo »).
+- **#130** — Carte de transaction: **vraie photo produit** (batch depuis `products.images`, fallback icône) + masquage/démasquage étendu au **vendeur** (colonne `seller_hidden`, RPC role-aware).
+
+**Décisions produit de Thrasher**
+- Modération produits obligatoire: **écartée** (goulot pour un admin solo alors que les vendeurs sont déjà vérifiés par pièce d'identité). Version légère « 1er produit » proposée si besoin.
+- Migration parrainage `migration-2026-referral-cap.sql`: déjà exécutée.
+
+**À exécuter côté Thrasher (SQL Editor), quand il veut le cross-device**
+- `migration-2026-order-hide-both.sql` — version finale du masquage (acheteur + vendeur, `buyer_hidden`/`seller_hidden`, RPC role-aware, idempotente, supersede les anciennes `order-hide`/`order-unhide`).
+- Sur son téléphone: rouvrir l'app une fois pour que le service worker charge la v29 (fait disparaître le crash en cache).
+
+---
+
 ## 2026-07-02 (session 3) : Extension de l'arsenal de skills (ASO, visuel, décision, recherche, conversion)
 
 Thrasher a fait installer plusieurs skills externes et un skill maison, chacun évalué avant install puis mergé via une petite PR dédiée.
