@@ -2572,6 +2572,24 @@
                 <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">close</span>
             </button>
         </div>
+        <!-- Filtre zòn (opsyonèl) -->
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-on-surface-variant pl-1" style="font-size:18px">place</span>
+            <select id="searchZone" onchange="doSearch(document.getElementById('searchInput').value)" class="si flex-1">
+                <option value="">Tout zòn</option>
+                <option value="Pétion-Ville">Pétion-Ville</option>
+                <option value="Delmas">Delmas</option>
+                <option value="Tabarre">Tabarre</option>
+                <option value="Carrefour">Carrefour</option>
+                <option value="Port-au-Prince">Port-au-Prince Centre</option>
+                <option value="Croix-des-Bouquets">Croix-des-Bouquets</option>
+                <option value="Cap-Haïtien">Cap-Haïtien</option>
+                <option value="Les Cayes">Les Cayes</option>
+                <option value="Autre">Lòt</option>
+            </select>
+        </div>
+        <!-- Rezilta boutik / vandè -->
+        <div id="searchSellers" class="mb-4"></div>
         <!-- Results -->
         <div id="searchRes" class="masonry mb-4"></div>
         <!-- Tendans (visible quand pa gen rechèch) -->
@@ -3702,6 +3720,24 @@
                 </p>
                 <textarea id="editShopBio" class="si resize-none" rows="3" maxlength="250" placeholder="Yon ti deskripsyon sou boutik ou — vizib pou tout itilizatè."></textarea>
                 <p class="font-label text-[10px] text-on-surface-variant mt-1" id="editShopBioCount">0 / 250</p>
+            </div>
+            <div id="editZoneRow">
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">
+                    Zòn boutik la <span class="text-on-surface-variant">(vandè sèlman)</span>
+                </p>
+                <select id="editSellerZone" class="si">
+                    <option value="">Chwazi zòn ou...</option>
+                    <option value="Pétion-Ville">Pétion-Ville</option>
+                    <option value="Delmas">Delmas</option>
+                    <option value="Tabarre">Tabarre</option>
+                    <option value="Carrefour">Carrefour</option>
+                    <option value="Port-au-Prince">Port-au-Prince Centre</option>
+                    <option value="Croix-des-Bouquets">Croix-des-Bouquets</option>
+                    <option value="Cap-Haïtien">Cap-Haïtien</option>
+                    <option value="Les Cayes">Les Cayes</option>
+                    <option value="Autre">Lòt</option>
+                </select>
+                <p class="font-label text-[10px] text-on-surface-variant mt-1">Sa ede kliyan jwenn boutik ou lè yo chèche pa zòn.</p>
             </div>
             <div id="editShopNameLockRow" class="hidden flex items-start gap-2 p-2.5 rounded-lg" style="background:rgba(151,66,43,.08)">
                 <span class="material-symbols-outlined fi flex-shrink-0" style="font-size:14px;color:#97422b">lock_clock</span>
@@ -7703,8 +7739,10 @@
             const isSeller = u.role === 'seller' || u.role === 'admin';
             const mcRow = document.getElementById('editMoncashRow');
             const bioRow = document.getElementById('editShopBioRow');
+            const zoneRow = document.getElementById('editZoneRow');
             if (mcRow) mcRow.style.display = isSeller ? '' : 'none';
             if (bioRow) bioRow.style.display = isSeller ? '' : 'none';
+            if (zoneRow) zoneRow.style.display = isSeller ? '' : 'none';
 
             // Bug K — Pull current bio + initialise the live counter.
             const bioEl = document.getElementById('editShopBio');
@@ -7717,11 +7755,13 @@
             if (isSeller && db && u.uid) {
                 try {
                     const { data, error } = await db.from('profiles')
-                        .select('bio, shop_name_changed_at')
+                        .select('bio, location, shop_name_changed_at')
                         .eq('id', u.uid).maybeSingle();
                     if (!error && data) {
                         if (bioEl) bioEl.value = data.bio || '';
                         if (cntEl) cntEl.textContent = (data.bio || '').length + ' / 250';
+                        const zoneEl = document.getElementById('editSellerZone');
+                        if (zoneEl) zoneEl.value = data.location || '';
                         // Bug J — if the seller renamed the shop in the
                         // last 30 days, lock first/last name inputs and
                         // show how many days remain.
@@ -7815,6 +7855,8 @@
                 }
                 if (isSeller) {
                     updates.bio = bio || null;
+                    const zoneVal = (document.getElementById('editSellerZone')?.value || '').trim();
+                    if (zoneVal) updates.location = zoneVal;
                 }
                 const { error } = await db.from('profiles').update(updates).eq('id', A.user.uid);
                 if (error) console.warn('[Profile save]', error.message);
@@ -11735,8 +11777,14 @@
             const trends = document.getElementById("searchTrends");
             if (!res) return;
 
-            if (!q || !q.trim()) {
+            const zone = (document.getElementById("searchZone")?.value || '').trim();
+            const query = (q || '').toLowerCase().trim();
+
+            // Anyen chwazi (ni tèks, ni zòn) → montre tendans
+            if (!query && !zone) {
                 res.innerHTML = "";
+                const sb = document.getElementById("searchSellers");
+                if (sb) sb.innerHTML = "";
                 if (trends) trends.classList.remove('hidden');
                 return;
             }
@@ -11744,15 +11792,20 @@
             // Kache tendans lè ap chèche
             if (trends) trends.classList.add('hidden');
 
-            const query = q.toLowerCase().trim();
+            // Chèche boutik / vandè an paralèl (pa non ak/oswa zòn)
+            searchSellers(query, zone);
 
+            const zoneL = zone.toLowerCase();
             // Chèche nan done lokal dabò (rapid)
-            const local = PRODUCTS.filter(p =>
-                p.t.toLowerCase().includes(query) ||
-                p.c.includes(query) ||
-                (p.desc && p.desc.toLowerCase().includes(query)) ||
-                (p.l && p.l.toLowerCase().includes(query))
-            );
+            const local = PRODUCTS.filter(p => {
+                const matchQ = !query ||
+                    p.t.toLowerCase().includes(query) ||
+                    p.c.includes(query) ||
+                    (p.desc && p.desc.toLowerCase().includes(query)) ||
+                    (p.l && p.l.toLowerCase().includes(query));
+                const matchZ = !zone || (p.l && p.l.toLowerCase().includes(zoneL));
+                return matchQ && matchZ;
+            });
 
             if (local.length > 0) {
                 res.innerHTML = local.map((p, i) => feedCard(p, i)).join("");
@@ -11764,12 +11817,18 @@
 
             // Chèche nan Supabase (source of truth)
             if (typeof db !== 'undefined' && db) {
-                db.from('products')
+                let pq = db.from('products')
                     .select('*, seller:profiles!seller_id(display_name, verified_seller, rating_avg)')
-                    .eq('status', 'active')
-                    .or('title.ilike.%' + query + '%,description.ilike.%' + query + '%,category.ilike.%' + query + '%,location.ilike.%' + query + '%')
-                    .limit(12)
+                    .eq('status', 'active');
+                if (query) {
+                    pq = pq.or('title.ilike.%' + query + '%,description.ilike.%' + query + '%,category.ilike.%' + query + '%,location.ilike.%' + query + '%');
+                }
+                if (zone) {
+                    pq = pq.ilike('location', '%' + zone + '%');
+                }
+                pq.limit(12)
                     .then(({ data, error }) => {
+                        let merged = [...local];
                         if (!error && data && data.length > 0) {
                             const sbProducts = data.map(p => {
                                 const imgs = p.images || [];
@@ -11786,7 +11845,6 @@
                                 };
                             });
                             // Merge ak done lokal (san doub)
-                            const merged = [...local];
                             sbProducts.forEach(sp => {
                                 if (!merged.find(m => m.t === sp.t)) merged.push(sp);
                                 if (!PRODUCTS.find(p => p.id === sp.id)) PRODUCTS.push(sp);
@@ -11796,20 +11854,71 @@
                                 _searchIntent(merged, query);
                             }
                         }
-                        if (merged.length === 0 && local.length === 0) {
-                            res.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8 col-span-2">Okenn rezilta pou "' + q + '"</p>';
+                        if (merged.length === 0) {
+                            res.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8 col-span-2">Okenn pwodwi jwenn.</p>';
                         }
                     }).catch(() => {
                         if (local.length === 0) {
-                            res.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8 col-span-2">Okenn rezilta pou "' + q + '"</p>';
+                            res.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8 col-span-2">Okenn pwodwi jwenn.</p>';
                         }
                     });
             }
         }
 
+        // Chèche boutik / vandè pa non (display_name) ak/oswa pa zòn (profiles.location)
+        async function searchSellers(query, zone) {
+            const box = document.getElementById("searchSellers");
+            if (!box) return;
+            if ((!query && !zone) || typeof db === 'undefined' || !db) { box.innerHTML = ""; return; }
+            try {
+                let sq = db.from('profiles')
+                    .select('id, display_name, avatar_url, verified_seller, rating_avg, review_count, location')
+                    .eq('role', 'seller');
+                if (query) sq = sq.ilike('display_name', '%' + query + '%');
+                if (zone) sq = sq.eq('location', zone);
+                const { data, error } = await sq.limit(8);
+                if (error || !data) { box.innerHTML = ""; return; }
+                const rows = data.filter(s => s.display_name);
+                if (rows.length === 0) { box.innerHTML = ""; return; }
+                box.innerHTML = '<p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Boutik / Vandè</p>' +
+                    rows.map(sellerSearchRow).join("");
+            } catch (e) { box.innerHTML = ""; }
+        }
+
+        function sellerSearchRow(s) {
+            const name = esc(s.display_name || 'Boutik');
+            const loc = s.location ? esc(s.location) : '';
+            const rating = (s.rating_avg || 0);
+            const rc = s.review_count || 0;
+            const initials = (s.display_name || 'B').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            const avatar = s.avatar_url
+                ? '<img src="' + esc(s.avatar_url) + '" alt="Foto boutik ' + name + '" class="w-11 h-11 rounded-full object-cover flex-shrink-0"/>'
+                : '<div class="w-11 h-11 rounded-full flex items-center justify-center font-headline font-bold text-white flex-shrink-0" style="background:#00666f">' + esc(initials) + '</div>';
+            const verified = s.verified_seller
+                ? '<span class="material-symbols-outlined fi" style="font-size:14px;color:#00666f" title="Verifye">verified</span>'
+                : '';
+            const meta = (loc ? loc + ' · ' : '') + (rating > 0 ? '★ ' + rating.toFixed(1) + ' (' + rc + ')' : 'Pa gen nòt');
+            return '<button onclick="openSellerFromSearch(\'' + jsAttr(s.id) + '\')" class="w-full flex items-center gap-3 p-2.5 rounded-xl active:bg-surface-container-low amb mb-1.5 text-left">' +
+                avatar +
+                '<div class="flex-1 min-w-0">' +
+                '<p class="font-headline font-bold text-sm text-on-surface truncate flex items-center gap-1">' + name + ' ' + verified + '</p>' +
+                '<p class="font-body text-xs text-on-surface-variant truncate">' + meta + '</p>' +
+                '</div>' +
+                '<span class="material-symbols-outlined text-on-surface-variant flex-shrink-0" style="font-size:20px">chevron_right</span>' +
+                '</button>';
+        }
+
+        // Fèmen sheet rechèch la anvan ouvri pwofil boutik la
+        function openSellerFromSearch(id) {
+            closeSheets();
+            openSellerProfile(id);
+        }
+
         function clearSearch() {
             const input = document.getElementById('searchInput');
             if (input) input.value = '';
+            const zone = document.getElementById('searchZone');
+            if (zone) zone.value = '';
             doSearch('');
         }
 
