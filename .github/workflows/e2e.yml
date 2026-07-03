@@ -1,9 +1,16 @@
 name: E2E (deployed)
 
-# Tès end-to-end otantifye kont app la deplwaye. Kouri sou demann
-# (workflow_dispatch) paske yo bezwen idantifyan (GitHub Secrets):
-#   AYM_E2E_URL, AYM_E2E_EMAIL, AYM_E2E_PASSWORD, AYM_BYPASS_TOKEN (opsyonèl)
+# Tès end-to-end otantifye kont app la deplwaye. Idantifyan yo nan
+# GitHub Secrets:
+#   AYM_E2E_URL, AYM_E2E_EMAIL, AYM_E2E_PASSWORD, AYM_BYPASS_TOKEN (Vercel bypass)
 # Si secrets yo absan, tès yo skip (yo pa echwe).
+#
+# Deklanche:
+#   - workflow_dispatch : manyèl (opsyonèlman ak yon URL)
+#   - deployment_status : otomatik apre CHAK deplwaman Vercel ki reyisi
+#     (preview oswa pwod) — konsa flux sansib yo teste sou vrè kòd la a
+#     chak PR. target_url la se URL deplwaman an; AYM_BYPASS_TOKEN pase
+#     checkpoint Vercel la.
 
 on:
   workflow_dispatch:
@@ -11,11 +18,14 @@ on:
       url:
         description: 'Deployed URL to test (overrides the AYM_E2E_URL secret)'
         required: false
+  deployment_status:
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Sou deployment_status, kouri sèlman lè deplwaman an reyisi.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -32,7 +42,7 @@ jobs:
 
       - name: Run E2E tests
         env:
-          AYM_E2E_URL: ${{ github.event.inputs.url || secrets.AYM_E2E_URL }}
+          AYM_E2E_URL: ${{ github.event.inputs.url || github.event.deployment_status.target_url || secrets.AYM_E2E_URL }}
           AYM_E2E_EMAIL: ${{ secrets.AYM_E2E_EMAIL }}
           AYM_E2E_PASSWORD: ${{ secrets.AYM_E2E_PASSWORD }}
           AYM_BYPASS_TOKEN: ${{ secrets.AYM_BYPASS_TOKEN }}
