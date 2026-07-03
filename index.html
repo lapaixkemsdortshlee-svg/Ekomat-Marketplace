@@ -1883,6 +1883,17 @@
 ══════════════════════════════════════════════════════ -->
     <div class="screen pb-32 max-w-lg mx-auto" id="s-seller">
         <div id="sellerProfileContent"></div>
+        <!-- Barre kontak fiks — rete an plas pandan itilizatè a ap defile -->
+        <div class="fixed bottom-0 left-0 right-0 z-40 px-4 pb-4 pt-6 pointer-events-none"
+             style="background:linear-gradient(180deg,rgba(252,249,244,0),#fcf9f4 45%)">
+            <div class="max-w-lg mx-auto pointer-events-auto">
+                <button onclick="openChatForSeller(A.currentSeller)"
+                        class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl cta font-headline font-bold text-base active:scale-[.98] amb">
+                    <span class="material-symbols-outlined fi" style="font-size:20px">chat</span>
+                    Kontakte vandè
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════
@@ -1905,7 +1916,11 @@
                     </div>
                 </div>
                 <!-- Admin KPIs -->
-                <div class="grid grid-cols-3 gap-2 mt-4">
+                <div class="grid grid-cols-4 gap-2 mt-4">
+                    <div class="rounded-lg p-2.5 text-center" style="background:rgba(255,255,255,.12)">
+                        <p class="font-headline font-extrabold text-xl text-white" id="kpiUsers">0</p>
+                        <p class="font-label text-[9px] text-white/70 uppercase tracking-[.08em]">Itilizatè</p>
+                    </div>
                     <div class="rounded-lg p-2.5 text-center" style="background:rgba(255,255,255,.12)">
                         <p class="font-headline font-extrabold text-xl text-white" id="kpiPending">0</p>
                         <p class="font-label text-[9px] text-white/70 uppercase tracking-[.08em]">An Atant</p>
@@ -1921,39 +1936,42 @@
                 </div>
             </div>
 
-            <!-- Admin tabs -->
-            <div class="flex gap-1 bg-surface-container-highest rounded-xl p-1 mb-5">
-                <button
-                    class="admin-tab flex-1 py-2.5 rounded-lg bg-surface-container-lowest font-label font-bold text-sm text-on-surface amb active:scale-95 transition-transform"
+            <!-- Admin tabs — ikòn + tèks, scrollable orizontal pou yo respire -->
+            <div class="flex gap-1 bg-surface-container-highest rounded-xl p-1 mb-5 overflow-x-auto" style="scrollbar-width:none;-ms-overflow-style:none">
+                <button class="admin-tab flex-1 min-w-[58px] flex flex-col items-center gap-1 py-2 rounded-lg bg-surface-container-lowest text-on-surface amb active:scale-95 transition-transform"
                     id="at-verif" onclick="switchAdminTab('verif')">
-                    Verifikasyon
+                    <span class="material-symbols-outlined" style="font-size:20px">how_to_reg</span>
+                    <span class="font-label text-[9px] font-bold">Verif</span>
                 </button>
-                <button
-                    class="admin-tab flex-1 py-2.5 rounded-lg font-label font-bold text-sm text-on-surface-variant active:scale-95 transition-transform"
+                <button class="admin-tab flex-1 min-w-[58px] flex flex-col items-center gap-1 py-2 rounded-lg text-on-surface-variant active:scale-95 transition-transform"
                     id="at-orders" onclick="switchAdminTab('orders')">
-                    Komand
+                    <span class="material-symbols-outlined" style="font-size:20px">receipt_long</span>
+                    <span class="font-label text-[9px] font-bold">Komand</span>
                 </button>
-                <button
-                    class="admin-tab flex-1 py-2.5 rounded-lg font-label font-bold text-sm text-on-surface-variant active:scale-95 transition-transform"
+                <button class="admin-tab flex-1 min-w-[58px] flex flex-col items-center gap-1 py-2 rounded-lg text-on-surface-variant active:scale-95 transition-transform"
                     id="at-users" onclick="switchAdminTab('users')">
-                    Itilizatè
+                    <span class="material-symbols-outlined" style="font-size:20px">group</span>
+                    <span class="font-label text-[9px] font-bold">Itilizatè</span>
                 </button>
-                <button
-                    class="admin-tab flex-1 py-2.5 rounded-lg font-label font-bold text-sm text-on-surface-variant active:scale-95 transition-transform"
+                <button class="admin-tab flex-1 min-w-[58px] flex flex-col items-center gap-1 py-2 rounded-lg text-on-surface-variant active:scale-95 transition-transform"
                     id="at-pending" onclick="switchAdminTab('pending')">
-                    Pwodwi
+                    <span class="material-symbols-outlined" style="font-size:20px">inventory_2</span>
+                    <span class="font-label text-[9px] font-bold">Pwodwi</span>
                 </button>
-                <button
-                    class="admin-tab flex-1 py-2.5 rounded-lg font-label font-bold text-sm text-on-surface-variant active:scale-95 transition-transform"
+                <button class="admin-tab flex-1 min-w-[58px] flex flex-col items-center gap-1 py-2 rounded-lg text-on-surface-variant active:scale-95 transition-transform"
                     id="at-convos" onclick="switchAdminTab('convos')">
-                    Mesaj
+                    <span class="material-symbols-outlined" style="font-size:20px">forum</span>
+                    <span class="font-label text-[9px] font-bold">Mesaj</span>
+                </button>
+                <button class="admin-tab flex-1 min-w-[58px] flex flex-col items-center gap-1 py-2 rounded-lg text-on-surface-variant active:scale-95 transition-transform"
+                    id="at-stats" onclick="switchAdminTab('stats')">
+                    <span class="material-symbols-outlined" style="font-size:20px">query_stats</span>
+                    <span class="font-label text-[9px] font-bold">Estatistik</span>
                 </button>
             </div>
 
             <!-- Tab: Verifications -->
             <div id="admin-verif">
-                <div id="funnelHealth" class="mb-4"></div>
-                <div id="sysHealth" class="mb-4"></div>
                 <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
                     Demann Verifikasyon Vandè</p>
                 <div class="space-y-3" id="verifList"></div>
@@ -1963,7 +1981,6 @@
             <div id="admin-orders" class="hidden">
                 <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
                     Komand Aktif yo</p>
-                <div id="escrowHealth" class="mb-4"></div>
                 <div class="space-y-3" id="adminOrderList"></div>
             </div>
 
@@ -1996,6 +2013,15 @@
                         <p class="font-body text-sm text-on-surface-variant mt-2">Ap chaje konvèsasyon…</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Tab: Statistik — tout metrik yo gen plas pou respire isit -->
+            <div id="admin-stats" class="hidden">
+                <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
+                    Estatistik ak sante sistèm</p>
+                <div id="funnelHealth" class="mb-4"></div>
+                <div id="escrowHealth" class="mb-4"></div>
+                <div id="sysHealth" class="mb-4"></div>
             </div>
         </div>
     </div>
@@ -7748,12 +7774,17 @@
         }
 
         function switchAdminTab(tab) {
-            document.querySelectorAll(".admin-tab").forEach(b => { b.className = b.className.replace("bg-surface-container-lowest font-headline font-bold text-sm text-on-surface amb", "font-label font-bold text-sm text-on-surface-variant"); });
-            document.getElementById("at-" + tab).className = document.getElementById("at-" + tab).className.replace("font-label font-bold text-sm text-on-surface-variant", "bg-surface-container-lowest font-headline font-bold text-sm text-on-surface amb");
-            ["verif", "orders", "users", "pending", "convos"].forEach(t => { document.getElementById("admin-" + t).classList.toggle("hidden", t !== tab); });
+            document.querySelectorAll(".admin-tab").forEach(b => {
+                const on = b.id === 'at-' + tab;
+                b.classList.toggle('bg-surface-container-lowest', on);
+                b.classList.toggle('text-on-surface', on);
+                b.classList.toggle('amb', on);
+                b.classList.toggle('text-on-surface-variant', !on);
+            });
+            ["verif", "orders", "users", "pending", "convos", "stats"].forEach(t => { document.getElementById("admin-" + t).classList.toggle("hidden", t !== tab); });
             if (tab === 'convos') loadAdminConversations();
             if (tab === 'pending') renderAdminPending();
-            if (tab === 'verif') { renderSystemHealth(); renderFunnelHealth(); }
+            if (tab === 'stats') { renderFunnelHealth(); renderEscrowHealth(); renderSystemHealth(); }
         }
 
         // ── Admin: pwodwi an atant verifikasyon ──────────────────────
@@ -7763,7 +7794,7 @@
             el.innerHTML = '<div class="text-center py-8"><span class="material-symbols-outlined sp text-on-surface-variant" style="font-size:24px">progress_activity</span><p class="font-label text-xs text-on-surface-variant mt-1">Ap chaje…</p></div>';
             try {
                 const { data, error } = await db.from('products')
-                    .select('id, title, price, images, seller_id, seller_name, category, location, created_at')
+                    .select('id, title, price, images, seller_id, category, location, created_at')
                     .eq('status', 'pending_review')
                     .order('created_at', { ascending: true });
                 if (error) throw error;
@@ -14767,6 +14798,11 @@
                     banned_until: u.banned_until || null, ban_reason: u.ban_reason || null,
                 }));
             }
+            // Total itilizatè enskri — grandi ak chak enskripsyon (KPI header).
+            const { count: totalUsers } = await db.from('profiles')
+                .select('id', { count: 'exact', head: true });
+            const kU = document.getElementById('kpiUsers');
+            if (kU && typeof totalUsers === 'number') kU.textContent = totalUsers;
             renderVerifList();
             renderAdminOrders();
             renderAdminUsers();
