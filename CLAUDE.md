@@ -11,6 +11,7 @@ Reach for the right capability by task:
 - **Real backend / schema / data** → the **Supabase MCP** (`mcp__supabase__*`, read-only, scoped to project `htxfwxldzaocuwezzbom`). Prefer it over guessing from `supabase/*.sql`.
 - **New UI or visual redesign** → `ui-ux-pro-max`, `frontend-design`, Magic (`mcp__magic__*`).
 - **Before building a feature** → `brainstorming` → `writing-plans` → `test-driven-development`.
+- **Agent workflow / méta (BuilderIO/skills)** → `visual-plan` / `visual-recap` (plans et recaps visuels), `plan-arbiter` (arbitrer des plans concurrents), `agent-watchdog` (surveiller/auditer un autre agent), `plow-ahead` (avancer en autonomie sans stops inutiles), `read-the-damn-docs` (lire les docs officielles avant d'assumer une API), `quick-recap` (bloc de statut rouge/jaune/vert), `stay-within-limits` (respecter les quotas d'usage).
 - **Debugging** → `systematic-debugging`.
 - **Test the real app** → gstack `/browse`, `/qa` (the Vercel preview needs the protection-bypass header).
 - **Marketplace growth (Kreyòl)** → `cro`, `pricing`, `onboarding`, `copywriting`, `ads`, `seo-audit`.
