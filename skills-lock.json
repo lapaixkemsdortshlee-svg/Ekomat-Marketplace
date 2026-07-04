@@ -19,11 +19,23 @@
       "skillPath": "skills/ad-creative/SKILL.md",
       "computedHash": "822b7c608a6546680bb1389f619bcd00556974b7bc1a060b217cec94afc22ae0"
     },
+    "adding-a-skill": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/adding-a-skill/SKILL.md",
+      "computedHash": "d7b2b72d70983ee9fc19ca60a8db4a68ab80b907379547aac10a241b0883188a"
+    },
     "ads": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
       "skillPath": "skills/ads/SKILL.md",
       "computedHash": "3f623f4dd628a2989bf9e181bb8100ddf8998cbacbbfa1dbcff69642fedd9da0"
+    },
+    "agent-watchdog": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/agent-watchdog/SKILL.md",
+      "computedHash": "5bb61a77efa302d55d7b2ec8b44297e67600a192d65a01815eeb4c2100da2e29"
     },
     "ai-seo": {
       "source": "coreyhaines31/marketingskills",
@@ -235,6 +247,12 @@
       "skillPath": "skills/directory-submissions/SKILL.md",
       "computedHash": "b737c3b9b9387bbeefd4fb5a003c1debaf273563f170665f6b9341c6818d121b"
     },
+    "efficient-fable": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/efficient-fable/SKILL.md",
+      "computedHash": "6bc4b7c27d800bc010ef31145410cad501a2fbd13f469ee93a0848e8478aaa2d"
+    },
     "emails": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
@@ -355,6 +373,18 @@
       "skillPath": "skills/paywalls/SKILL.md",
       "computedHash": "1f0b8d15770d2e7737b818408dc5877b2eadc4cab072cdfb3529349ab059815f"
     },
+    "plan-arbiter": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/plan-arbiter/SKILL.md",
+      "computedHash": "151f8788a21e960035ef4967dc4c839abef391e2c8687b43497172aa4767ccc7"
+    },
+    "plow-ahead": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/plow-ahead/SKILL.md",
+      "computedHash": "7d6d88122cb3c12330bc234c3726dc2959c9b68caa1b060070bd4714281299c7"
+    },
     "popups": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
@@ -403,11 +433,23 @@
       "skillPath": "skills/public-relations/SKILL.md",
       "computedHash": "1b13653b478b49049e4df4981ea032de63833387c4f914eadaeb070f6ecbdc5c"
     },
+    "quick-recap": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/quick-recap/SKILL.md",
+      "computedHash": "dd86e523be67bea3621cf7f3cc00ed8d6db0eae076aec51b8e03900071eb4893"
+    },
     "rating-prompt-strategy": {
       "source": "Eronred/aso-skills",
       "sourceType": "github",
       "skillPath": "skills/rating-prompt-strategy/SKILL.md",
       "computedHash": "d9a3471479fb02249d5c5272e105db7ab53e07a786c5f2041c38479d245adbda"
+    },
+    "read-the-damn-docs": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/read-the-damn-docs/SKILL.md",
+      "computedHash": "8c69f4c549f42e705cc999905e22f7a795f7725071c99fa826c7e166effb3e57"
     },
     "referral-program": {
       "source": "Eronred/aso-skills",
@@ -493,6 +535,12 @@
       "skillPath": "skills/social/SKILL.md",
       "computedHash": "8c8e87a941d4cb53827e929ee457d9710bb81c5fb1ac80f19cd2aa034aeaa40d"
     },
+    "stay-within-limits": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/stay-within-limits/SKILL.md",
+      "computedHash": "405e81005613b77e34af6834c8c7537100254ae523eeeb8da776d5bbd6fabfb0"
+    },
     "subscription-lifecycle": {
       "source": "Eronred/aso-skills",
       "sourceType": "github",
@@ -510,6 +558,18 @@
       "sourceType": "github",
       "skillPath": "video/SKILL.md",
       "computedHash": "ce7185dde8e0bcec214d15912128220e541808af2392956b688e936db113b84d"
+    },
+    "visual-plan": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/visual-plan/SKILL.md",
+      "computedHash": "2e5f1e1e53e3c3e505d5a8f9e55672f27e56a9f78665362d5aff5484ee64b944"
+    },
+    "visual-recap": {
+      "source": "BuilderIO/skills",
+      "sourceType": "github",
+      "skillPath": "skills/visual-recap/SKILL.md",
+      "computedHash": "ac4eb640b8cc6d5d995397e27b53e842f4e71324bd86d06de73d457f8c692bb6"
     },
     "web-to-app-funnel": {
       "source": "Eronred/aso-skills",
