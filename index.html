@@ -1250,6 +1250,9 @@
                         <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1">Modpas</p>
                         <input id="authPassword" type="password" class="si" placeholder="6 karaktè minimòm" autocomplete="new-password"/>
                     </div>
+                    <div class="text-right -mt-1 hidden" id="forgotPwRow">
+                        <button type="button" onclick="sendPasswordReset()" class="font-label text-[11px] font-bold text-primary active:opacity-60">Modpas bliye?</button>
+                    </div>
 
                     <button onclick="emailSignUp()" id="emailSignUpBtn"
                         class="w-full py-4 rounded-xl cta font-headline font-extrabold text-base active:scale-[.98] transition-transform flex items-center justify-center gap-2 amb">
@@ -2600,6 +2603,20 @@
             style="background:rgba(152,68,62,.1)">
             <span class="material-symbols-outlined align-middle" style="font-size:18px">send</span>
             Voye Notifikasyon Reji
+        </button>
+    </div>
+    <!-- Feuille: nouvo modpas (apre lyen reyinisyalizasyon) -->
+    <div class="sheet" id="pwRecoverySheet">
+        <div class="handle"></div>
+        <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight mb-1">Chwazi yon nouvo modpas</h3>
+        <p class="font-body text-sm text-on-surface-variant mb-4">Antre nouvo modpas ou pou kont ou.</p>
+        <div class="mb-4">
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1">Nouvo modpas</p>
+            <input id="recoveryNewPw" type="password" class="si" placeholder="6 karaktè minimòm" autocomplete="new-password"/>
+        </div>
+        <button onclick="submitNewPassword()" id="recoverySubmitBtn"
+            class="w-full py-3.5 rounded-xl cta font-headline font-bold text-base active:scale-[.98] transition-transform flex items-center justify-center gap-2 amb">
+            Anrejistre nouvo modpas
         </button>
     </div>
     <div class="sheet" id="searchSheet" style="max-height:85vh;overflow-y:auto">
@@ -4258,16 +4275,19 @@
             const btn = document.getElementById('emailSignUpBtn');
             const link = document.getElementById('authToggleLink');
 
+            const forgotRow = document.getElementById('forgotPwRow');
             if (_authMode === 'login') {
                 nameFields.forEach(f => f.closest('.grid')?.classList.add('hidden'));
                 if (btn) btn.textContent = 'Konekte';
                 if (link) link.textContent = 'Kreye yon kont';
                 document.querySelector('#emailAuthForm + .text-center p').firstChild.textContent = 'Ou pa gen kont? ';
+                if (forgotRow) forgotRow.classList.remove('hidden');
             } else {
                 document.querySelectorAll('#emailAuthForm .grid').forEach(g => g.classList.remove('hidden'));
                 if (btn) btn.textContent = 'Kreye Kont';
                 if (link) link.textContent = 'Konekte';
                 document.querySelector('#emailAuthForm + .text-center p').firstChild.textContent = 'Ou gen yon kont deja? ';
+                if (forgotRow) forgotRow.classList.add('hidden');
             }
         }
 
@@ -4296,6 +4316,57 @@
             }
 
             if (btn) btn.classList.remove('btn-loading');
+        }
+
+        // ── Modpas bliye: voye imèl reyinisyalizasyon ──
+        async function sendPasswordReset() {
+            const email = document.getElementById('authEmail')?.value?.trim();
+            if (!email) { toast('Antre imèl ou nan chan anlè a anvan.'); document.getElementById('authEmail')?.focus(); return; }
+            if (typeof db === 'undefined' || !db) { toast('Koneksyon pa disponib. Eseye ankò.'); return; }
+            const link = document.querySelector('#forgotPwRow button');
+            if (link) link.textContent = 'N ap voye...';
+            try {
+                const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+                if (error) { toast('Erè: ' + error.message); }
+                else { toast('Nou voye yon imèl pou reyinisyalize modpas ou. Tcheke bwat resepsyon ou (ak spam yo).'); }
+            } catch (e) { toast('Yon erè rive. Eseye ankò.'); }
+            finally { if (link) link.textContent = 'Modpas bliye?'; }
+        }
+
+        // ── Montre fòm nouvo modpas la (deklanche pa evènman PASSWORD_RECOVERY) ──
+        function openPasswordRecovery() {
+            try { hideSplash(); } catch (e) {}
+            goTo('s-login');
+            openSheet('pwRecoverySheet');
+            setTimeout(() => document.getElementById('recoveryNewPw')?.focus(), 300);
+        }
+
+        async function submitNewPassword() {
+            const pw = document.getElementById('recoveryNewPw')?.value || '';
+            if (pw.length < 6) { toast('Modpas dwe gen 6 karaktè minimòm'); return; }
+            if (typeof db === 'undefined' || !db) { toast('Koneksyon pa disponib.'); return; }
+            const btn = document.getElementById('recoverySubmitBtn');
+            if (btn) btn.classList.add('btn-loading');
+            try {
+                const { error } = await db.auth.updateUser({ password: pw });
+                if (error) { toast('Erè: ' + error.message); return; }
+                A._recovering = false;
+                closeSheets();
+                toast('Modpas ou chanje! N ap konekte w...');
+                // Itilizatè a gen yon sesyon valid (soti nan lyen an) → boot app la
+                const { data: { session } } = await db.auth.getSession();
+                if (session && !A.booted) {
+                    const result = await handleAuthSession(session);
+                    if (result === 'role') {
+                        hideSplash();
+                        document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+                        document.getElementById('s-role').classList.add('on');
+                    } else {
+                        A.booted = true; hideSplash(); bootApp();
+                    }
+                }
+            } catch (e) { toast('Yon erè rive. Eseye ankò.'); }
+            finally { if (btn) btn.classList.remove('btn-loading'); }
         }
 
         function selectRole(role) {
@@ -14450,7 +14521,16 @@
         db.auth.onAuthStateChange(async (event, session) => {
             console.log('[Auth]', event);
 
+            // Modpas bliye: lè lyen reyinisyalizasyon an louvri app la, montre fòm nouvo modpas la
+            if (event === 'PASSWORD_RECOVERY') {
+                A._recovering = true;
+                try { hideAuthLoader(); } catch (e) {}
+                openPasswordRecovery();
+                return;
+            }
+
             if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+                if (A._recovering) return; // pa boot app la pandan itilizatè a ap chwazi nouvo modpas
                 showAuthLoader('Ap konekte...', 'Koneksyon an ap pran yon ti tan anplis… n ap verifye kont ou an tout sekirite.');
                 // Safety timeout
                 const safetyTimer = setTimeout(() => {
