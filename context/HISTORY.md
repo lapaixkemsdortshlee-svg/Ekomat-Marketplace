@@ -7,6 +7,27 @@
 
 ---
 
+## 2026-07-04 : Suite session — sparring mode, skills BuilderIO, mot de passe oublié, décision rebrand (5 PR + décisions)
+
+Prolongement de la session recherche (voir entrée suivante). Toujours branche `claude/prime-11fc5t`, on repart de `main` à chaque PR. Le mode **sparring partner** a été activé en cours de route et appliqué au reste de la session.
+
+**PR mergées :**
+- **#136** — Activation du **mode sparring partner** comme posture par défaut d'Alita. Le fichier `CLAUDE-sparring-partner.md` existait à la racine mais rien ne le chargeait (config morte) : câblé dans `CLAUDE.md` (auto-chargé) + `/prime`. Verdict d'abord, zéro flatterie, steelman-puis-attaque, garde-fou anti-contrarien.
+- **#137** — Installation du pack **BuilderIO/skills** (10 skills agent-workflow : visual-plan, visual-recap, plan-arbiter, agent-watchdog, plow-ahead, read-the-damn-docs, quick-recap, stay-within-limits, efficient-fable, adding-a-skill) via `npx skills add BuilderIO/skills`, + réf dans `CLAUDE.md`. **Aucun secret committé** : le `mcp_token` du service hébergé (liens visual-plan/recap) reste hors git ; l'auth hébergée est à faire par Thrasher en local (`npx @agent-native/core connect ...`). Note : l'installeur interactif hang dans le sandbox remote (pas de TTY) ; le CLI Vercel `skills` détecte l'agent et installe non-interactivement.
+- **#138** — Flux **« mot de passe oublié »** (n'existait pas). Lien « Modpas bliye? » en mode login → `resetPasswordForEmail(redirectTo: window.location.origin)` → événement `PASSWORD_RECOVERY` → feuille « Nouvo modpas » → `updateUser`. Kreyòl. **Dépendance dashboard côté Thrasher (indispensable en prod) : whitelister les Redirect URLs (Auth → URL Configuration) + configurer un SMTP custom** (le SMTP Supabase par défaut est limité ~3-4/h, test only ; reco : Resend).
+- **#135** — Log de la session recherche (voir entrée suivante).
+- **#139** — Objectifs Alita ajoutés à `CONTEXT.md` : **rebrand + domaine** (renommer AVANT d'acheter le domaine) et **acquisition de vendeurs** (prévu, pas maintenant).
+
+**Décision produit majeure — REBRAND :** analyse sparring de la collision de nom. Constat clé (recherche web) : « AyitiMarket » n'est pas juste en collision avec **myayitimarket.com**, c'est un **terme générique** partagé par plusieurs entités (ayitimarket.com « Ayiti Market » actif, Ayimarket, Market Haiti, Caribbean Marketplace...). Donc SEO indifférenciable + marque quasi indéposable. Verdict : renommer est justifié (la vraie raison de Thrasher, #3, était « trop générique » — pas la peur du concurrent). **Timing** : pré-lancement + pré-traction (1 vendeur) = moment le moins cher pour renommer ; le bundle ID `com.ayitidigital.ayitimarket` devient permanent une fois publié sur les stores, donc renommer AVANT publication. Brainstorm de noms distinctifs (Konbit(a), Sara/Madan Sara, Lakou, Potomitan, Twòk...) fait ; **Thrasher gère le choix final du nom + l'identité visuelle, on en reparle.**
+
+**Découverte technique en passant** : la colonne `profiles.categories` **n'existe pas** en prod (le code de vérification vendeur tente d'y écrire en silence sans succès) — d'où le choix de dériver les catégories vendeur de leurs produits (#134). À réparer proprement un jour (le write cassé dans le flux verification).
+
+**État de déploiement (mis à jour) :**
+- ✅ `migration-2026-seller-search-cat.sql` : **déployée** par Thrasher (recherche floue + filtre catégorie + zone ILIKE actifs).
+- ⏳ Reste côté Thrasher : les 2 réglages Auth pour le mot de passe oublié (Redirect URLs + SMTP), et le rebrand (nom + identité + domaine).
+
+---
+
 ## 2026-07-03 (session 2) : Recherche boutique/vendeur — 3 PR mergées (nom, flou pg_trgm, filtre catégorie/zone, écran « Tout Boutik »)
 
 Session lancée par `/prime`. Point de départ : Thrasher voulait qu'un utilisateur puisse chercher précisément le nom d'une boutique OU d'un vendeur, dans une zone précise. On a d'abord challengé l'hypothèse (esprit council/brainstorming) avant de coder. Chaque lot testé (7 blocs JS + 12/12 Playwright + vérif navigateur offline + validation SQL en lecture seule sur la vraie base via Supabase MCP) puis mergé via sa propre PR. Branche `claude/prime-11fc5t`, on repart de `main` à chaque fois.
