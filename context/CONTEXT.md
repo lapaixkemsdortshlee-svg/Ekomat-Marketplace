@@ -41,6 +41,8 @@ Je construis **AyitiMarket**, une marketplace multi-vendeurs pensée pour la com
 
 - Ne jamais arrêter de progresser sur AyitiMarket, pour en faire une entreprise fiable, au service de tous les Haïtiens.
 - **Publier l'app sur les stores** : builds Android (.aab) + iOS (.ipa), comptes Google Play ($25) et Apple Developer ($99/an), soumission (voir `docs/DEPLOYMENT-GUIDE.md`).
+- **Rebrand + domaine (avant les stores)** : « AyitiMarket » est jugé trop générique (collision avec myayitimarket.com et ayitimarket.com, nom peu déposable). Choisir un nouveau nom distinctif et déposable, PUIS acheter le domaine correspondant. **Ordre imposé : le nom doit changer AVANT l'achat du domaine.** À faire idéalement avant la publication stores (le bundle ID `com.ayitidigital.ayitimarket` devient permanent une fois publié). Thrasher gère le choix du nom + l'identité visuelle ; on en reparle ensuite.
+- **Acquisition de vendeurs (objectif prévu, pas maintenant)** : faire venir des vendeurs pour remplir le catalogue. C'est le vrai goulot (vs l'outillage de recherche). À activer quand Thrasher le décide.
 - Brancher les vrais paiements MonCash (bloqué tant que les credentials Digicel ne sont pas obtenus).
 - Lancer l'acquisition payante (ads Meta/Google) quand le budget le permet + activer Leaked Password Protection (plan pro).
 
