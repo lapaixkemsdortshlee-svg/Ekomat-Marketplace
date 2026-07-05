@@ -7,6 +7,32 @@
 
 ---
 
+## 2026-07-05 : ALITA DEVIENT AUTONOME — sous-agent intent, roadmap, et les 4 chantiers livrés (5 PR : #141 à #145)
+
+La session qui transforme Alita d'outil en agent. Point de départ : la question de Thrasher « qu'est-ce qui manque à Alita pour devenir un agent puissant ? ». Diagnostic sparring : ce ne sont pas les capacités qui manquent (~150 skills, 10+ connecteurs), ce sont les **boucles fermées** (agir sans session, déployer sans humain, mémoriser, notifier). Roadmap validée par Thrasher, puis exécutée dans la même session.
+
+**PR mergées :**
+- **#141** — Sous-agent **`alita-intent`** (`.claude/agents/alita-intent.md`) : analyse les demandes ambiguës de Thrasher (courtes, mélange FR/kreyòl, fautes de frappe) AVANT exécution → intention probable, lectures alternatives, prompt amélioré, signaux sparring. Câblé dans CLAUDE.md. Lecture seule, ne bloque pas si l'intention est claire à 80 %+.
+- **#142** — **`context/ROADMAP-AUTONOMIE.md`** : les 4 chantiers avec checklist, qui-fait-quoi (Alita vs Thrasher), critères de vérification, garde-fou permanent (routines en lecture/rapport, actions d'argent = Thrasher).
+- **#143** — **Chantiers 1, 3, 4 exécutés** :
+  - **Routines créées** (sessions fraîches, lecture seule) : Morning brief (12h UTC = 7h Haïti, quotidien, push), Santé hebdo (lundi 13h UTC, advisors + erreurs + escrow + KPIs, push+email), Sentinelle (22h UTC, silencieuse si RAS, push+email). Test manuel déclenché → **notification reçue et confirmée par Thrasher**.
+  - **Mémoire** : 7 leçons durables semées dans agentmemory (project `ayitimarket`) + discipline remember/recall câblée dans CLAUDE.md + hygiène HISTORY dans /update.
+  - **Canal** : décision Thrasher = push + email seulement, WhatsApp écarté (payant), à revoir dans 1 mois.
+- **#144** — **Chantier 2 : pipeline de déploiement auto des migrations** : `.github/workflows/db-migrate.yml` (`supabase link` + `db push` sur push main touchant `supabase/migrations/**`, pattern officiel vérifié dans les docs), `supabase/config.toml`, migration no-op de test, règle CLAUDE.md (nouvelles migrations = `supabase/migrations/<timestamp>_nom.sql`, destructif = revue Thrasher). Baseline : les anciens `migration-2026-*.sql` restent historiques, jamais rejoués.
+- **#145** — Clôture chantier 2 après validation en prod.
+
+**Debug du premier run (leçon utile) :** run 1 rouge → logs : `password authentication failed` sur `db push` (le `link` passait, donc token OK). Cause : le secret `SUPABASE_DB_PASSWORD` ne contenait pas le vrai mot de passe **DB** (piège : ce n'est ni l'anon key ni la service_role). Fix : reset du mot de passe dans Supabase (Settings → Database) en le TAPANT soi-même, même valeur dans le secret GitHub (Actions → Repository secrets), re-run → vert. Vérifié : `20260705050000 (pipeline_test)` enregistrée dans `schema_migrations` en prod via `list_migrations`.
+
+**⚠️ Sécurité à faire par Thrasher :** son mot de passe DB était visible dans une capture d'écran partagée dans le chat → refaire un reset + update du secret GitHub (2 min, même manipulation).
+
+**État final : 18/21 étapes de la roadmap.** Restent : 1.6 (bilan bruit des routines, ~1 semaine), 3.4 (vérifier recall en prochaine session), 4.3 (décision WhatsApp, ~1 mois). Premier Morning brief réel : 2026-07-06 7h Haïti.
+
+**Notes opérationnelles :**
+- GitHub MCP ne peut PAS déclencher/re-lancer un workflow (403 « Resource not accessible by integration ») → le « Re-run all jobs » reste un clic Thrasher.
+- Le classifier de sécurité de session bloque (à juste titre) un psql avec mot de passe en clair dans la commande → passer par le MCP Supabase (lecture seule) pour vérifier.
+
+---
+
 ## 2026-07-04 : Suite session — sparring mode, skills BuilderIO, mot de passe oublié, décision rebrand (5 PR + décisions)
 
 Prolongement de la session recherche (voir entrée suivante). Toujours branche `claude/prime-11fc5t`, on repart de `main` à chaque PR. Le mode **sparring partner** a été activé en cours de route et appliqué au reste de la session.
