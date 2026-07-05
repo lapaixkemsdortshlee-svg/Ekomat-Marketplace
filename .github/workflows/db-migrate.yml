@@ -1,0 +1,49 @@
+# Déploiement automatique des migrations Supabase (chantier 2 de
+# context/ROADMAP-AUTONOMIE.md).
+#
+# Toute nouvelle migration DOIT vivre dans supabase/migrations/<timestamp>_nom.sql
+# (convention CLI). Les anciens fichiers supabase/migration-2026-*.sql sont
+# historiques: déjà déployés à la main, JAMAIS repris par ce workflow.
+#
+# Baseline: la prod n'a jamais été gérée par le CLI, donc sa table
+# supabase_migrations.schema_migrations démarre vide. Comme supabase/migrations/
+# ne contient QUE des fichiers nouveaux, `db push` n'applique que ceux-là —
+# aucun rejeu de l'historique possible.
+#
+# Secrets requis (déjà posés par Thrasher): SUPABASE_ACCESS_TOKEN,
+# SUPABASE_DB_PASSWORD. Le project ref n'est pas un secret.
+name: Deploy Supabase migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+  workflow_dispatch:
+
+concurrency:
+  group: db-migrate
+  cancel-in-progress: false
+
+jobs:
+  push-migrations:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: htxfwxldzaocuwezzbom
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref $SUPABASE_PROJECT_ID
+
+      - name: Push migrations
+        run: supabase db push
+
+      - name: Show applied migrations
+        run: supabase migration list

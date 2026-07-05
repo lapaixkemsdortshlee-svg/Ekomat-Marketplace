@@ -21,7 +21,7 @@
 - [x] **1.2 (Alita)** Créer la routine **« Morning brief »** : quotidienne, `0 12 * * *` UTC (7h00 Haïti), session fraîche, prompt autonome qui exécute l'esprit de `/morning` (veille IA/e-commerce/Haïti filtrée par CONTEXT.md) + état rapide du projet (PRs ouvertes, dernier déploiement). Notification push avec le résumé.
 - [x] **1.3 (Alita)** Créer la routine **« Santé hebdo »** : lundi `0 13 * * 1` UTC (8h00 Haïti), session fraîche : advisors Supabase (sécurité + perf), `error_overview()`, `escrow_attention_orders()`, KPIs `funnel_overview()`. Rapport synthétique + notification.
 - [x] **1.4 (Alita)** Créer la routine **« Sentinelle »** : quotidienne `0 22 * * *` UTC (17h00 Haïti) : vérifier `error_logs` récents et commandes escrow en attente anormale. **Silencieuse si RAS** (pas de notification), alerte seulement si problème.
-- [x] **1.5 (Alita)** Tester chaque routine avec un déclenchement manuel (`fire_trigger`) et vérifier que la notification arrive chez Thrasher.
+- [x] **1.5 (Alita)** Tester chaque routine avec un déclenchement manuel (`fire_trigger`) et vérifier que la notification arrive chez Thrasher. ✅ Notification de test reçue et confirmée par Thrasher le 2026-07-05.
 - [ ] **1.6 (Thrasher)** Après 1 semaine : valider les horaires et le niveau de bruit (trop / pas assez), ajuster.
 
 ### Vérification du chantier
@@ -37,13 +37,13 @@ Une semaine complète où : le brief du matin arrive seul, le rapport du lundi a
 
 ### Étapes
 
-- [ ] **2.1 (Thrasher)** Créer un **access token Supabase** : dashboard → compte (avatar) → Access Tokens → « Generate new token » (nom : `github-actions-migrate`). Le copier.
-- [ ] **2.2 (Thrasher)** Retrouver le **mot de passe de la base** (Settings → Database → Database password ; le reset si perdu).
-- [ ] **2.3 (Thrasher)** Ajouter 2 **GitHub Secrets** (repo → Settings → Secrets and variables → Actions) : `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD`. (Le project ref `htxfwxldzaocuwezzbom` n'est pas secret, il ira dans le workflow.)
-- [ ] **2.4 (Alita)** Créer le dossier `supabase/migrations/` + workflow `.github/workflows/db-migrate.yml` : sur push vers `main` touchant `supabase/migrations/**` → `supabase link --project-ref htxfwxldzaocuwezzbom` puis `supabase db push`. Concurrency group pour éviter deux déploiements simultanés.
-- [ ] **2.5 (Alita)** Établir la **baseline** : marquer l'état actuel de la prod comme point de départ de l'historique de migrations CLI (pour que `db push` n'essaie jamais de rejouer les anciennes migrations). Vérifier avec `supabase migration list`.
+- [x] **2.1 (Thrasher)** Créer un **access token Supabase** : dashboard → compte (avatar) → Access Tokens → « Generate new token » (nom : `github-actions-migrate`). Le copier.
+- [x] **2.2 (Thrasher)** Retrouver le **mot de passe de la base** (Settings → Database → Database password ; le reset si perdu).
+- [x] **2.3 (Thrasher)** Ajouter 2 **GitHub Secrets** (repo → Settings → Secrets and variables → Actions) : `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD`. (Le project ref `htxfwxldzaocuwezzbom` n'est pas secret, il ira dans le workflow.)
+- [x] **2.4 (Alita)** Créer le dossier `supabase/migrations/` + workflow `.github/workflows/db-migrate.yml` : sur push vers `main` touchant `supabase/migrations/**` → `supabase link --project-ref htxfwxldzaocuwezzbom` puis `supabase db push`. Concurrency group pour éviter deux déploiements simultanés.
+- [x] **2.5 (Alita)** Établir la **baseline** : marquer l'état actuel de la prod comme point de départ de l'historique de migrations CLI (pour que `db push` n'essaie jamais de rejouer les anciennes migrations). Vérifier avec `supabase migration list`.
 - [ ] **2.6 (Alita)** Test de bout en bout : une migration no-op (`select 1;` commentée) mergée sur `main` → l'Action passe → vérifier via MCP (`list_migrations`) qu'elle est enregistrée en prod.
-- [ ] **2.7 (Alita)** Documenter la nouvelle règle dans `CLAUDE.md` : toute nouvelle migration va dans `supabase/migrations/<timestamp>_nom.sql` (plus jamais de fichier ad hoc), idempotente, et les changements destructifs (DROP, DELETE) exigent une revue explicite de Thrasher avant merge.
+- [x] **2.7 (Alita)** Documenter la nouvelle règle dans `CLAUDE.md` : toute nouvelle migration va dans `supabase/migrations/<timestamp>_nom.sql` (plus jamais de fichier ad hoc), idempotente, et les changements destructifs (DROP, DELETE) exigent une revue explicite de Thrasher avant merge.
 
 ### Vérification du chantier
 Une vraie migration (la prochaine feature) déployée en prod par le merge seul, zéro action manuelle.
@@ -99,6 +99,6 @@ Une alerte sentinelle réelle reçue par Thrasher hors session, sur au moins un 
 | Chantier | État | Dernière mise à jour |
 |---|---|---|
 | 1. Routines | ✅ Fait (3 routines créées + test manuel lancé ; reste 1.6 : bilan de bruit après 1 semaine) | 2026-07-05 |
-| 2. Déploiement Supabase | En attente des étapes 2.1-2.3 (Thrasher : token, db password, GitHub Secrets) | 2026-07-05 |
+| 2. Déploiement Supabase | Workflow prêt (secrets posés par Thrasher, workflow + baseline + migration test committés) ; reste 2.6 : vérifier le run CI après merge | 2026-07-05 |
 | 3. Mémoire | ✅ Fait (7 leçons semées, discipline câblée ; reste 3.4 : vérif recall dans une session future) | 2026-07-05 |
 | 4. Canal sortant | ✅ Décidé : push + email seulement, WhatsApp écarté (revoir dans 1 mois si besoin) | 2026-07-05 |

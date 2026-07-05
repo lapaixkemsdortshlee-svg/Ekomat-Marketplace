@@ -20,5 +20,8 @@ playwright/.cache/
 # Vercel
 .vercel/
 
+# Supabase CLI (état local du link, jamais committé)
+supabase/.temp/
+
 # Generated code-graph artifacts
 graphify-out/
