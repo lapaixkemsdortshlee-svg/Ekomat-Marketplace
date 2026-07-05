@@ -42,7 +42,7 @@ Une semaine complète où : le brief du matin arrive seul, le rapport du lundi a
 - [x] **2.3 (Thrasher)** Ajouter 2 **GitHub Secrets** (repo → Settings → Secrets and variables → Actions) : `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_PASSWORD`. (Le project ref `htxfwxldzaocuwezzbom` n'est pas secret, il ira dans le workflow.)
 - [x] **2.4 (Alita)** Créer le dossier `supabase/migrations/` + workflow `.github/workflows/db-migrate.yml` : sur push vers `main` touchant `supabase/migrations/**` → `supabase link --project-ref htxfwxldzaocuwezzbom` puis `supabase db push`. Concurrency group pour éviter deux déploiements simultanés.
 - [x] **2.5 (Alita)** Établir la **baseline** : marquer l'état actuel de la prod comme point de départ de l'historique de migrations CLI (pour que `db push` n'essaie jamais de rejouer les anciennes migrations). Vérifier avec `supabase migration list`.
-- [ ] **2.6 (Alita)** Test de bout en bout : une migration no-op (`select 1;` commentée) mergée sur `main` → l'Action passe → vérifier via MCP (`list_migrations`) qu'elle est enregistrée en prod.
+- [x] **2.6 (Alita)** Test de bout en bout : une migration no-op (`select 1;` commentée) mergée sur `main` → l'Action passe → vérifier via MCP (`list_migrations`) qu'elle est enregistrée en prod. ✅ Vérifié le 2026-07-05 : `20260705050000 (pipeline_test)` enregistrée en prod (après correction du secret `SUPABASE_DB_PASSWORD` — 1er run rouge : mauvais mot de passe DB, corrigé par reset + update du secret, re-run vert).
 - [x] **2.7 (Alita)** Documenter la nouvelle règle dans `CLAUDE.md` : toute nouvelle migration va dans `supabase/migrations/<timestamp>_nom.sql` (plus jamais de fichier ad hoc), idempotente, et les changements destructifs (DROP, DELETE) exigent une revue explicite de Thrasher avant merge.
 
 ### Vérification du chantier
@@ -99,6 +99,6 @@ Une alerte sentinelle réelle reçue par Thrasher hors session, sur au moins un 
 | Chantier | État | Dernière mise à jour |
 |---|---|---|
 | 1. Routines | ✅ Fait (3 routines créées + test manuel lancé ; reste 1.6 : bilan de bruit après 1 semaine) | 2026-07-05 |
-| 2. Déploiement Supabase | Workflow prêt (secrets posés par Thrasher, workflow + baseline + migration test committés) ; reste 2.6 : vérifier le run CI après merge | 2026-07-05 |
+| 2. Déploiement Supabase | ✅ TERMINÉ — pipeline validé de bout en bout (migration test en prod via le workflow) | 2026-07-05 |
 | 3. Mémoire | ✅ Fait (7 leçons semées, discipline câblée ; reste 3.4 : vérif recall dans une session future) | 2026-07-05 |
 | 4. Canal sortant | ✅ Décidé : push + email seulement, WhatsApp écarté (revoir dans 1 mois si besoin) | 2026-07-05 |
