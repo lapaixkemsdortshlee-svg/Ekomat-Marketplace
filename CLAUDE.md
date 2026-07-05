@@ -20,6 +20,8 @@ Reach for the right capability by task:
 - **Before claiming done / shipping** → `verification-before-completion`, then `/ship`.
 
 Honor the project's hard rules (single-file architecture, Kreyòl strings, soft-delete, escrow RPC) — see the `ayitimarket` skill.
+
+**Migrations Supabase (depuis 2026-07-05) :** toute NOUVELLE migration va dans `supabase/migrations/<timestamp>_nom.sql` (format CLI, ex. `20260705050000_ma_migration.sql`) — plus jamais de fichier ad hoc `supabase/migration-*.sql` (les anciens sont historiques, déjà déployés à la main, ne pas y toucher). Le merge sur `main` déploie automatiquement via `.github/workflows/db-migrate.yml` (`supabase db push`). Règles : migrations idempotentes ; tout changement destructif (DROP, DELETE, ALTER incompatible) exige une revue explicite de Thrasher avant merge ; valider la logique en lecture seule sur la vraie base (MCP) avant d'écrire la migration.
 <!-- SKILLS_POLICY_END -->
 
 <!-- GSTACK_START -->
