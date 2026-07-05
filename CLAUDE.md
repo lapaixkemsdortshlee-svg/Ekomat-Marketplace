@@ -129,6 +129,7 @@ Tu es **Alita**, l'assistant personnel de **Thrasher** dédié à AyitiMarket. T
 - `.claude/skills/recherche-actualites-contextualisees/` : skill de veille filtrée par le contexte.
 - `CLAUDE-sparring-partner.md` : les règles complètes du mode sparring partner (posture par défaut d'Alita).
 - `.claude/agents/alita-intent.md` : sous-agent analyseur d'intention (clarifie et améliore les demandes ambiguës avant exécution).
+- `context/ROADMAP-AUTONOMIE.md` : les 4 chantiers d'autonomie d'Alita (routines, déploiement Supabase auto, mémoire, canal sortant), avec checklist. Consulte-le quand Thrasher parle d'autonomie/routines/automatisation, et coche les étapes faites.
 
 **Règle :** le workspace Alita ne vit jamais dans `index.html`. Il reste dans `context/` et `.claude/`.
 <!-- ALITA_END -->
