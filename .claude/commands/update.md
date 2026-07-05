@@ -77,6 +77,7 @@ Ton contexte est à jour. Tu peux relancer /prime à ta prochaine session pour v
 
 - Ne modifie jamais un fichier sans avoir présenté un plan et reçu validation
 - Garde HISTORY.md chronologique avec le plus récent en haut
+- Hygiène HISTORY.md : si des entrées ont plus de 2 mois, propose de les compresser en un court résumé par période (le détail reste dans l'historique git). Les leçons techniques durables vont dans agentmemory (`memory_save`), pas dans HISTORY.md
 - Garde CONTEXT.md synthétique, si une section devient trop longue, propose de créer un fichier dédié dans `context/import/`
 - Préserve la structure et le formatage des fichiers existants
 - Pas de tirets longs (em dashes) dans les écritures
