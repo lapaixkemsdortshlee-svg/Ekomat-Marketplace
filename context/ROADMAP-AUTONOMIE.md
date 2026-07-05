@@ -17,11 +17,11 @@
 
 ### Étapes
 
-- [ ] **1.1 (Thrasher)** Vérifier que les notifications push de l'app Claude sont activées sur ton téléphone (sinon les routines parleront dans le vide).
-- [ ] **1.2 (Alita)** Créer la routine **« Morning brief »** : quotidienne, `0 12 * * *` UTC (7h00 Haïti), session fraîche, prompt autonome qui exécute l'esprit de `/morning` (veille IA/e-commerce/Haïti filtrée par CONTEXT.md) + état rapide du projet (PRs ouvertes, dernier déploiement). Notification push avec le résumé.
-- [ ] **1.3 (Alita)** Créer la routine **« Santé hebdo »** : lundi `0 13 * * 1` UTC (8h00 Haïti), session fraîche : advisors Supabase (sécurité + perf), `error_overview()`, `escrow_attention_orders()`, KPIs `funnel_overview()`. Rapport synthétique + notification.
-- [ ] **1.4 (Alita)** Créer la routine **« Sentinelle »** : quotidienne `0 22 * * *` UTC (17h00 Haïti) : vérifier `error_logs` récents et commandes escrow en attente anormale. **Silencieuse si RAS** (pas de notification), alerte seulement si problème.
-- [ ] **1.5 (Alita)** Tester chaque routine avec un déclenchement manuel (`fire_trigger`) et vérifier que la notification arrive chez Thrasher.
+- [x] **1.1 (Thrasher)** Vérifier que les notifications push de l'app Claude sont activées sur ton téléphone (sinon les routines parleront dans le vide).
+- [x] **1.2 (Alita)** Créer la routine **« Morning brief »** : quotidienne, `0 12 * * *` UTC (7h00 Haïti), session fraîche, prompt autonome qui exécute l'esprit de `/morning` (veille IA/e-commerce/Haïti filtrée par CONTEXT.md) + état rapide du projet (PRs ouvertes, dernier déploiement). Notification push avec le résumé.
+- [x] **1.3 (Alita)** Créer la routine **« Santé hebdo »** : lundi `0 13 * * 1` UTC (8h00 Haïti), session fraîche : advisors Supabase (sécurité + perf), `error_overview()`, `escrow_attention_orders()`, KPIs `funnel_overview()`. Rapport synthétique + notification.
+- [x] **1.4 (Alita)** Créer la routine **« Sentinelle »** : quotidienne `0 22 * * *` UTC (17h00 Haïti) : vérifier `error_logs` récents et commandes escrow en attente anormale. **Silencieuse si RAS** (pas de notification), alerte seulement si problème.
+- [x] **1.5 (Alita)** Tester chaque routine avec un déclenchement manuel (`fire_trigger`) et vérifier que la notification arrive chez Thrasher.
 - [ ] **1.6 (Thrasher)** Après 1 semaine : valider les horaires et le niveau de bruit (trop / pas assez), ajuster.
 
 ### Vérification du chantier
@@ -60,7 +60,7 @@ Un token Supabase vit dans les secrets GitHub. Risque contenu : secrets GitHub c
 
 ### Étapes
 
-- [ ] **3.1 (Alita)** Semer les leçons déjà payées (une entrée `remember` chacune, avec tags) :
+- [x] **3.1 (Alita)** Semer les leçons déjà payées (une entrée `remember` chacune, avec tags) :
   - Le navigateur du sandbox ne joint PAS Supabase (proxy TLS) ; QA API = curl/MCP, QA UI = CI.
   - Les installeurs interactifs (npx sans TTY) hangent dans le sandbox ; toujours chercher un mode non-interactif.
   - `profiles.categories` n'existe pas en prod ; le write dans le flux verification échoue en silence ; catégories vendeur = dérivées des produits.
@@ -68,8 +68,8 @@ Un token Supabase vit dans les secrets GitHub. Risque contenu : secrets GitHub c
   - Boutique = `display_name` du profil vendeur (pas de table boutique).
   - Les commits de merge GitHub apparaissent « unverified » au stop-hook : normal, pas nos commits.
   - Le service worker cache-first a déjà masqué des fixes (bump `aym-vXX` + network-first HTML depuis v29).
-- [ ] **3.2 (Alita)** Câbler la discipline dans `CLAUDE.md` (section Alita) : à chaque leçon technique durable → `remember` immédiat ; au début d'un travail sur un sujet → `recall` le sujet ; à la fin d'une session importante → HISTORY.md (journal) + `remember` (leçons).
-- [ ] **3.3 (Alita)** Hygiène HISTORY.md : lors des `/update`, compresser les entrées de plus de 2 mois en un résumé (le journal reste lisible, le détail vit dans git).
+- [x] **3.2 (Alita)** Câbler la discipline dans `CLAUDE.md` (section Alita) : à chaque leçon technique durable → `remember` immédiat ; au début d'un travail sur un sujet → `recall` le sujet ; à la fin d'une session importante → HISTORY.md (journal) + `remember` (leçons).
+- [x] **3.3 (Alita)** Hygiène HISTORY.md : lors des `/update`, compresser les entrées de plus de 2 mois en un résumé (le journal reste lisible, le détail vit dans git).
 - [ ] **3.4 (Alita)** Vérifier dans une session suivante : `recall "supabase sandbox"` retourne la leçon du proxy ; `recall "zone location"` retourne la leçon ILIKE.
 
 ### Vérification du chantier
@@ -84,10 +84,10 @@ Une session future où Alita cite une leçon retrouvée via `recall` au lieu de 
 
 ### Étapes
 
-- [ ] **4.1 (déjà couvert par 1.x)** Notifications push des routines = canal par défaut.
-- [ ] **4.2 (Alita)** Canal email : les routines importantes (santé hebdo, alertes sentinelle) envoient aussi un email récapitulatif à lapaixkemsdortshlee@gmail.com (via les notifications email des routines, ou un draft Gmail).
+- [x] **4.1 (déjà couvert par 1.x)** Notifications push des routines = canal par défaut.
+- [x] **4.2 (Alita)** Canal email : les routines importantes (santé hebdo, alertes sentinelle) envoient aussi un email récapitulatif à lapaixkemsdortshlee@gmail.com (via les notifications email des routines, ou un draft Gmail).
 - [ ] **4.3 (Thrasher, plus tard, si besoin prouvé)** WhatsApp : décider seulement après 1 mois de routines. Si les pushes suffisent → ne rien payer. Sinon : Zapier → Twilio WhatsApp (compter ~qq $/mois), Alita configure le Zap.
-- [ ] **4.4 (Alita)** Documenter le choix final dans CONTEXT.md.
+- [x] **4.4 (Alita)** Documenter le choix final dans CONTEXT.md.
 
 ### Vérification du chantier
 Une alerte sentinelle réelle reçue par Thrasher hors session, sur au moins un canal, avec le contexte suffisant pour agir.
@@ -98,7 +98,7 @@ Une alerte sentinelle réelle reçue par Thrasher hors session, sur au moins un 
 
 | Chantier | État | Dernière mise à jour |
 |---|---|---|
-| 1. Routines | À démarrer | 2026-07-05 |
-| 2. Déploiement Supabase | À démarrer (bloqué par 2.1-2.3, actions Thrasher) | 2026-07-05 |
-| 3. Mémoire | À démarrer | 2026-07-05 |
-| 4. Canal sortant | Partiellement couvert par le chantier 1 | 2026-07-05 |
+| 1. Routines | ✅ Fait (3 routines créées + test manuel lancé ; reste 1.6 : bilan de bruit après 1 semaine) | 2026-07-05 |
+| 2. Déploiement Supabase | En attente des étapes 2.1-2.3 (Thrasher : token, db password, GitHub Secrets) | 2026-07-05 |
+| 3. Mémoire | ✅ Fait (7 leçons semées, discipline câblée ; reste 3.4 : vérif recall dans une session future) | 2026-07-05 |
+| 4. Canal sortant | ✅ Décidé : push + email seulement, WhatsApp écarté (revoir dans 1 mois si besoin) | 2026-07-05 |
