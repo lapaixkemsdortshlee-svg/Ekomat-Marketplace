@@ -7,7 +7,7 @@
 //
 // SECRETS POU KONFIGIRE:
 //   RESEND_API_KEY   →  re_xxx — soti nan resend.com
-//   EMAIL_FROM       →  egz. "AyitiMarket <noreply@ayitimarket.com>"
+//   EMAIL_FROM       →  egz. "Ekomat <noreply@ekomat.example>"
 //   WEBHOOK_SECRET   →  menm sekrè ki itilize ak send-push
 //
 // DEPLWAYE:
@@ -70,12 +70,12 @@ function shellHtml(opts: {
     <div style="padding:24px">
       ${opts.bodyHtml}
       <a href="${APP_URL}" style="display:inline-block;margin-top:20px;padding:12px 20px;border-radius:10px;background:${opts.color};color:#fff;text-decoration:none;font-weight:700;font-size:14px">
-        Louvri AyitiMarket
+        Louvri Ekomat
       </a>
     </div>
     <div style="padding:14px 24px;background:#f6f3ee;border-top:1px solid #e5e2dd">
       <p style="margin:0;font-size:11px;color:#6d7979;line-height:1.5">
-        Ou resevwa imèl sa a paske ou enskri sou AyitiMarket.
+        Ou resevwa imèl sa a paske ou enskri sou Ekomat.
         Pou koupe imèl yo, ale nan Paramèt → Notifikasyon.
       </p>
     </div>
@@ -119,14 +119,14 @@ function renderOrderTemplate(
 
     if (kind === "order_placed") {
         return {
-            subject: `[AyitiMarket] Resi kòmand — ${product}`,
+            subject: `[Ekomat] Resi kòmand — ${product}`,
             html: shellHtml({
                 color: "#97422b",
                 eyebrow: "Resi kòmand",
                 title: `Kòmand ou kreye — ${product}`,
                 bodyHtml: `<p style="margin:0 0 12px;font-size:15px;line-height:1.55">
                     Mèsi! Kòmand ou anrejistre. Voye <strong>${total}</strong> MonCash
-                    bay AyitiMarket pou eskwo kòmanse. Apre admin verifye peman an,
+                    bay Ekomat pou eskwo kòmanse. Apre admin verifye peman an,
                     vandè a ap prepare pwodwi a.
                 </p>` + orderCardHtml(order),
             }),
@@ -135,8 +135,8 @@ function renderOrderTemplate(
     if (kind === "payment_verified") {
         return {
             subject: recipientIsBuyer
-                ? `[AyitiMarket] Peman ou konfime — ${product}`
-                : `[AyitiMarket] Peman kliyan an konfime — ${product}`,
+                ? `[Ekomat] Peman ou konfime — ${product}`
+                : `[Ekomat] Peman kliyan an konfime — ${product}`,
             html: shellHtml({
                 color: "#1e40af",
                 eyebrow: "Eskwo aktive",
@@ -151,7 +151,7 @@ function renderOrderTemplate(
     }
     if (kind === "ready_for_pickup") {
         return {
-            subject: `[AyitiMarket] Pwodwi ou pare pou kolèk — ${product}`,
+            subject: `[Ekomat] Pwodwi ou pare pou kolèk — ${product}`,
             html: shellHtml({
                 color: "#00666f",
                 eyebrow: "Pare pou kolèk",
@@ -166,7 +166,7 @@ function renderOrderTemplate(
     }
     if (kind === "otp_confirmed") {
         return {
-            subject: `[AyitiMarket] Livrezon konfime — ${product}`,
+            subject: `[Ekomat] Livrezon konfime — ${product}`,
             html: shellHtml({
                 color: "#065f46",
                 eyebrow: "Livrezon konfime",
@@ -182,15 +182,15 @@ function renderOrderTemplate(
     if (kind === "released") {
         return {
             subject: recipientIsBuyer
-                ? `[AyitiMarket] Tranzaksyon fèmen — ${product}`
-                : `[AyitiMarket] Lajan libere — ${total}`,
+                ? `[Ekomat] Tranzaksyon fèmen — ${product}`
+                : `[Ekomat] Lajan libere — ${total}`,
             html: shellHtml({
                 color: "#065f46",
                 eyebrow: recipientIsBuyer ? "Tranzaksyon fèmen" : "Lajan libere",
                 title: recipientIsBuyer ? "Mèsi!" : "Lajan voye sou MonCash ou",
                 bodyHtml: `<p style="margin:0 0 12px;font-size:15px;line-height:1.55">
                     ${recipientIsBuyer
-                        ? `Kòmand <strong>${product}</strong> fini. Mèsi pou itilize AyitiMarket!`
+                        ? `Kòmand <strong>${product}</strong> fini. Mèsi pou itilize Ekomat!`
                         : `Admin lage <strong>${fmtHTG(order.net_amount || order.total_amount)}</strong> bay ou nan MonCash.`}
                 </p>` + orderCardHtml(order),
             }),
@@ -198,7 +198,7 @@ function renderOrderTemplate(
     }
     if (kind === "cancelled") {
         return {
-            subject: `[AyitiMarket] Kòmand anile — ${product}`,
+            subject: `[Ekomat] Kòmand anile — ${product}`,
             html: shellHtml({
                 color: "#991b1b",
                 eyebrow: "Kòmand anile",
@@ -211,7 +211,7 @@ function renderOrderTemplate(
     }
     if (kind === "refunded") {
         return {
-            subject: `[AyitiMarket] Kòmand ranbouse — ${product}`,
+            subject: `[Ekomat] Kòmand ranbouse — ${product}`,
             html: shellHtml({
                 color: "#97422b",
                 eyebrow: "Ranbouseman",
@@ -224,7 +224,7 @@ function renderOrderTemplate(
     }
     if (kind === "dispute") {
         return {
-            subject: `[AyitiMarket] Litij ouvri — ${product}`,
+            subject: `[Ekomat] Litij ouvri — ${product}`,
             html: shellHtml({
                 color: "#991b1b",
                 eyebrow: "Litij",
@@ -237,7 +237,7 @@ function renderOrderTemplate(
     }
     // Fallback for any unknown order kind
     return {
-        subject: `[AyitiMarket] ${record.title || product}`,
+        subject: `[Ekomat] ${record.title || product}`,
         html: shellHtml({
             color: String(record.color || "#00666f"),
             eyebrow: "Kòmand",
@@ -251,18 +251,18 @@ function renderOrderTemplate(
 
 // Imèl jenerik lè notif la pa gen yon order_id (sistèm, chat, promo).
 function renderGenericEmail(record: Record<string, any>): { subject: string; html: string } {
-    const title = String(record.title || "AyitiMarket");
-    const body = String(record.body || "Ou gen yon nouvèl notifikasyon nan AyitiMarket.");
+    const title = String(record.title || "Ekomat");
+    const body = String(record.body || "Ou gen yon nouvèl notifikasyon nan Ekomat.");
     const color = String(record.color || "#00666f");
     const type = String(record.type || "system");
     const eyebrow: Record<string, string> = {
         order: "Kòmand", chat: "Mesaj", system: "Sistèm", promo: "Pwomosyon",
     };
     return {
-        subject: `[AyitiMarket] ${title}`,
+        subject: `[Ekomat] ${title}`,
         html: shellHtml({
             color,
-            eyebrow: eyebrow[type] || "AyitiMarket",
+            eyebrow: eyebrow[type] || "Ekomat",
             title,
             bodyHtml: `<p style="margin:0;font-size:15px;line-height:1.55;color:#3d4949">${body}</p>`,
         }),

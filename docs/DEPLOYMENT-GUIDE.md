@@ -1,4 +1,4 @@
-# AyitiMarket - Guide de Déploiement Mobile
+# Ekomat - Guide de Déploiement Mobile (ex-AyitiMarket)
 
 > Source : `AyitiMarketDeploymentGuide.pdf` (fourni par Thrasher). Converti en
 > markdown pour vivre dans le repo (cherchable, versionné).
@@ -22,10 +22,10 @@
 10. Checklist Avan Soumisyon Store
 
 ## 1. Achitekti Pwojè a
-AyitiMarket se yon PWA (Progressive Web App) ki fonksyone nan navigatè men ki ka transfòme an app natif pou Android ak iOS atravè Capacitor.
+Ekomat se yon PWA (Progressive Web App) ki fonksyone nan navigatè men ki ka transfòme an app natif pou Android ak iOS atravè Capacitor.
 
 ```
-ayitimarket/
+ekomat/
   index.html          # App konplè (HTML+CSS+JS)
   vercel.json         # Config Vercel
   manifest.json       # PWA manifest
@@ -50,7 +50,7 @@ ayitimarket/
 ## 3. Konfigirasyon Environman
 Kreye dosye pwojè a epi inisyalize npm :
 ```
-mkdir ayitimarket && cd ayitimarket
+mkdir ekomat && cd ekomat
 npm init -y
 npm install @capacitor/core @capacitor/cli
 ```
@@ -58,14 +58,15 @@ Kopye `index.html`, `manifest.json`, `sw.js` nan rasin dosye a.
 
 ## 4. Capacitor - Inisyalizasyon
 ```
-npx cap init AyitiMarket com.ayitidigital.ayitimarket --web-dir=.
+npx cap init Ekomat com.ayitidigital.ekomat --web-dir=.
+# ⚠️ Rebrand 2026-07-11 : bundle ID = com.ayitidigital.ekomat (jamais publié sous l'ancien ID, donc changement sans risque ; il devient PERMANENT à la 1ère publication).
 ```
 `capacitor.config.ts` :
 ```ts
 import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
-  appId: 'com.ayitidigital.ayitimarket',
-  appName: 'AyitiMarket',
+  appId: 'com.ayitidigital.ekomat',
+  appName: 'Ekomat',
   webDir: '.',
   server: {
     androidScheme: 'https',
@@ -93,7 +94,7 @@ npx cap add ios
 4. Build Release : chwazi Android App Bundle (`.aab`) pou Google Play. Build → Generate Signed Bundle → release. Fichye a : `android/app/build/outputs/bundle/release/app-release.aab`
 5. Upload sou Google Play Console :
    - Ale sou play.google.com/console
-   - Kreye nouvo app : AyitiMarket
+   - Kreye nouvo app : Ekomat
    - Ranpli tout enfòmasyon (deskripsyon, screenshot, ikòn 512x512)
    - Upload `.aab` nan Production → Create Release
    - Soumèt pou Review (3-7 jou)
@@ -102,7 +103,7 @@ npx cap add ios
 Rekwi macOS ak Xcode 15+.
 1. Sinkronize : `npx cap sync ios`
 2. Ouvri Xcode : `npx cap open ios`
-3. Konfigure Signing : Signing & Capabilities → chwazi Team (Apple Developer account) → Bundle ID : `com.ayitidigital.ayitimarket`
+3. Konfigure Signing : Signing & Capabilities → chwazi Team (Apple Developer account) → Bundle ID : `com.ayitidigital.ekomat`
 4. Archive ak Upload :
    - Product → Archive
    - Distribute App → App Store Connect → Upload
@@ -114,8 +115,8 @@ Rekwi macOS ak Xcode 15+.
 `manifest.json` :
 ```json
 {
-  "name": "AyitiMarket",
-  "short_name": "AyitiMarket",
+  "name": "Ekomat",
+  "short_name": "Ekomat",
   "description": "Marketplace mobile pou Ayiti",
   "start_url": "/index.html",
   "display": "standalone",
@@ -176,4 +177,4 @@ Workflow pou mete ajou :
 | Deep Links | Konfigure pou Google OAuth callback |
 
 ---
-*AyitiMarket - Ayiti Digital © 2026 · Marketplace mobile pou mache ayisyen an*
+*Ekomat - Ayiti Digital © 2026 · Marketplace mobile pou mache ayisyen an*

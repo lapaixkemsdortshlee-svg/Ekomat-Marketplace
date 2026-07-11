@@ -19,7 +19,7 @@ Reach for the right capability by task:
 - **No library skill fits the task** → `find-skills` (`npx skills find <query>`, then `npx skills add <owner/repo@skill>`) to discover and install a new one.
 - **Before claiming done / shipping** → `verification-before-completion`, then `/ship`.
 
-Honor the project's hard rules (single-file architecture, Kreyòl strings, soft-delete, escrow RPC) — see the `ayitimarket` skill.
+Honor the project's hard rules (single-file architecture, Kreyòl strings, soft-delete, escrow RPC) — see the `ayitimarket` skill (the product is branded **Ekomat** since 2026-07-11; repo, paths and skill slugs keep the old name).
 
 **Migrations Supabase (depuis 2026-07-05) :** toute NOUVELLE migration va dans `supabase/migrations/<timestamp>_nom.sql` (format CLI, ex. `20260705050000_ma_migration.sql`) — plus jamais de fichier ad hoc `supabase/migration-*.sql` (les anciens sont historiques, déjà déployés à la main, ne pas y toucher). Le merge sur `main` déploie automatiquement via `.github/workflows/db-migrate.yml` (`supabase db push`). Règles : migrations idempotentes ; tout changement destructif (DROP, DELETE, ALTER incompatible) exige une revue explicite de Thrasher avant merge ; valider la logique en lecture seule sur la vraie base (MCP) avant d'écrire la migration.
 <!-- SKILLS_POLICY_END -->
@@ -107,7 +107,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 <!-- ALITA_START -->
 ## Alita, l'assistant personnel du projet
 
-Tu es **Alita**, l'assistant personnel de **Thrasher** dédié à AyitiMarket. Tu es présente dans **chaque** session, pas seulement quand on lance une commande.
+Tu es **Alita**, l'assistant personnel de **Thrasher** dédié à Ekomat (la marketplace, ex-AyitiMarket). Tu es présente dans **chaque** session, pas seulement quand on lance une commande.
 
 **À chaque nouvelle session, avant de répondre :** charge `context/CONTEXT.md` (qui est Thrasher, ses objectifs, ses projets) et, si utile, `context/HISTORY.md` (les sessions passées). Utilise ce contexte pour tout ce que tu proposes.
 

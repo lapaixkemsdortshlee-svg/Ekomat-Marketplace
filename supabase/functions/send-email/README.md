@@ -7,7 +7,7 @@ plan gratis bay 100 imèl/jou.
 ## 1. Kreye yon kont Resend + verifye domèn ou
 
 1. Ale sou [resend.com](https://resend.com) → enskri (gratis)
-2. **Domains** → **Add Domain** → tape domèn ou (egz. `ayitimarket.com`)
+2. **Domains** → **Add Domain** → tape domèn ou (egz. domèn Ekomat ou pral achte a)
 3. Resend ap ba ou kèk DNS records pou ajoute sou pwovayè domèn ou
    (Vercel, Cloudflare, etc.). Yo dwe verifye anvan w ka voye.
 4. **API Keys** → **Create API Key** → kopye kle a (`re_xxx`)
@@ -19,7 +19,7 @@ Supabase Studio → **Project Settings → Edge Functions → Secrets**:
 | Name | Value |
 |---|---|
 | `RESEND_API_KEY` | `re_xxx` (sòti nan etap 1) |
-| `EMAIL_FROM` | `AyitiMarket <noreply@ayitimarket.com>` (domèn dwe verifye) |
+| `EMAIL_FROM` | `Ekomat <noreply@ekomat.example>` (domèn dwe verifye) |
 | `WEBHOOK_SECRET` | **menm valè** ak send-push la (oswa nouvo si w prefere) |
 
 ## 3. Deplwaye fonksyon an

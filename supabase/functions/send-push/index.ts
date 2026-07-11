@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
 
     // 6. Voye push pou chak aparèy
     const url = `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
-    const title = String(record.title ?? "AyitiMarket");
+    const title = String(record.title ?? "Ekomat");
     const body = String(record.body ?? "");
     const data: Record<string, string> = {
         type: String(record.type ?? ""),

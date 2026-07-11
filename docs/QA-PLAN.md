@@ -1,4 +1,4 @@
-# Plan & Objectifs — AyitiMarket (à partir du 1ᵉʳ juillet 2026)
+# Plan & Objectifs — Ekomat (à partir du 1ᵉʳ juillet 2026)
 
 > **Contexte** : 29 commits de fonctionnalités livrés en 6 jours (24–30 juin). On passe
 > de la livraison rapide à la **fiabilisation et la croissance**.

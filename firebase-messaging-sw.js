@@ -1,6 +1,6 @@
 // Firebase Cloud Messaging — Service Worker pou background push.
 //
-// Fichye sa a dwe SOU RACINE site la (egz. https://ayitimarket/firebase-
+// Fichye sa a dwe SOU RACINE site la (egz. https://ekomat/firebase-
 // messaging-sw.js) paske se sa Firebase ap chèche pa defo. Yo ka kowegzite
 // ak sw.js (PWA cache) san pwoblèm — yo nan scope diferan.
 //
@@ -28,7 +28,7 @@ if (FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId) {
     messaging.onBackgroundMessage(payload => {
       const n = (payload && payload.notification) || {};
       const data = (payload && payload.data) || {};
-      const title = n.title || data.title || 'AyitiMarket';
+      const title = n.title || data.title || 'Ekomat';
       const body = n.body || data.body || '';
       self.registration.showNotification(title, {
         body,

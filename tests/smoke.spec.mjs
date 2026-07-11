@@ -1,4 +1,4 @@
-// Smoke tests pou AyitiMarket. Yo verifye:
+// Smoke tests pou Ekomat. Yo verifye:
 //   1. App la chaje san erè JavaScript kritik
 //   2. Tit paj la kòrèk
 //   3. UI prensipal la (splash / login / feed) parèt
@@ -43,7 +43,7 @@ test('paj la chaje san erè kritik', async ({ page }) => {
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 
     await page.goto('/');
-    await expect(page).toHaveTitle(/AyitiMarket/i);
+    await expect(page).toHaveTitle(/Ekomat/i);
 
     // Bay app la tan pou inisyalize state ak charge SDK yo.
     await page.waitForTimeout(2500);

@@ -1,4 +1,4 @@
-# AyitiMarket — Palèt mak / Brand palette
+# Ekomat (ex-AyitiMarket) — Palèt mak / Brand palette
 
 Source de vérité des couleurs : `index.html` (tokens Tailwind inline, lignes 56-73 ; dark mode `--dm-*`, lignes 771-786 ; logo/drapeau, lignes 1341-1345 & 1408). Ce fichier documente les codes ; il ne remplace pas la config.
 
@@ -14,12 +14,12 @@ Pour toute brand identity (logo, kat vizit, social, print), **utilise seulement 
 
 | Koulè | Rôle | HEX | RGB | HSL | Tailwind |
 |---|---|---|---|---|---|
-| **Teal** | Prensipal — bouton, CTA, lyen, « Market » | `#00666F` | `rgb(0, 102, 111)` | `hsl(185, 100%, 22%)` | `primary` |
-| **Brick** | Segondè — « Ayiti », badge panye/mesaj | `#98443E` | `rgb(152, 68, 62)` | `hsl(4, 42%, 42%)` | `secondary` |
-| **Rust** | Aksan — admin, ti detay | `#97422B` | `rgb(151, 66, 43)` | `hsl(13, 56%, 38%)` | `tertiary` |
+| **Teal** | Prensipal — bouton, CTA, lyen, « mat » + anse logo a | `#00666F` | `rgb(0, 102, 111)` | `hsl(185, 100%, 22%)` | `primary` |
+| **Brick** | Segondè — badge panye/mesaj | `#98443E` | `rgb(152, 68, 62)` | `hsl(4, 42%, 42%)` | `secondary` |
+| **Rust** | Aksan — « eko » + boul « e » logo a, admin, ti detay | `#97422B` | `rgb(151, 66, 43)` | `hsl(13, 56%, 38%)` | `tertiary` |
 | **Cream** | Sifas — fon aplikasyon an | `#FCF9F4` | `rgb(252, 249, 244)` | `hsl(37, 57%, 97%)` | `surface` |
 
-Règ : **Ayiti** toujou brick, **Market** toujou teal. Sou fon fonse, « Market » vin `#5AD7E6`.
+Règ (rebrand Ekomat 2026-07-11) : **eko** toujou rust `#97422B`, **mat** toujou teal `#00666F`. Sou fon fonse, « mat » vin `#5AD7E6`.
 
 ## 2. Degrade signati
 
@@ -79,13 +79,13 @@ Règ : **Ayiti** toujou brick, **Market** toujou teal. Sou fon fonse, « Market 
 - **Info** : `#1E40AF` · `#1976D2`
 - **AI / purple** : `#7C3AED` · `#4F46E5`
 
-## 7. Logo & drapo Ayiti
+## 7. Logo & drapo Ayiti (mis à jour Ekomat)
 
 | Non | HEX | RGB | HSL |
 |---|---|---|---|
-| Ayiti (brick) | `#98443E` | `rgb(152, 68, 62)` | `hsl(4, 42%, 42%)` |
-| Market (teal) | `#00666F` | `rgb(0, 102, 111)` | `hsl(185, 100%, 22%)` |
-| Market dark | `#5AD7E6` | `rgb(90, 215, 230)` | `hsl(186, 74%, 63%)` |
+| eko + boul « e » (rust) | `#97422B` | `rgb(151, 66, 43)` | `hsl(13, 56%, 38%)` |
+| mat + anse (teal) | `#00666F` | `rgb(0, 102, 111)` | `hsl(185, 100%, 22%)` |
+| mat dark | `#5AD7E6` | `rgb(90, 215, 230)` | `hsl(186, 74%, 63%)` |
 | Flag Blue | `#00209F` | `rgb(0, 32, 159)` | `hsl(228, 100%, 31%)` |
 | Flag Red | `#D21034` | `rgb(210, 16, 52)` | `hsl(349, 86%, 44%)` |
 | Flag Green | `#006B3F` | `rgb(0, 107, 63)` | `hsl(155, 100%, 21%)` |

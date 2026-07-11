@@ -7,6 +7,23 @@
 
 ---
 
+## 2026-07-11 : REBRAND — AyitiMarket devient EKOMAT (nom + identité choisis par Thrasher)
+
+Thrasher a tranché le rebrand (décidé le 2026-07-04) : le nouveau nom est **Ekomat**, avec une identité visuelle qu'il a créée lui-même — un « e »-boule rust (#97422B) avec une anse teal (#00666F) façon sac de course, wordmark « eko » rust + « mat » teal sur fond cream, alignée sur la palette BRAND.md (PR #150).
+
+**Fait dans cette session (branche `claude/prime-sta44n`) :**
+- Rebrand texte complet : `index.html` (53 chaînes : meta/OG/title, strings Kreyòl, notifs, bot « Asistan Ekomat », console), `manifest.json`, `onboarding.html`, `firebase-messaging-sw.js` (titre notif), wordmark header « eko/mat », `sw.js` bump `aym-v30`.
+- Landing pages : `scripts/gen-landing.mjs` rebrandé (header « eko/mat », pastille rust) + 6 pages `/l/` régénérées + sitemap.
+- Contenus : `llms.txt`, `README.md`, `SECURITY.md`, `.env.example`, `docs/QA-PLAN.md`, `docs/DEPLOYMENT-GUIDE.md` (**bundle ID → `com.ayitidigital.ekomat`**, jamais publié sous l'ancien, donc sans risque), templates email/push des edge functions (redéploiement requis), tests Playwright (attentes de titre), `package.json` (`ekomat-tests`).
+- Contexte Alita : `CONTEXT.md`, `CLAUDE.md`, skill projet mis à jour.
+- **Pas touché (volontaire)** : IDs Firebase `ayitimarket-19c78`, URLs `ayiti-market.vercel.app` (domaine pas encore acheté), clés localStorage `aym_*`, slug du skill, nom du repo GitHub, migrations SQL historiques, chemins d'infra.
+
+**Leçon de session :** j'ai d'abord tenté de recréer le logo en SVG à partir des captures — veto net de Thrasher (« pa defòme li ») : le logo est SON fichier, on ne le réinvente pas. Les originaux sont déposés par lui sur GitHub, et l'intégration (login fond transparent, splash, icônes 192/512, favicon Vercel, og-image) se fait à partir de ses fichiers. Il m'a aussi recadrée sur la méthode : charger les skills du repo et afficher une checklist AVANT d'exécuter.
+
+**Reste côté Thrasher :** vérifier collisions/marque « Ekomat » PUIS acheter le domaine ; redéployer les edge functions `send-email`/`send-push` ; renommer l'app dans les dashboards (Vercel project name, Firebase, Google OAuth consent screen, templates SMTP Supabase) — le code, lui, est prêt.
+
+---
+
 ## 2026-07-05 : ALITA DEVIENT AUTONOME — sous-agent intent, roadmap, et les 4 chantiers livrés (5 PR : #141 à #145)
 
 La session qui transforme Alita d'outil en agent. Point de départ : la question de Thrasher « qu'est-ce qui manque à Alita pour devenir un agent puissant ? ». Diagnostic sparring : ce ne sont pas les capacités qui manquent (~150 skills, 10+ connecteurs), ce sont les **boucles fermées** (agir sans session, déployer sans humain, mémoriser, notifier). Roadmap validée par Thrasher, puis exécutée dans la même session.
