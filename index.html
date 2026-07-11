@@ -183,6 +183,50 @@
             z-index: 60;
         }
 
+        /* ── Tutoriel coach-marks (nouveau compte, une fois) ─────────── */
+        #tourBackdrop { position: fixed; inset: 0; z-index: 80; pointer-events: auto; }
+        #tourSpot {
+            position: fixed; z-index: 81; background: transparent; border-radius: 16px;
+            pointer-events: none; box-shadow: 0 0 0 9999px rgba(28, 28, 25, .74);
+            transition: top .35s cubic-bezier(.4,0,.2,1), left .35s cubic-bezier(.4,0,.2,1),
+                        width .35s cubic-bezier(.4,0,.2,1), height .35s cubic-bezier(.4,0,.2,1);
+        }
+        #tourSpot.round { border-radius: 999px; }
+        #tourSpot::after {
+            content: ""; position: absolute; inset: -4px; border-radius: inherit;
+            border: 2.5px solid #00666f; animation: tourRing 1.6s ease-out infinite;
+        }
+        @keyframes tourRing {
+            0% { box-shadow: 0 0 0 0 rgba(0,102,111,.45); }
+            70% { box-shadow: 0 0 0 14px rgba(0,102,111,0); }
+            100% { box-shadow: 0 0 0 0 rgba(0,102,111,0); }
+        }
+        #tourTip {
+            position: fixed; z-index: 82; max-width: 300px; width: calc(100% - 40px);
+            background: #fcf9f4; border-radius: 18px; padding: 16px 16px 14px;
+            box-shadow: 0 18px 48px rgba(28,28,25,.28); border: 1px solid #ebe8e3;
+            opacity: 0; transform: translateY(6px); transition: opacity .3s ease, transform .3s ease;
+        }
+        #tourTip.show { opacity: 1; transform: translateY(0); }
+        #tourTip .tt-badge {
+            width: 38px; height: 38px; border-radius: 12px; background: rgba(0,102,111,.1);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 9px;
+        }
+        #tourTip .tt-badge .material-symbols-outlined { color: #00666f; font-size: 22px; animation: tourTap 1.4s ease-in-out infinite; }
+        @keyframes tourTap { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+        #tourTip h4 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1rem; color: #1c1c19; margin-bottom: 3px; }
+        #tourTip p { font-family: 'Manrope', sans-serif; font-size: .8125rem; line-height: 1.5; color: #3d4949; }
+        #tourDots { display: flex; gap: 5px; margin: 12px 0; }
+        #tourDots i { width: 6px; height: 6px; border-radius: 50%; background: #d9d4cd; transition: all .25s; }
+        #tourDots i.on { background: #00666f; width: 16px; border-radius: 3px; }
+        #tourTip .tt-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        #tourTip .tt-skip { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: .8125rem; color: #98443e; background: none; padding: 8px 4px; }
+        #tourTip .tt-back { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: .8125rem; color: #3d4949; background: none; padding: 8px 6px; }
+        #tourTip .tt-next { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: .8125rem; color: #fff; background: #00666f; padding: 9px 18px; border-radius: 999px; margin-left: auto; }
+        @media (prefers-reduced-motion: reduce) {
+            #tourSpot::after, #tourTip .tt-badge .material-symbols-outlined { animation: none; }
+        }
+
         @keyframes fu {
             from {
                 opacity: 0;
@@ -1481,6 +1525,26 @@
                     class="font-headline font-extrabold text-[1.75rem] tracking-[-0.02em] text-on-surface leading-tight">
                     Découvrez<br /><span class="text-primary">Ekomat</span></h2>
             </div>
+            <!-- Kat byenveni — ranplase ansyen toast nwa a, entegre nan design la -->
+            <div id="welcomeCard" class="hidden"
+                style="position:relative;overflow:hidden;border-radius:18px;padding:16px 44px 16px 16px;margin-bottom:18px;background:linear-gradient(135deg,#00666f,#00818c);box-shadow:0 10px 26px rgba(0,102,111,.22)">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <img src="brand/splash-icon-teal.png" alt=""
+                        style="width:36px;height:36px;flex-shrink:0;filter:brightness(0) invert(1);opacity:.95" />
+                    <div style="min-width:0">
+                        <p id="welcomeCardName"
+                            style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.05rem;color:#fcf9f4;line-height:1.2">
+                            Byenveni!</p>
+                        <p style="font-family:'Manrope',sans-serif;font-size:.8125rem;color:rgba(252,249,244,.9);margin-top:1px">
+                            Kontan wè ou sou Ekomat. Ann eksplore ansanm!</p>
+                    </div>
+                </div>
+                <button onclick="hideWelcomeCard()" aria-label="Fèmen"
+                    style="position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;background:rgba(252,249,244,.18);display:flex;align-items:center;justify-content:center">
+                    <span class="material-symbols-outlined" style="font-size:16px;color:#fcf9f4">close</span>
+                </button>
+            </div>
+
             <!-- Flow guide banner (disparaît après 1ère action) -->
             <div id="flowGuide" class="rounded-xl p-4 mb-4 flex items-start gap-3"
                 style="background:rgba(0,102,111,.07)">
@@ -4470,6 +4534,7 @@
             if (typeof updateMsgBadge === 'function') updateMsgBadge();
             navTo("feed");
             showAuthBanner();
+            if (typeof maybeRunFirstRun === 'function') setTimeout(maybeRunFirstRun, 350);
             // Load dynamic follower count
             if (db && A.user?.uid && (A.user.role === 'seller' || A.user.role === 'admin')) {
                 db.from('followers').select('id', { count: 'exact', head: true }).eq('seller_id', A.user.uid)
@@ -14560,7 +14625,6 @@
                         document.getElementById('s-role').classList.add('on');
                     } else if (result === 'boot' && !A.booted) {
                         A.booted = true; hideSplash(); bootApp();
-                        toast('Byenveni ' + A.user.name + '!');
                     }
                 } catch(e) {
                     clearTimeout(safetyTimer);
@@ -15316,6 +15380,137 @@
     console.log('%c[Ekomat] Module Supabase v5.0 — Production', 'color:#00666f;font-weight:bold');
     </script>
     </div><!-- /#main-app -->
+    <!-- ══════════════════════════════════════════════════════
+     KAT BYENVENI + TUTORYÈL (coach-marks) — nouvo kont, yon fwa
+    ══════════════════════════════════════════════════════ -->
+    <script>
+        var _tour = { steps: [], i: 0, onResize: null };
+
+        function showWelcomeCard(autoHide) {
+            var card = document.getElementById('welcomeCard');
+            if (!card || !A.user) return;
+            var first = (A.user.name || '').split(' ')[0] || 'zanmi';
+            var nameEl = document.getElementById('welcomeCardName');
+            if (nameEl) nameEl.textContent = 'Byenveni, ' + first + '!';
+            card.classList.remove('hidden');
+            clearTimeout(window._welcomeTimer);
+            if (autoHide) window._welcomeTimer = setTimeout(hideWelcomeCard, 7000);
+        }
+        function hideWelcomeCard() {
+            var card = document.getElementById('welcomeCard');
+            if (card) card.classList.add('hidden');
+        }
+
+        function maybeRunFirstRun() {
+            try {
+                var firstRun = !localStorage.getItem('aym_tutorial_done');
+                if (firstRun && A.user && A.user.role !== 'admin') {
+                    showWelcomeCard(false);
+                    setTimeout(function () {
+                        try { startTour(); } catch (e) { console.warn('[tour]', e); endTour(); }
+                    }, 950);
+                } else {
+                    if (firstRun) { try { localStorage.setItem('aym_tutorial_done', '1'); } catch (e) { } }
+                    showWelcomeCard(true);
+                }
+            } catch (e) { console.warn('[firstRun]', e); }
+        }
+
+        function buildTourDom() {
+            var bd = document.createElement('div'); bd.id = 'tourBackdrop';
+            var sp = document.createElement('div'); sp.id = 'tourSpot';
+            var tip = document.createElement('div'); tip.id = 'tourTip';
+            tip.innerHTML =
+                '<div class="tt-badge"><span class="material-symbols-outlined">touch_app</span></div>'
+                + '<h4 id="tourTitle"></h4><p id="tourBody"></p>'
+                + '<div id="tourDots"></div>'
+                + '<div class="tt-actions">'
+                + '<button class="tt-skip" onclick="endTour()">Pase</button>'
+                + '<button class="tt-back" id="tourBack" onclick="prevTourStep()" style="display:none">Anvan</button>'
+                + '<button class="tt-next" id="tourNext" onclick="nextTourStep()">Swivan</button>'
+                + '</div>';
+            document.body.appendChild(bd);
+            document.body.appendChild(sp);
+            document.body.appendChild(tip);
+        }
+
+        function startTour() {
+            if (document.getElementById('tourBackdrop')) return;
+            var defs = [
+                { el: 'nav-feed', t: 'Feed', b: 'Isit la ou dekouvri tout pwodwi yo. Se paj prensipal ou.', pos: 'top' },
+                { el: 'searchBtn', t: 'Rechèch', b: 'Chèche yon pwodwi oswa yon boutik rapidman.', pos: 'bottom', round: true },
+                { el: 'msgBtn', t: 'Mesaj', b: 'Pale dirèk ak vandè yo: tèks, vwa, foto ak lokasyon.', pos: 'bottom', round: true },
+                { el: 'nav-pub', t: 'Pibliye', b: 'Ou se vandè? Mete pwodwi ou yo an vann isit la.', pos: 'top' },
+                { el: 'fab', t: 'Vann rapid', b: 'Bouton sa a louvri piblikasyon an de tan twa mouvman.', pos: 'top', round: true },
+                { el: 'nav-order', t: 'Komand', b: 'Swiv acha ak lavant ou yo ak kòd OTP livrezon an.', pos: 'top' },
+                { el: 'nav-cart', t: 'Panye', b: 'Pwodwi ou vle achte yo rasanble isit la anvan ou peye.', pos: 'top' },
+                { el: 'nav-profile', t: 'Pwofil', b: 'Jere kont ou, paramèt yo ak enfòmasyon ou.', pos: 'top' }
+            ];
+            var steps = defs.filter(function (s) {
+                var el = document.getElementById(s.el);
+                if (!el) return false;
+                var r = el.getBoundingClientRect();
+                return r.width > 1 && r.height > 1;
+            });
+            if (!steps.length) { try { localStorage.setItem('aym_tutorial_done', '1'); } catch (e) { } return; }
+            _tour = { steps: steps, i: 0 };
+            buildTourDom();
+            _tour.onResize = function () { layoutTourStep(_tour.i); };
+            window.addEventListener('resize', _tour.onResize);
+            layoutTourStep(0);
+            requestAnimationFrame(function () {
+                var tip = document.getElementById('tourTip'); if (tip) tip.classList.add('show');
+            });
+        }
+
+        function layoutTourStep(i) {
+            var step = _tour.steps[i]; if (!step) return;
+            var el = document.getElementById(step.el);
+            if (!el) { nextTourStep(); return; }
+            var spot = document.getElementById('tourSpot');
+            var tip = document.getElementById('tourTip');
+            if (!spot || !tip) return;
+            var pad = 8, r = el.getBoundingClientRect();
+            spot.className = step.round ? 'round' : '';
+            spot.style.top = (r.top - pad) + 'px';
+            spot.style.left = (r.left - pad) + 'px';
+            spot.style.width = (r.width + pad * 2) + 'px';
+            spot.style.height = (r.height + pad * 2) + 'px';
+            document.getElementById('tourTitle').textContent = step.t;
+            document.getElementById('tourBody').textContent = step.b;
+            document.getElementById('tourDots').innerHTML = _tour.steps.map(function (_, k) {
+                return '<i class="' + (k === i ? 'on' : '') + '"></i>';
+            }).join('');
+            document.getElementById('tourBack').style.display = i > 0 ? '' : 'none';
+            document.getElementById('tourNext').textContent = (i === _tour.steps.length - 1) ? 'Fini' : 'Swivan';
+            var vw = window.innerWidth, vh = window.innerHeight, tw = tip.offsetWidth, th = tip.offsetHeight;
+            var left = r.left + r.width / 2 - tw / 2;
+            left = Math.max(14, Math.min(left, vw - tw - 14));
+            var top = (step.pos === 'bottom') ? (r.bottom + pad + 12) : (r.top - pad - th - 12);
+            top = Math.max(14, Math.min(top, vh - th - 14));
+            tip.style.left = left + 'px';
+            tip.style.top = top + 'px';
+        }
+
+        function nextTourStep() {
+            _tour.i++;
+            if (_tour.i >= _tour.steps.length) { endTour(); }
+            else { layoutTourStep(_tour.i); }
+        }
+        function prevTourStep() {
+            if (_tour.i > 0) { _tour.i--; layoutTourStep(_tour.i); }
+        }
+        function endTour() {
+            try { localStorage.setItem('aym_tutorial_done', '1'); } catch (e) { }
+            if (_tour && _tour.onResize) window.removeEventListener('resize', _tour.onResize);
+            ['tourBackdrop', 'tourSpot', 'tourTip'].forEach(function (id) {
+                var n = document.getElementById(id); if (n) n.remove();
+            });
+            _tour = { steps: [], i: 0, onResize: null };
+            clearTimeout(window._welcomeTimer);
+            window._welcomeTimer = setTimeout(hideWelcomeCard, 5000);
+        }
+    </script>
 </body>
 
 </html>
