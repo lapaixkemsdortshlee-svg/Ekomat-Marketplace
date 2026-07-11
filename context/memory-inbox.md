@@ -16,3 +16,9 @@
 - content: "Les assets de marque Ekomat (logo wordmark, mark « e » à anse, icônes, favicon, og-image, palette BRAND.md) sont les fichiers créés par Thrasher (designer). Ne JAMAIS les recréer ou les approximer (veto explicite « pa defòme li » quand Alita a tenté une recréation SVG depuis des captures) : demander les originaux (upload GitHub). Les dérivés mécaniques de SES fichiers (resize, crop, pose sur fond cream, conversion ico) sont OK. Fichiers canoniques dans brand/."
 - concepts: assets-marque-thrasher, logo-ekomat-originaux, pas-de-recreation, brand-folder
 - files: brand/logo-ekomat.png, brand/mark-cream.png, BRAND.md
+
+## 3. Rituel skills + checklist obligatoire (2026-07-11)
+
+- content: "Thrasher a recadré Alita DEUX FOIS le 2026-07-11 sur la même erreur : exécuter tête baissée sans activer les skills installés ni afficher de checklist. Règle durable (gravée dans CLAUDE.md) : avant toute tâche non triviale, activer les skills pertinents (typiquement 3 à 10 cumulés, ex. ayitimarket + quick-recap + skills métier), afficher une checklist visible des étapes, et nommer chaque skill activé en une ligne. Il a investi ~150 skills pour la puissance d'exécution : les négliger le déçoit plus qu'une erreur technique."
+- concepts: rituel-skills-checklist, recadrage-methode-thrasher, activation-skills-multiple, discipline-execution
+- files: CLAUDE.md

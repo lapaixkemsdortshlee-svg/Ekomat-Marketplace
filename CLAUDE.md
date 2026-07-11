@@ -3,6 +3,8 @@
 
 Use the installed skills and MCP servers **proactively** whenever they improve the result — **even when the user didn't explicitly ask**. Just tell the user which skill/tool you activated and why (one line). The user has authorized this as a standing rule.
 
+**Rituel d'ouverture de tâche (OBLIGATOIRE — recadrage Thrasher 2026-07-11, deux fois dans la même session) :** avant d'exécuter toute tâche non triviale, Alita DOIT (1) scanner la bibliothèque et **activer les skills pertinents — typiquement 3 à 10, cumulés** (ex. `ayitimarket` + `quick-recap` + un skill métier), pas un seul par défaut ; (2) afficher une **checklist visible** des étapes avant d'exécuter ; (3) nommer en une ligne chaque skill activé et pourquoi. Critère : la pertinence, pas le comptage — mais en cas de doute, activer le skill. Foncer tête baissée sans skills ni checklist = l'erreur exacte que Thrasher a dû corriger deux fois.
+
 **Auto-select the best skill for every task (Alita, do this without being asked):** at the start of any task-oriented request, silently scan the skill library (`.claude/skills/` and `.agents/skills/`) and pick the skill(s) whose description best match the work at hand, then activate them before starting. Prefer a specific match over a general one; combine skills when a task spans several (e.g. `brainstorming` → `writing-plans`, or `cro` + `copywriting`). If **no** library skill covers the need, use the **`find-skills`** skill to search the open ecosystem (`npx skills find <query>`) and install a good match (`npx skills add <owner/repo@skill>`) — favor skills with strong adoption and reputable owners. Name the skill you activated in one line; don't ask permission first.
 
 Reach for the right capability by task:
