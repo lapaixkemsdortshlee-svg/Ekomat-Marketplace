@@ -189,6 +189,7 @@ function page(p) {
 <link rel="apple-touch-icon" href="/icon-192.png"/>
 <link rel="manifest" href="/manifest.json"/>
 <meta name="theme-color" content="#00666f"/>
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script>
 <style>
@@ -217,7 +218,7 @@ function page(p) {
 </style>
 </head>
 <body>
-<header><div class="wrap"><a class="brand" href="/"><span class="logo">e</span><b>eko<span>mat</span></b></a></div></header>
+<header><div class="wrap"><a class="brand" href="/"><img src="/brand/logo-ekomat.png" alt="Ekomat" height="34" style="display:block;height:34px;width:auto"/></a></div></header>
 
 <div class="hero"><div class="wrap">
   <h1>${p.h1}</h1>
