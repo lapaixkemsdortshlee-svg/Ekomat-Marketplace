@@ -53,6 +53,12 @@ kouch men:
 
 - **Kle Firebase Web piblik** (apiKey, etc.) parèt nan kòd kliyan a —
   sa **se** konsepsyon Firebase (sekirite a chita sou règ Firebase + auth).
+  GitHub Secret Scanning te louvri alèt #1 (« Google API Key », 2026-06)
+  sou kle sa a : **fo pozitif konnen** — kle a fèt pou ale nan navigatè a.
+  Tretman 2026-07-11 : restriksyon kle a nan Google Cloud Console
+  (referrers HTTP + API limite a FCM/Installations sèlman), epi fèmen
+  alèt la kòm « False positive ». Pa gen rotasyon nesesè : yon fwa kle a
+  restrenn, li initil andeyò domèn nou yo.
 - **Anon key Supabase** parèt nan kòd kliyan an — RLS pwoteje aksè a.
 - **CDN tyès pati** (Tailwind, Supabase JS, Firebase) **pa gen SRI** kounye a
   (yo deplwaye san pin) — yon konpwomi sou yon CDN ka enjekte kòd. TODO:
