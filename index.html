@@ -222,9 +222,13 @@
         #tourTip .tt-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         #tourTip .tt-skip { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: .8125rem; color: #98443e; background: none; padding: 8px 4px; }
         #tourTip .tt-back { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: .8125rem; color: #3d4949; background: none; padding: 8px 6px; }
-        #tourTip .tt-next { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: .8125rem; color: #fff; background: #00666f; padding: 9px 18px; border-radius: 999px; margin-left: auto; }
+        #tourTip .tt-next { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: .8125rem; color: #fff; background: #00666f; padding: 9px 18px; border-radius: 999px; margin-left: auto; animation: tourNextPulse 1.5s ease-in-out infinite; }
+        @keyframes tourNextPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0,102,111,.45); }
+            50% { transform: scale(1.06); box-shadow: 0 0 0 9px rgba(0,102,111,0); }
+        }
         @media (prefers-reduced-motion: reduce) {
-            #tourSpot::after, #tourTip .tt-badge .material-symbols-outlined { animation: none; }
+            #tourSpot::after, #tourTip .tt-badge .material-symbols-outlined, #tourTip .tt-next { animation: none; }
         }
 
         @keyframes fu {
