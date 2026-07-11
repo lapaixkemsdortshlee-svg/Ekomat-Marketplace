@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aym-v32';
+const CACHE_NAME = 'aym-v33';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   '/icon-512.png',
   '/favicon.png',
   '/brand/logo-ekomat.png',
+  '/brand/splash-icon-teal.png',
 ];
 
 // External CDN resources to cache
