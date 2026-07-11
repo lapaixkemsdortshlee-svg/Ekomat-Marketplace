@@ -7,20 +7,27 @@
 
 ---
 
-## 2026-07-11 : REBRAND — AyitiMarket devient EKOMAT (nom + identité choisis par Thrasher)
+## 2026-07-11 : REBRAND COMPLET — AyitiMarket devient EKOMAT (PR #151 mergée + PR #152 logos)
 
-Thrasher a tranché le rebrand (décidé le 2026-07-04) : le nouveau nom est **Ekomat**, avec une identité visuelle qu'il a créée lui-même — un « e »-boule rust (#97422B) avec une anse teal (#00666F) façon sac de course, wordmark « eko » rust + « mat » teal sur fond cream, alignée sur la palette BRAND.md (PR #150).
+Thrasher a tranché le rebrand (décidé le 2026-07-04) : le nouveau nom est **Ekomat**, avec une identité visuelle créée par lui : un « e »-boule rust (#97422B) avec une anse teal (#00666F) façon sac de course, wordmark « eko » rust + « mat » teal sur fond cream, alignée sur la palette BRAND.md (PR #150).
 
-**Fait dans cette session (branche `claude/prime-sta44n`) :**
-- Rebrand texte complet : `index.html` (53 chaînes : meta/OG/title, strings Kreyòl, notifs, bot « Asistan Ekomat », console), `manifest.json`, `onboarding.html`, `firebase-messaging-sw.js` (titre notif), wordmark header « eko/mat », `sw.js` bump `aym-v30`.
-- Landing pages : `scripts/gen-landing.mjs` rebrandé (header « eko/mat », pastille rust) + 6 pages `/l/` régénérées + sitemap.
-- Contenus : `llms.txt`, `README.md`, `SECURITY.md`, `.env.example`, `docs/QA-PLAN.md`, `docs/DEPLOYMENT-GUIDE.md` (**bundle ID → `com.ayitidigital.ekomat`**, jamais publié sous l'ancien, donc sans risque), templates email/push des edge functions (redéploiement requis), tests Playwright (attentes de titre), `package.json` (`ekomat-tests`).
-- Contexte Alita : `CONTEXT.md`, `CLAUDE.md`, skill projet mis à jour.
-- **Pas touché (volontaire)** : IDs Firebase `ayitimarket-19c78`, URLs `ayiti-market.vercel.app` (domaine pas encore acheté), clés localStorage `aym_*`, slug du skill, nom du repo GitHub, migrations SQL historiques, chemins d'infra.
+**PR #151 (mergée) — rebrand texte complet :**
+- `index.html` (53 chaînes : meta/OG/title, strings Kreyòl, notifs, bot « Asistan Ekomat », console), `manifest.json`, `onboarding.html`, `firebase-messaging-sw.js`, wordmark header « eko/mat », `sw.js` bump `aym-v30`.
+- Landing pages regénérées, `llms.txt`, `README`, `SECURITY.md`, `.env.example`, docs (guide déploiement : **bundle ID → `com.ayitidigital.ekomat`**, jamais publié sous l'ancien donc sans risque), templates email/push des edge functions, tests Playwright, `package.json`.
+- **Pas touché (volontaire)** : IDs Firebase `ayitimarket-19c78`, URLs `ayiti-market.vercel.app` (domaine pas encore acheté), clés localStorage `aym_*`, project_id Supabase CLI, migrations SQL historiques, chemins d'infra.
 
-**Leçon de session :** j'ai d'abord tenté de recréer le logo en SVG à partir des captures — veto net de Thrasher (« pa defòme li ») : le logo est SON fichier, on ne le réinvente pas. Les originaux sont déposés par lui sur GitHub, et l'intégration (login fond transparent, splash, icônes 192/512, favicon Vercel, og-image) se fait à partir de ses fichiers. Il m'a aussi recadrée sur la méthode : charger les skills du repo et afficher une checklist AVANT d'exécuter.
+**PR #152 — logos officiels intégrés :**
+- Thrasher a déposé ses 6 fichiers PNG sur `main` ; rangés dans `brand/` (noms web-safe). Le wordmark transparent remplace les 2 mascottes base64 du login/splash (celle du login se fond dans la page cream, comme demandé) ; **`index.html` passe de ~1.08 Mo à 842 Ko**.
+- Icônes 192/512 régénérées depuis le mark (cream, mark à 62% du cadre, maskable OK), `favicon.png`+`favicon.ico` + links (onglet navigateur Vercel), `og-image.png` 1200×630 depuis le logo officiel, vrai logo dans le header des landing pages, `sw.js` bump `aym-v31` + précache.
+- Vérifié : JS OK, 12/12 Playwright, rendu navigateur contrôlé.
 
-**Reste côté Thrasher :** vérifier collisions/marque « Ekomat » PUIS acheter le domaine ; redéployer les edge functions `send-email`/`send-push` ; renommer l'app dans les dashboards (Vercel project name, Firebase, Google OAuth consent screen, templates SMTP Supabase) — le code, lui, est prêt.
+**Renommages faits par Thrasher dans la foulée :** projet Vercel → `ekomat-marketplace`, repo GitHub → `Ekomat-Marketplace`. Les redirections GitHub/Vercel fonctionnent : workflow migrations, remote git et accès continuent sans changement. Docs alignées.
+
+**CodeQL rouge sur les 2 PR = faux positif de baseline** (connu depuis juillet) : sur ce fichier énorme, tout gros diff fait re-signaler les alertes baseline comme « nouvelles ». Prouvé mécaniquement cette fois (diff symétrique normalisé : zéro logique JS changée) et documenté en commentaire sur chaque PR. Leçon détaillée sauvée dans agentmemory.
+
+**Leçon de méthode (recadrage Thrasher, x2) :** (1) j'ai tenté de recréer son logo en SVG depuis les captures d'écran → veto net (« pa defòme li ») : les assets de marque sont SES fichiers, on demande les originaux, on ne les réinvente pas (les dérivés mécaniques resize/crop/fond restent OK) ; (2) charger les skills du repo et afficher une checklist AVANT d'exécuter, pas d'exécution tête baissée.
+
+**Reste côté Thrasher :** QA visuelle du preview puis merge #152 ; redéployer les edge functions `send-email`/`send-push` ; renommer Firebase + écran de consentement Google OAuth ; vérifier collisions « Ekomat » (marque + domaine) PUIS acheter le domaine et mettre à jour les URLs.
 
 ---
 
