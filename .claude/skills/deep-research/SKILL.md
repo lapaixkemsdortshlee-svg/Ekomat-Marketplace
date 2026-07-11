@@ -9,7 +9,7 @@ description: >
   approfondie", "research this thoroughly", "investigate", "market research", "competitive
   landscape", "explore X from multiple angles", "find everything about", "état de l'art",
   "veille sur", or any question where one web search is clearly not enough and the stakes
-  justify reading several sources. For AyitiMarket this is the tool for market sizing,
+  justify reading several sources. For Ekomat this is the tool for market sizing,
   competitor scans, MonCash/payment options, diaspora e-commerce trends, and growth-channel
   research. Do NOT use it for a single factual lookup, a definition, coding help, or reading
   one known URL — answer those directly. It replaces paid deep-research apps (Firecrawl/OpenAI
@@ -57,7 +57,7 @@ territory, deeper levels chase only the most important open threads.
 Restate the topic in one sharp sentence and pin down what a *useful* answer looks like. If
 the request is vague or high-stakes and you can't tell the angle (audience, geography, time
 frame, decision at hand), ask **one** focused round of questions via AskUserQuestion, then
-proceed. For AyitiMarket, default the lens to **Haiti + the Haitian diaspora** and surface
+proceed. For Ekomat, default the lens to **Haiti + the Haitian diaspora** and surface
 the Kreyòl/local angle where it matters, unless told otherwise.
 
 Keep a running research state as you go:
@@ -144,4 +144,4 @@ The "so what" for the user's actual situation.
 - **Don't fabricate.** If the web didn't say it, it doesn't go in the report. An honest "sources
   are thin here" beats a confident guess.
 - This is research, not translation or analysis-for-its-own-sake. Hand the report to the next
-  step (e.g. a `claude-council` pressure-test, or a Kreyòl rewrite for AyitiMarket content).
+  step (e.g. a `claude-council` pressure-test, or a Kreyòl rewrite for Ekomat content).

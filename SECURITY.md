@@ -1,4 +1,4 @@
-# Sekirite — AyitiMarket
+# Sekirite — Ekomat
 
 ## Rapòte yon vilnerabilite
 

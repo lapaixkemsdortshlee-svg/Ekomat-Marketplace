@@ -1,4 +1,4 @@
-// Jeneratè paj datterisaj (landing pages) Kreyòl pou SEO — AyitiMarket.
+// Jeneratè paj datterisaj (landing pages) Kreyòl pou SEO — Ekomat.
 //
 // Pouki: index.html se yon SPA yon sèl fichye ki pa gen kontni endèksab pou
 // chak kategori/vil. Paj estatik sa yo bay Google (ak asistan AI) kontni
@@ -19,7 +19,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ORIGIN = 'https://ayiti-market.vercel.app';
 const TODAY = new Date().toISOString().slice(0, 10);
 
-// Vil AyitiMarket sèvi (soti nan seleksyon lokalizasyon app la).
+// Vil Ekomat sèvi (soti nan seleksyon lokalizasyon app la).
 const CITIES = ['Pòtoprens', 'Pétion-Ville', 'Delmas', 'Tabarre', 'Carrefour',
     'Kwadèbouke', 'Cap-Haïtien', 'Les Cayes'];
 
@@ -29,11 +29,11 @@ const PAGES = [
         slug: 'elektwonik',
         kind: 'kategori',
         h1: 'Achte Elektwonik an Ayiti',
-        title: 'Achte Elektwonik an Ayiti — Telefòn, Akseswa | AyitiMarket',
-        desc: 'Achte telefòn, aparèy elektwonik ak akseswa an Ayiti sou AyitiMarket. '
+        title: 'Achte Elektwonik an Ayiti — Telefòn, Akseswa | Ekomat',
+        desc: 'Achte telefòn, aparèy elektwonik ak akseswa an Ayiti sou Ekomat. '
             + 'Peman MonCash pwoteje ak eskwo, vandè verifye, livrezon lokal.',
         intro: 'Ap chèche yon telefòn Digicel oswa Natcom, yon chajè, yon oto-radio '
-            + 'oswa yon aparèy elektwonik an Ayiti? Sou AyitiMarket ou jwenn machandiz '
+            + 'oswa yon aparèy elektwonik an Ayiti? Sou Ekomat ou jwenn machandiz '
             + 'nan men vandè verifye, epi lajan ou rete pwoteje ak eskwo jiskaske ou '
             + 'resevwa pwodwi a nan men. Pa gen okenn risk pou fwod.',
         points: [
@@ -47,11 +47,11 @@ const PAGES = [
         slug: 'mod',
         kind: 'kategori',
         h1: 'Achte Rad ak Mòd an Ayiti',
-        title: 'Rad ak Mòd an Ayiti — Achte an liy | AyitiMarket',
-        desc: 'Achte rad, soulye ak atik mòd an Ayiti sou AyitiMarket. Vandè verifye, '
+        title: 'Rad ak Mòd an Ayiti — Achte an liy | Ekomat',
+        desc: 'Achte rad, soulye ak atik mòd an Ayiti sou Ekomat. Vandè verifye, '
             + 'peman MonCash ak eskwo, livrezon nan zòn ou.',
         intro: 'Rad fanm, rad gason, soulye, sak — dekouvri dènye mòd la nan men '
-            + 'vandè ayisyen verifye. Sou AyitiMarket ou pale dirèk ak vandè a, ou wè '
+            + 'vandè ayisyen verifye. Sou Ekomat ou pale dirèk ak vandè a, ou wè '
             + 'foto reyèl pwodwi a, epi ou peye ak eskwo ki pwoteje lajan w jiskaske '
             + 'komann ou rive.',
         points: [
@@ -65,11 +65,11 @@ const PAGES = [
         slug: 'bote',
         kind: 'kategori',
         h1: 'Pwodwi Bote ak Kosmetik an Ayiti',
-        title: 'Bote & Kosmetik an Ayiti — Achte an liy | AyitiMarket',
-        desc: 'Achte pwodwi bote, swen po ak kosmetik an Ayiti sou AyitiMarket. '
+        title: 'Bote & Kosmetik an Ayiti — Achte an liy | Ekomat',
+        desc: 'Achte pwodwi bote, swen po ak kosmetik an Ayiti sou Ekomat. '
             + 'Vandè verifye, peman MonCash pwoteje ak eskwo.',
         intro: 'Swen po, makiyaj, pafen, pwodwi cheve — jwenn pwodwi bote ki '
-            + 'otantik nan men vandè verifye an Ayiti. AyitiMarket pwoteje chak '
+            + 'otantik nan men vandè verifye an Ayiti. Ekomat pwoteje chak '
             + 'acha ak eskwo: ou konfime ou resevwa pwodwi a anvan lajan an libere.',
         points: [
             ['Pwodwi otantik', 'Vandè verifye ak sistèm avi pou ou achte an konfyans.'],
@@ -82,11 +82,11 @@ const PAGES = [
         slug: 'atizana',
         kind: 'kategori',
         h1: 'Atizana Ayisyen — Achte Dirèk nan men Atizan yo',
-        title: 'Atizana Ayisyen an Ayiti — Achte an liy | AyitiMarket',
+        title: 'Atizana Ayisyen an Ayiti — Achte an liy | Ekomat',
         desc: 'Achte atizana ayisyen — travay bwa, fè, tablo, dekorasyon — dirèk nan '
-            + 'men atizan verifye. Peman MonCash pwoteje ak eskwo sou AyitiMarket.',
+            + 'men atizan verifye. Peman MonCash pwoteje ak eskwo sou Ekomat.',
         intro: 'Sipòte atizan ayisyen yo dirèkteman. Tablo, travay an fè dekoupe, '
-            + 'objè an bwa, dekorasyon fèt men — achte atizana otantik sou AyitiMarket '
+            + 'objè an bwa, dekorasyon fèt men — achte atizana otantik sou Ekomat '
             + 'ak konfyans, paske eskwo a pwoteje lajan w jiskaske ou resevwa zèv la.',
         points: [
             ['Dirèk nan men atizan', 'San entèmedyè — pi bon pri pou ou, plis pou atizan an.'],
@@ -98,12 +98,12 @@ const PAGES = [
     {
         slug: 'potoprens',
         kind: 'vil',
-        h1: 'AyitiMarket nan Pòtoprens',
-        title: 'Achte & Vann an liy nan Pòtoprens | AyitiMarket',
+        h1: 'Ekomat nan Pòtoprens',
+        title: 'Achte & Vann an liy nan Pòtoprens | Ekomat',
         desc: 'Achte ak vann an liy nan Pòtoprens ak zòn metwopolitèn nan '
             + '(Pétion-Ville, Delmas, Tabarre, Carrefour). Eskwo MonCash, vandè verifye.',
         intro: 'Nan Pòtoprens ak tout zòn metwopolitèn nan — Pétion-Ville, Delmas, '
-            + 'Tabarre, Carrefour, Kwadèbouke — AyitiMarket konekte achtè ak vandè '
+            + 'Tabarre, Carrefour, Kwadèbouke — Ekomat konekte achtè ak vandè '
             + 'verifye. Chwazi yon pwen kolèk tou pre w, pale ak vandè a nan chat, '
             + 'epi peye ak eskwo ki pwoteje lajan w.',
         points: [
@@ -116,11 +116,11 @@ const PAGES = [
     {
         slug: 'kap-ayisyen',
         kind: 'vil',
-        h1: 'AyitiMarket nan Cap-Haïtien (Okap)',
-        title: 'Achte & Vann an liy nan Cap-Haïtien | AyitiMarket',
-        desc: 'Achte ak vann an liy nan Cap-Haïtien (Okap) sou AyitiMarket. '
+        h1: 'Ekomat nan Cap-Haïtien (Okap)',
+        title: 'Achte & Vann an liy nan Cap-Haïtien | Ekomat',
+        desc: 'Achte ak vann an liy nan Cap-Haïtien (Okap) sou Ekomat. '
             + 'Eskwo MonCash ki pwoteje lajan w, vandè verifye, livrezon lokal.',
-        intro: 'Nan Cap-Haïtien (Okap) ak nò peyi a, AyitiMarket pèmèt ou achte ak '
+        intro: 'Nan Cap-Haïtien (Okap) ak nò peyi a, Ekomat pèmèt ou achte ak '
             + 'vann an tout sekirite. Jwenn machandiz nan men vandè verifye, kominike '
             + 'dirèkteman, epi kite eskwo a pwoteje lajan w jiskaske livrezon konfime.',
         points: [
@@ -142,7 +142,7 @@ function page(p) {
             {
                 '@type': 'BreadcrumbList',
                 itemListElement: [
-                    { '@type': 'ListItem', position: 1, name: 'AyitiMarket', item: ORIGIN + '/' },
+                    { '@type': 'ListItem', position: 1, name: 'Ekomat', item: ORIGIN + '/' },
                     { '@type': 'ListItem', position: 2, name: p.h1, item: url },
                 ],
             },
@@ -152,8 +152,8 @@ function page(p) {
                 description: p.desc,
                 url,
                 inLanguage: 'ht',
-                isPartOf: { '@type': 'WebSite', name: 'AyitiMarket', url: ORIGIN + '/' },
-                about: { '@type': 'Organization', name: 'AyitiMarket', url: ORIGIN + '/' },
+                isPartOf: { '@type': 'WebSite', name: 'Ekomat', url: ORIGIN + '/' },
+                about: { '@type': 'Organization', name: 'Ekomat', url: ORIGIN + '/' },
             },
         ],
     };
@@ -174,7 +174,7 @@ function page(p) {
 <meta name="keywords" content="${p.keywords}"/>
 <link rel="canonical" href="${url}"/>
 <meta property="og:type" content="website"/>
-<meta property="og:site_name" content="AyitiMarket"/>
+<meta property="og:site_name" content="Ekomat"/>
 <meta property="og:title" content="${p.title}"/>
 <meta property="og:description" content="${p.desc}"/>
 <meta property="og:url" content="${url}"/>
@@ -198,9 +198,9 @@ function page(p) {
   .wrap{max-width:900px;margin:0 auto;padding:0 20px}
   header{padding:20px 0;border-bottom:1px solid #ece8e1}
   .brand{display:flex;align-items:center;gap:12px;text-decoration:none}
-  .logo{width:40px;height:40px;border-radius:11px;background:#00666f;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Plus Jakarta Sans';font-weight:800;font-size:22px}
-  .brand b{font-family:'Plus Jakarta Sans';font-weight:800;font-size:20px;color:#1c1c19}
-  .brand b span{color:#97422b}
+  .logo{width:40px;height:40px;border-radius:11px;background:#97422b;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Plus Jakarta Sans';font-weight:800;font-size:22px}
+  .brand b{font-family:'Plus Jakarta Sans';font-weight:800;font-size:20px;color:#97422b}
+  .brand b span{color:#00666f}
   .hero{padding:56px 0 40px;background:linear-gradient(135deg,#00666f,#004f57);color:#fcf9f4;text-align:center}
   .hero h1{font-family:'Plus Jakarta Sans';font-weight:800;font-size:2.1rem;letter-spacing:-.02em;line-height:1.15}
   .hero p{margin:16px auto 0;max-width:640px;color:rgba(255,255,255,.85)}
@@ -217,17 +217,17 @@ function page(p) {
 </style>
 </head>
 <body>
-<header><div class="wrap"><a class="brand" href="/"><span class="logo">A</span><b>Ayiti<span>Market</span></b></a></div></header>
+<header><div class="wrap"><a class="brand" href="/"><span class="logo">e</span><b>eko<span>mat</span></b></a></div></header>
 
 <div class="hero"><div class="wrap">
   <h1>${p.h1}</h1>
   <p>${p.intro}</p>
-  <a class="cta" href="/">Louvri AyitiMarket →</a>
+  <a class="cta" href="/">Louvri Ekomat →</a>
 </div></div>
 
 <div class="wrap">
   <section>
-    <h2>Poukisa AyitiMarket</h2>
+    <h2>Poukisa Ekomat</h2>
     <div class="grid">${pts}</div>
   </section>
 
@@ -256,7 +256,7 @@ function page(p) {
 </div>
 
 <footer><div class="wrap">
-  AyitiMarket — Marketplace mobil Ayisyen an. Achte ak vann an tout sekirite ak eskwo. ·
+  Ekomat — Marketplace mobil Ayisyen an. Achte ak vann an tout sekirite ak eskwo. ·
   <a href="/">Louvri app la</a>
 </div></footer>
 </body>

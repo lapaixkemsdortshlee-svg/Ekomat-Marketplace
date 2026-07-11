@@ -1,13 +1,15 @@
 ---
 name: ayitimarket
-description: Use when working in the AyitiMarket repository (Haitian multi-vendor marketplace). Provides architecture orientation, state shape, helper inventory, Supabase schema, role flows, conventions (Kreyòl strings, soft-delete, escrow state machine, role-aware notifications), and the canonical patterns for adding features without breaking existing flows. Trigger on any task touching index.html, supabase/*.sql, the boutique/seller/admin panels, cart, chat, notifications, orders, or escrow.
+description: Use when working in the AyitiMarket repository — product now branded Ekomat (Haitian multi-vendor marketplace). Provides architecture orientation, state shape, helper inventory, Supabase schema, role flows, conventions (Kreyòl strings, soft-delete, escrow state machine, role-aware notifications), and the canonical patterns for adding features without breaking existing flows. Trigger on any task touching index.html, supabase/*.sql, the boutique/seller/admin panels, cart, chat, notifications, orders, or escrow.
 ---
 
-# AyitiMarket — project skill
+# Ekomat (ex-AyitiMarket) — project skill
+
+> Rebrand 2026-07-11 : la marque produit est **Ekomat**. Le repo GitHub, les chemins, les IDs Firebase (`ayitimarket-19c78`), les clés localStorage (`aym_*`) et le slug de ce skill gardent l'ancien nom.
 
 ## What this is (and what it is NOT)
 
-**AyitiMarket** is a Haitian multi-vendor e-commerce marketplace serving three roles: **buyer**, **seller**, and **admin**. UI strings are written in **Haitian Creole (Kreyòl)** — never replace them with French/English unless the user asks.
+**Ekomat** is a Haitian multi-vendor e-commerce marketplace serving three roles: **buyer**, **seller**, and **admin**. UI strings are written in **Haitian Creole (Kreyòl)** — never replace them with French/English unless the user asks.
 
 **The architecture is NOT what older briefs say.** Some prior conversations describe it as "React/Next.js + Zustand/Redux". That is wrong. The reality:
 
