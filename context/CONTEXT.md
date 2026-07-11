@@ -55,7 +55,7 @@ Je construis **Ekomat** (ex-AyitiMarket, rebrandée le 2026-07-11), une marketpl
 
 ## Mes projets en cours
 
-- **Ekomat** (ex-AyitiMarket ; unique projet actif, tout mon focus est dessus). Le repo GitHub s'appelle toujours `ayitimarket`.
+- **Ekomat** (ex-AyitiMarket ; unique projet actif, tout mon focus est dessus). Repo GitHub renommé `Ekomat-Marketplace` et projet Vercel `ekomat-marketplace` le 2026-07-11 (l'ancien nom redirige).
 
 ---
 

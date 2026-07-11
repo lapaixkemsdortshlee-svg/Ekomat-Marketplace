@@ -5,7 +5,7 @@ description: Use when working in the AyitiMarket repository — product now bran
 
 # Ekomat (ex-AyitiMarket) — project skill
 
-> Rebrand 2026-07-11 : la marque produit est **Ekomat**. Le repo GitHub, les chemins, les IDs Firebase (`ayitimarket-19c78`), les clés localStorage (`aym_*`) et le slug de ce skill gardent l'ancien nom.
+> Rebrand 2026-07-11 : la marque produit est **Ekomat**. Repo GitHub renommé `Ekomat-Marketplace` (l'ancien nom `ayitimarket` redirige). Les chemins locaux, les IDs Firebase (`ayitimarket-19c78`), les clés localStorage (`aym_*`), le project_id Supabase CLI et le slug de ce skill gardent l'ancien nom.
 
 ## What this is (and what it is NOT)
 

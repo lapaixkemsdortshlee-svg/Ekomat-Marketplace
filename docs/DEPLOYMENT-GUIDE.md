@@ -144,7 +144,7 @@ self.addEventListener('fetch', e => {
 ```
 
 ## 8. Vercel - Deployment Otomatik
-Repo GitHub `ayitimarket` deja konekte ak Vercel. Chak push sou branch `main` deklanche yon deploy otomatik.
+Repo GitHub `Ekomat-Marketplace` (ansyen non `ayitimarket` toujou redirije) deja konekte ak Vercel. Chak push sou branch `main` deklanche yon deploy otomatik.
 
 Workflow pou mete ajou :
 1. Modifye `index.html` lokalman oswa sou github.com
