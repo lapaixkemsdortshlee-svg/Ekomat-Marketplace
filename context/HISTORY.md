@@ -7,6 +7,29 @@
 
 ---
 
+## 2026-07-12 (session 2) : Session UI/UX intensive — Help Center + refonte fiches Komand + cartes profils (5 PR : #164 à #168)
+
+Session lancée par `/prime` (branche `claude/prime-5m9n8n`, on repart de `main` à chaque PR — 5 PR courtes mergées d'affilée par Thrasher). Toutes les modifs dans `index.html` (single-file), Kreyòl, testées (syntaxe JS 8/8 + Playwright 12/12) avant merge. Le style CDN (Tailwind/Material Symbols) n'est pas dispo dans le sandbox, donc QA structurelle en local (audit DOM navigateur) + QA visuelle finale sur le preview Vercel côté Thrasher.
+
+**#164 — Sant Èd (Help Center) dans Paramèt.** Nouvelle entrée « Sant Èd » en tête de Paramèt → Aksyon, ouvre une feuille avec **11 topics en accordéon** (rendu data-driven depuis `HELP_TOPICS`, échappé via `esc()`) + recherche filtrante. Chaque topic a intro + étapes numérotées + note « Poukisa ». Contenu **fidèle au vrai code** (escrow RPC, OTP livraison, MonCash + référence, vérif CIN/Paspò 24-48h + OTP SMS, 5 essais OTP → litige auto). Topics : commencer, escrow, MonCash, chat, vendre, recevoir paiement, panier, recherche, litige, referral, paramètres.
+
+**#165 — Stepper escrow + boutons Komand.** (1) Ajout du **fil connecteur vertical** entre les puces du stepper (`.esc-step::before`, teal pour étapes faites, gris pour à venir) — les cercles étaient isolés/flottants (retour Thrasher « tèks twò santre »). Retrait de l'ancien CSS `.esc-line` mort (jamais généré). (2) Boutons d'action secondaires des fiches Komand (Anile, Pwoteste, Note vandè a, Envit yon zanmi, Kache/Demaske) passés en **icône seule** (36px + `aria-label`/`title`) ; CTA principaux gardent le texte. Décision Thrasher via AskUserQuestion.
+
+**#166 — Fiches Komand alignées à gauche + boutons centrés + bump SW.** Le stepper, les boutons d'action et Kontakte sont **sortis de la colonne indentée** (`flex-1` après la vignette produit) → pleine largeur, ce qui récupère la gouttière vide à gauche sous l'en-tête (les textes semblaient trop à droite). Boutons d'action + Kontakte **centrés** (`justify-center`). **Bump service worker `aym-v36 → v37`** pour pousser Help Center + fiches Komand vers le cache assets des utilisateurs installés.
+
+**#167 — Cartes en-tête profils vendeur & acheteur (style référence).** Thrasher a fourni une carte de réf (freelance : bannière + avatar bas-gauche + chip + rangée stats séparateurs + CTA pilule). Transposé la **forme** avec notre design (dégradé teal, Kreyòl), sur les deux profils. Décisions Thrasher : **juste la carte en-tête** (pas de refonte d'écran), CTA acheteur = **Vin Vandè**. Vendeur (public) : bannière teal + avatar 76px bas-gauche, **bookmark sur la bannière = Swiv** (remplace bouton texte), chip catégorie, stats Nòt/Lavant/Avi, pilule **Kontakte** (= Get in touch) ; absorbe l'ancien Trust Stats grid + duo Swiv/Mesaj ; `toggleFollowSeller` adapté à l'icône bookmark ; variable morte `starsHTML` retirée. Acheteur (own profile, role-aware) : icône edit sur bannière, chip rôle, stats Favori/Komand/Swiv (vendeur : Lavant/Nòt/Abonnen ; admin : mêmes 3 KPI, **mêmes ids** `kpiAdmin*` pour l'updater async), CTA acheteur→Vin Vandè / vendeur→Boutik / admin→Admin.
+
+**#168 — Fix z-index bannière + photo cover.** Retour Thrasher (screenshot) : la bannière passait **par-dessus** l'avatar (tête cachée). **Leçon** : un sibling positionné (`position:relative`, ici la bannière avec ses orbes) peint AU-DESSUS d'un sibling statique même si celui-ci vient après dans le DOM. Fix : corps `position:relative;z-index:1` + avatar `z-index:2` → au-dessus de la bannière (sur les deux cartes). + **Feature photo de bannière** (own profile) : `uploadCoverPhoto()` **miroir de `uploadProfilePhoto`** (data URL stocké local dans `aym_user`, garde quota) ; affichée avec un **dégradé teal par-dessus** (`linear-gradient(rgba teal), url(cover)`, `background-size:cover`) pour un rendu pro/cohérent ; affordance icône caméra « Banyè ».
+
+**Notes techniques / dette connue :**
+- Le SW sert le **HTML en network-first** (depuis v29) → les changements `index.html` arrivent aux utilisateurs à la prochaine ouverture sans bump ; le bump v37 (#166) sert le cache des **assets**.
+- **Upload photo profil ET bannière = data URL local seulement** (pas d'upload Supabase storage). Limite : pas cross-device, pas visible publiquement (bannière/avatar d'un vendeur pas vus par les acheteurs). Piste future si voulu : colonne `profiles.cover_url` (+ avatar réel) + upload storage. Choix assumé pour rester cohérent avec l'existant et sans migration.
+- Workflow PR : auto-watch + check-in 1h programmé à chaque PR, annulé au merge ; commentaires `vercel[bot]` = notif preview Ready, skip silencieux.
+
+**Reste côté Thrasher :** QA visuelle sur le preview (profils, fiches Komand, Help Center, rendu du fil connecteur et de la bannière cover) ; décider s'il veut la bannière/avatar persistés et publics (chantier Supabase séparé).
+
+---
+
 ## 2026-07-12 : QA post-rebrand (produits/feed) + cadrage stratégie « pilote avant vendeurs »
 
 Session de suite (branche `claude/prime-sta44n`, on repart de `main` à chaque PR ; PR #160/#161 déjà mergées au démarrage).
