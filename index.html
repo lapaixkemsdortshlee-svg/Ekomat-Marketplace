@@ -14018,7 +14018,6 @@
 
         function renderSellerProfile(seller) {
             const sellerProducts = PRODUCTS.filter(p => p.sellerId === seller.id);
-            const totalViews = sellerProducts.reduce((a, p) => a + (p.v || 0), 0);
 
             // Generate star rating HTML
             const fullStars = Math.floor(seller.rating);
