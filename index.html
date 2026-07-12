@@ -3749,6 +3749,16 @@
         <!-- Aksyon -->
         <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Aksyon</p>
         <div class="bg-surface-container-lowest rounded-xl amb overflow-hidden mb-4">
+            <button onclick="openHelpCenter()" class="w-full flex items-center gap-3 p-4 active:bg-surface-container-low transition-colors" style="border-bottom:1px solid rgba(188,201,200,.1)">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
+                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">help_center</span>
+                </div>
+                <div class="flex-1 text-left">
+                    <p class="font-headline font-bold text-sm text-on-surface">Sant Èd</p>
+                    <p class="font-label text-xs text-on-surface-variant">Gid, kesyon frekan ak kijan tout bagay mache</p>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">chevron_right</span>
+            </button>
             <button onclick="openFeedback()" class="w-full flex items-center gap-3 p-4 active:bg-surface-container-low transition-colors" style="border-bottom:1px solid rgba(188,201,200,.1)">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
                     <span class="material-symbols-outlined fi text-primary" style="font-size:18px">rate_review</span>
@@ -3800,6 +3810,50 @@
             class="w-full py-3.5 rounded-xl font-headline font-bold text-sm active:scale-95 transition-transform"
             style="background:#e5e2dd;color:#1c1c19">
             Fèmen Paramèt
+        </button>
+    </div>
+
+    <!-- ══ SANT ÈD — HELP CENTER ══ -->
+    <div class="sheet" id="helpSheet">
+        <div class="handle"></div>
+        <div class="flex items-center gap-2 mb-1">
+            <button onclick="closeSheets();openSheet('settingsSheet')" aria-label="Retounen nan Paramèt"
+                class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+            </button>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Sant Èd</h3>
+        </div>
+        <p class="font-body text-sm text-on-surface-variant mb-4 leading-relaxed">
+            Chwazi yon sijè pou w wè manyèl konplè a. Chak eksplikasyon montre w kijan pou w fè l epi poukisa l enpòtan.
+        </p>
+
+        <!-- Rechèch nan èd la -->
+        <div class="relative mb-4">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-size:18px">search</span>
+            <input id="helpSearch" oninput="filterHelpTopics(this.value)" placeholder="Chèche yon sijè (eskwo, chat, vann…)"
+                class="si w-full" style="padding-left:2.4rem" />
+        </div>
+
+        <!-- Lis sijè yo (jenere pa renderHelpCenter) -->
+        <div id="helpTopics" class="space-y-2.5"></div>
+
+        <!-- Kontak sipò -->
+        <div class="mt-5 p-4 rounded-xl amb" style="background:rgba(0,102,111,.06);border:1px solid rgba(0,102,111,.15)">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="material-symbols-outlined fi text-primary" style="font-size:18px">support_agent</span>
+                <p class="font-headline font-bold text-sm text-on-surface">Ou pa jwenn repons ou?</p>
+            </div>
+            <p class="font-label text-xs text-on-surface-variant mb-3">Ekri ekip Ekomat la dirèkteman, n ap ede w.</p>
+            <button onclick="closeSheets();openFeedback()"
+                class="w-full py-2.5 rounded-xl font-headline font-bold text-sm active:scale-95 transition-transform cta">
+                Kontakte sipò a
+            </button>
+        </div>
+
+        <button onclick="closeSheets()"
+            class="w-full mt-3 py-3.5 rounded-xl font-headline font-bold text-sm active:scale-95 transition-transform"
+            style="background:#e5e2dd;color:#1c1c19">
+            Fèmen
         </button>
     </div>
 
@@ -12301,6 +12355,201 @@
             });
         }
         function closeSheets() { document.getElementById("scrim").classList.remove("on"); document.querySelectorAll(".sheet").forEach(s => s.classList.remove("on")); }
+
+        // ══════════════════════════════════════════════════════════
+        //  SANT ÈD — HELP CENTER (kontni Kreyòl, fidèl ak vrè flux yo)
+        // ══════════════════════════════════════════════════════════
+        const HELP_TOPICS = [
+            {
+                id: 'kmanse', icon: 'rocket_launch', title: 'Kijan pou kòmanse',
+                sub: 'Premye pa ou sou Ekomat',
+                intro: 'Byenveni sou Ekomat! Men premye pa yo pou w kòmanse achte oswa vann an sekirite.',
+                steps: [
+                    'Kreye kont ou ak imel oswa Google, epi chwazi wòl ou: Achtè oswa Vandè.',
+                    'Nan Feed la, eksplore pwodwi yo. Tape yon pwodwi pou w wè detay li.',
+                    'Sèvi ak bar anba a pou navige: Feed, Rechèch, Mesaj, Panye ak Pwofil.',
+                    'Bouton (+) an ba adwat ba w aksè rapid pou Pibliye yon pwodwi oswa pale ak Asistan an.'
+                ],
+                why: 'Ou kapab chanje wòl ou (achtè/vandè) nenpòt lè nan Pwofil ou — menm kont lan sèvi pou achte epi vann.'
+            },
+            {
+                id: 'eskwo', icon: 'shield', title: 'Achte an sekirite ak Eskwo',
+                sub: 'Kijan lajan ou pwoteje',
+                intro: 'Eskwo se sistèm ki pwoteje lajan ou. Lè w peye, lajan an pa ale dirèk kay vandè a — li rete bloke jiskaske ou konfime ou resevwa pwodwi a.',
+                steps: [
+                    'Nan detay pwodwi a, tape Kòmande.',
+                    'Peye montan an ak MonCash (gade sijè «Peye ak MonCash»).',
+                    'Lajan ou rete bloke nan eskwo — vandè a poko touche l.',
+                    'Lè livrezon fèt, ba kousye a kòd 6 chif OTP ou. Se sèlman lè sa a lajan an libere bay vandè a.'
+                ],
+                why: 'Poukisa? Konsa ni achtè ni vandè pwoteje: ou pa pèdi lajan ou si pwodwi a pa rive, epi vandè a asire l ap touche lè livrezon fèt. Pèsòn pa ka twonpe lòt la.'
+            },
+            {
+                id: 'peman', icon: 'payments', title: 'Peye ak MonCash',
+                sub: 'Fè yon peman etap pa etap',
+                intro: 'Ekomat aksepte peman ak MonCash. Men kijan pou w peye yon kòmand.',
+                steps: [
+                    'Apre ou tape Kòmande, w ap wè feuille «Peye ak MonCash».',
+                    'Voye montan egzak la sou nimewo MonCash Ekomat ki afiche a.',
+                    'Kopye referans transaksyon MonCash la epi kole l nan app la.',
+                    'Sistèm nan verifye peman an epi mete lajan an nan eskwo.'
+                ],
+                why: 'Poukisa referans lan? Li pèmèt nou konfime se ou menm ki voye lajan an epi konekte l ak kòmand ou — konsa pa gen konfizyon sou ki peman ki pou ki kòmand.'
+            },
+            {
+                id: 'mesaj', icon: 'chat', title: 'Mesaj & Chat',
+                sub: 'Pale ak vandè oswa achtè',
+                intro: 'Ou ka pale dirèk ak yon vandè (oswa yon achtè) anvan, pandan ak apre yon kòmand.',
+                steps: [
+                    'Sou paj yon pwodwi oswa yon boutik, tape Kontakte vandè pou louvri yon konvèsasyon.',
+                    'Voye mesaj tèks oswa nòt vokal pou poze kesyon sou pwodwi, pri oswa livrezon.',
+                    'Ou jwenn tout konvèsasyon ou yo nan onglè Mesaj la.'
+                ],
+                why: 'Konsèy: rete toujou nan chat Ekomat la. Konsa nou ka ede w si gen yon pwoblèm — nou pa ka wè echanj ki fèt deyò app la.'
+            },
+            {
+                id: 'vann', icon: 'storefront', title: 'Vann sou Ekomat',
+                sub: 'Vin vandè & pibliye pwodwi',
+                intro: 'Pou w vann, ou dwe kreye yon kont vandè epi fè verifye idantite ou. Sa pwoteje achtè yo epi bay boutik ou konfyans.',
+                steps: [
+                    'Nan Pwofil, chwazi vin Vandè epi bay non Boutik / Biznis ou.',
+                    'Soumèt yon pyès idantite (CIN oswa Paspò). Admin ap verifye l nan 24-48h.',
+                    'Verifye nimewo telefòn ou ak yon kòd OTP nou voye pa SMS.',
+                    'Lè ou apwouve, tape bouton (+) an → Pibliye pwodwi pou mete premye atik ou an liy.'
+                ],
+                why: 'Poukisa verifikasyon ID? Paske achtè yo mete lajan yo an jwe. Lè yo wè yon vandè verifye, yo gen plis konfyans epi yo achte plis.'
+            },
+            {
+                id: 'resevwa', icon: 'account_balance_wallet', title: 'Resevwa peman ou (vandè)',
+                sub: 'Kijan w touche lajan ou',
+                intro: 'Kòm vandè, lajan yon kòmand rete nan eskwo jiskaske livrezon konfime. Men kijan w touche.',
+                steps: [
+                    'Lè yon achtè kòmande, w ap resevwa yon notifikasyon.',
+                    'Prepare pwodwi a epi ranje livrezon oswa kolèt la ak achtè a.',
+                    'Lè w livre, mande achtè a kòd 6 chif OTP li epi antre l nan app la.',
+                    'Kòd la libere eskwo a — lajan an vin pou ou (mwens komisyon platfòm nan).'
+                ],
+                why: 'Poukisa OTP? Se prèv livrezon an fèt vre. Konsa yon achtè pa ka di li pa resevwa pwodwi a pou l bloke lajan w — se li menm ki bay kòd la lè li resevwa.'
+            },
+            {
+                id: 'panye', icon: 'shopping_cart', title: 'Panye & Kòmand',
+                sub: 'Rasanble atik anvan w peye',
+                intro: 'Panye a kite w rasanble plizyè pwodwi anvan w kòmande.',
+                steps: [
+                    'Sou yon pwodwi, tape Ajoute nan panye.',
+                    'Louvri onglè Panye pou w wè tout atik ou chwazi yo epi ajiste kantite.',
+                    'Tape Kòmande pou w kontinye ak peman epi eskwo.'
+                ],
+                why: 'Ou ka retire yon atik nan panye a nenpòt lè anvan w peye.'
+            },
+            {
+                id: 'rechech', icon: 'search', title: 'Chèche boutik & pwodwi',
+                sub: 'Jwenn sa w ap chèche',
+                intro: 'Ou ka jwenn yon pwodwi presi oswa yon boutik menm si w pa konnen non egzak li.',
+                steps: [
+                    'Tape ikòn Rechèch la epi ekri sa w ap chèche — pwodwi oswa non boutik/vandè.',
+                    'Sèvi ak filt zòn ak kategori pou rafine rezilta yo.',
+                    'Tape «Gade tout boutik» pou parcouri tout boutik yo pa zòn ak kategori.'
+                ],
+                why: 'Rechèch la konprann fot ekri tou (pa egzanp «Berli» ap jwenn «Berlly») — pa bezwen ekri non an egzat.'
+            },
+            {
+                id: 'litij', icon: 'gavel', title: 'Si gen yon pwoblèm — Litij',
+                sub: 'Rezoud yon kòmand ki mal pase',
+                intro: 'Si yon kòmand mal pase (pwodwi pa rive, pa koresponn…), ou ka louvri yon litij epi yon admin ap rezoud li.',
+                steps: [
+                    'Louvri kòmand la epi tape Konteste / Louvri litij.',
+                    'Chwazi rezon an epi eksplike sa ki rive ak detay.',
+                    'Soumèt. Yon admin ap egzamine litij la epi deside — ranbouse oswa libere lajan an.'
+                ],
+                why: 'Nòt: apre 5 move esè kòd OTP, kòmand lan ale otomatikman nan litij pou admin rezoud — se yon sekirite anplis.'
+            },
+            {
+                id: 'envite', icon: 'group_add', title: 'Envite zanmi & rekonpans',
+                sub: 'Pataje Ekomat, touche kredi',
+                intro: 'Pataje Ekomat ak zanmi ou epi touche rekonpans.',
+                steps: [
+                    'Louvri feuille «Envite yon zanmi» pou w jwenn kòd referral ou.',
+                    'Pataje l sou WhatsApp oswa SMS.',
+                    'Lè yon zanmi enskri epi fè premye kòmand li, ou touche kredi (jiska 3 zanmi).'
+                ],
+                why: null
+            },
+            {
+                id: 'paramet', icon: 'tune', title: 'Paramèt & kont ou',
+                sub: 'Pèsonalize app la',
+                intro: 'Nan Paramèt ou ka pèsonalize app la selon bezwen ou.',
+                steps: [
+                    'Mòd Sombre, lang (Kreyòl / Français) ak monnaie (HTG / USD).',
+                    'Mode Lite pou ekonomize done — li pa chaje foto yo.',
+                    'Notifikasyon: aktive push, silans lannwit, epi chwazi ki tip notif ou vle.'
+                ],
+                why: 'Konsèy: si koneksyon w fèb oswa done chè, aktive Mode Lite pou app la vin pi rapid epi itilize mwens data.'
+            }
+        ];
+
+        function renderHelpCenter() {
+            const wrap = document.getElementById('helpTopics');
+            if (!wrap) return;
+            wrap.innerHTML = HELP_TOPICS.map(t => {
+                const searchable = (t.title + ' ' + t.sub + ' ' + t.intro + ' ' + t.steps.join(' ') + ' ' + (t.why || '')).toLowerCase();
+                const steps = t.steps.map((s, i) =>
+                    '<li class="flex gap-2.5 items-start">'
+                    + '<span class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-label text-[10px] font-bold mt-0.5" style="background:#00666f;color:#fff">' + (i + 1) + '</span>'
+                    + '<span class="font-body text-[13px] text-on-surface leading-relaxed">' + esc(s) + '</span></li>'
+                ).join('');
+                const why = t.why ? (
+                    '<div class="flex gap-2 mt-3 p-3 rounded-lg" style="background:rgba(151,66,43,.07)">'
+                    + '<span class="material-symbols-outlined fi flex-shrink-0" style="font-size:16px;color:#97422b">lightbulb</span>'
+                    + '<p class="font-label text-[12px] leading-relaxed" style="color:#7a4a38">' + esc(t.why) + '</p></div>'
+                ) : '';
+                return (
+                    '<div class="help-topic bg-surface-container-lowest rounded-xl amb overflow-hidden" data-help="' + esc(searchable) + '">'
+                    + '<button onclick="toggleHelpTopic(\'' + t.id + '\')" class="w-full flex items-center gap-3 p-4 text-left active:bg-surface-container-low transition-colors">'
+                    + '<div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">'
+                    + '<span class="material-symbols-outlined fi text-primary" style="font-size:18px">' + t.icon + '</span></div>'
+                    + '<div class="flex-1 min-w-0"><p class="font-headline font-bold text-sm text-on-surface">' + esc(t.title) + '</p>'
+                    + '<p class="font-label text-xs text-on-surface-variant">' + esc(t.sub) + '</p></div>'
+                    + '<span id="helpChev-' + t.id + '" class="material-symbols-outlined text-on-surface-variant transition-transform" style="font-size:20px">expand_more</span>'
+                    + '</button>'
+                    + '<div id="helpPanel-' + t.id + '" class="hidden px-4 pb-4">'
+                    + '<p class="font-body text-[13px] text-on-surface-variant leading-relaxed mb-3">' + esc(t.intro) + '</p>'
+                    + '<ol class="space-y-2">' + steps + '</ol>'
+                    + why
+                    + '</div></div>'
+                );
+            }).join('');
+            document.getElementById('helpEmpty')?.remove();
+            wrap.insertAdjacentHTML('afterend', '<p id="helpEmpty" class="hidden font-body text-sm text-center text-on-surface-variant py-6">Pa gen sijè ki koresponn ak rechèch ou a.</p>');
+        }
+
+        function openHelpCenter() {
+            renderHelpCenter();
+            const s = document.getElementById('helpSearch'); if (s) s.value = '';
+            closeSheets();
+            openSheet('helpSheet');
+        }
+
+        function toggleHelpTopic(id) {
+            const panel = document.getElementById('helpPanel-' + id);
+            const chev = document.getElementById('helpChev-' + id);
+            if (!panel) return;
+            const open = !panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', open);
+            if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+        }
+
+        function filterHelpTopics(q) {
+            q = (q || '').trim().toLowerCase();
+            let shown = 0;
+            document.querySelectorAll('#helpTopics .help-topic').forEach(el => {
+                const match = !q || (el.getAttribute('data-help') || '').includes(q);
+                el.classList.toggle('hidden', !match);
+                if (match) shown++;
+            });
+            const empty = document.getElementById('helpEmpty');
+            if (empty) empty.classList.toggle('hidden', shown > 0);
+        }
 
         // ══════════════════════════════════════════════════════════
         //  TRACKING + UTILS
