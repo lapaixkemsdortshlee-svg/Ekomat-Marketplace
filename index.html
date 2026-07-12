@@ -802,11 +802,28 @@
 
         /* ── Escrow Stepper ── */
         .esc-step {
+            position: relative;
             display: flex;
             gap: 12px;
-            padding: 10px 0;
+            padding: 7px 0;
         }
+        /* Vertical connector line joining the step bullets into one flow */
+        .esc-step::before {
+            content: '';
+            position: absolute;
+            left: 13px;            /* center of the 28px bullet (2px line) */
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background: #e7e3dd;
+            z-index: 0;
+        }
+        .esc-step:first-child::before { top: 21px; height: calc(100% - 21px); }
+        .esc-step:last-child::before { height: 21px; }
+        .esc-step.done::before { background: #00666f; }
         .esc-bullet {
+            position: relative;
+            z-index: 1;
             width: 28px; height: 28px; border-radius: 50%;
             flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
@@ -822,13 +839,6 @@
             border-color: #00666f;
             box-shadow: 0 0 0 4px rgba(0,102,111,.12);
         }
-        .esc-line {
-            width: 2px; flex: 0 0 2px;
-            background: #e7e3dd;
-            margin-left: 13px;
-        }
-        .esc-step.done ~ .esc-line,
-        .esc-line.done { background: #00666f; }
 
         /* ── DARK MODE — Midnight Teal Premium ── */
         body.dark {
@@ -6340,9 +6350,9 @@
                         <span class="material-symbols-outlined align-middle" style="font-size:14px">payments</span>
                         Peye kounye a
                     </button>`);
-                    buttons.push(`<button onclick="cancelOrder('${id}')"
-                        class="px-3 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95 bg-surface-container text-on-surface-variant">
-                        Anile
+                    buttons.push(`<button onclick="cancelOrder('${id}')" aria-label="Anile" title="Anile"
+                        class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 active:scale-95 bg-surface-container text-on-surface-variant">
+                        <span class="material-symbols-outlined" style="font-size:18px">close</span>
                     </button>`);
                 }
                 if (order.status === 'ready_for_pickup') {
@@ -6353,26 +6363,24 @@
                     </button>`);
                 }
                 if (['payment_verified','ready_for_pickup','picked_up','otp_confirmed','released'].includes(order.status)) {
-                    buttons.push(`<button onclick="openDispute('${id}')"
-                        class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                    buttons.push(`<button onclick="openDispute('${id}')" aria-label="Pwoteste" title="Pwoteste"
+                        class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 active:scale-95"
                         style="background:rgba(153,27,27,.08);color:#991b1b">
-                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoteste
+                        <span class="material-symbols-outlined" style="font-size:18px">report</span>
                     </button>`);
                 }
                 if (['otp_confirmed','released','completed','delivered'].includes(order.status) && !order._rated) {
-                    buttons.push(`<button onclick="openRatingSheet('${id}','${order.seller_id}','${order.product_id}','${jsAttr(order.seller_name||'Vandè')}')"
-                        class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                    buttons.push(`<button onclick="openRatingSheet('${id}','${order.seller_id}','${order.product_id}','${jsAttr(order.seller_name||'Vandè')}')" aria-label="Note vandè a" title="Note vandè a"
+                        class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 active:scale-95"
                         style="background:rgba(0,102,111,.08);color:#00666f">
-                        <span class="material-symbols-outlined align-middle" style="font-size:14px">star</span>
-                        Note vandè a
+                        <span class="material-symbols-outlined" style="font-size:18px">star</span>
                     </button>`);
                 }
                 if (['otp_confirmed','released','completed','delivered'].includes(order.status)) {
-                    buttons.push(`<button onclick="openReferralSheet()"
-                        class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                    buttons.push(`<button onclick="openReferralSheet()" aria-label="Envit yon zanmi" title="Envit yon zanmi"
+                        class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 active:scale-95"
                         style="background:rgba(151,66,43,.08);color:#97422b">
-                        <span class="material-symbols-outlined align-middle" style="font-size:14px">card_giftcard</span>
-                        Envit yon zanmi
+                        <span class="material-symbols-outlined" style="font-size:18px">card_giftcard</span>
                     </button>`);
                 }
             } else {
@@ -6393,10 +6401,10 @@
                     </button>`);
                 }
                 if (['payment_verified','ready_for_pickup','picked_up','otp_confirmed'].includes(order.status)) {
-                    buttons.push(`<button onclick="openDispute('${id}')"
-                        class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                    buttons.push(`<button onclick="openDispute('${id}')" aria-label="Pwoteste" title="Pwoteste"
+                        class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 active:scale-95"
                         style="background:rgba(153,27,27,.08);color:#991b1b">
-                        <span class="material-symbols-outlined align-middle" style="font-size:12px">report</span> Pwoteste
+                        <span class="material-symbols-outlined" style="font-size:18px">report</span>
                     </button>`);
                 }
             }
@@ -6404,17 +6412,15 @@
             // (pa efase — dosye a rete entak pou lòt pati a ak odit admin).
             if (['released','completed','delivered','cancelled','refunded'].includes(order.status)) {
                 buttons.push(order._hidden
-                    ? `<button onclick="unhideOrderFromHistory('${id}')"
-                    class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                    ? `<button onclick="unhideOrderFromHistory('${id}')" aria-label="Demaske" title="Demaske"
+                    class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 active:scale-95"
                     style="background:rgba(0,102,111,.08);color:#00666f">
-                    <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility</span>
-                    Demaske
+                    <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
                 </button>`
-                    : `<button onclick="hideOrderFromHistory('${id}')"
-                    class="flex-1 min-w-[120px] py-2 rounded-lg font-label font-bold text-[12px] active:scale-95"
+                    : `<button onclick="hideOrderFromHistory('${id}')" aria-label="Kache" title="Kache"
+                    class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 active:scale-95"
                     style="background:rgba(60,73,73,.06);color:#3d4949">
-                    <span class="material-symbols-outlined align-middle" style="font-size:14px">visibility_off</span>
-                    Kache
+                    <span class="material-symbols-outlined" style="font-size:18px">visibility_off</span>
                 </button>`);
             }
             return buttons.length
