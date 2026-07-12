@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aym-v36';
+const CACHE_NAME = 'aym-v37';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

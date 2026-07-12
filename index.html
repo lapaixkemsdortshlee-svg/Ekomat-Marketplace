@@ -6424,7 +6424,7 @@
                 </button>`);
             }
             return buttons.length
-                ? `<div class="flex flex-wrap gap-2 mt-3">${buttons.join('')}</div>`
+                ? `<div class="flex flex-wrap gap-2 mt-3 justify-center">${buttons.join('')}</div>`
                 : '';
         }
 
@@ -6457,12 +6457,12 @@
                 <p class="font-label text-[10px] text-on-surface-variant">${timeAgo(o.created_at)}</p>
             </div>
             ${o.pickup_location ? `<p class="font-label text-[11px] text-on-surface-variant mt-1"><span class="material-symbols-outlined align-middle" style="font-size:12px">location_on</span> ${o.pickup_location}</p>` : ''}
-            ${renderEscrowStepper(o, isSeller)}
-            ${escrowActionButtons(o, isSeller)}
-            <div class="flex gap-2 mt-2">
-                ${o.product_id ? `<button onclick="openConversation(${pidAttr}, ${otherAttr}, '${partnerNameSafe}')" class="flex-1 py-1.5 rounded-lg bg-surface-container font-label font-bold text-[11px] active:scale-95"><span class="material-symbols-outlined align-middle" style="font-size:12px">chat</span> Kontakte ${partnerRole.toLowerCase()}</button>` : ''}
-            </div>
         </div>
+    </div>
+    ${renderEscrowStepper(o, isSeller)}
+    ${escrowActionButtons(o, isSeller)}
+    <div class="flex gap-2 mt-2 justify-center">
+        ${o.product_id ? `<button onclick="openConversation(${pidAttr}, ${otherAttr}, '${partnerNameSafe}')" class="px-5 py-1.5 rounded-lg bg-surface-container font-label font-bold text-[11px] active:scale-95"><span class="material-symbols-outlined align-middle" style="font-size:12px">chat</span> Kontakte ${partnerRole.toLowerCase()}</button>` : ''}
     </div>
 </div>`;
         }
