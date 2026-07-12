@@ -5059,15 +5059,21 @@
         // yon eta vid pa dwe janm bloke itilizatè a — toujou gen yon pwochen pa.
         function emptyState(icon, title, desc, action) {
             const btn = action
-                ? '<button onclick="' + action.onclick + '" class="mt-5 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl cta font-label font-bold text-sm active:scale-95">'
-                    + (action.icon ? '<span class="material-symbols-outlined" style="font-size:16px">' + action.icon + '</span>' : '')
+                ? '<button onclick="' + action.onclick + '" class="inline-flex items-center gap-1.5 px-6 py-3 rounded-full cta font-label font-bold text-sm active:scale-95 amb" style="margin-top:22px">'
+                    + (action.icon ? '<span class="material-symbols-outlined" style="font-size:18px">' + action.icon + '</span>' : '')
                     + action.label + '</button>'
                 : '';
-            return '<div class="col-span-2 text-center py-16 px-6">'
-                + '<div class="mx-auto mb-3 flex items-center justify-center rounded-full" style="width:80px;height:80px;background:rgba(0,102,111,.07)">'
-                + '<span class="material-symbols-outlined" style="font-size:40px;color:#7fa8ab">' + icon + '</span></div>'
-                + '<p class="font-headline font-bold text-base text-on-surface">' + title + '</p>'
-                + '<p class="font-label text-xs text-on-surface-variant mt-1.5 max-w-xs mx-auto">' + desc + '</p>'
+            // Spans the full width whatever the parent layout is: grid
+            // (grid-column), CSS multicol like the .masonry feed
+            // (column-span:all) and normal/flex flow (width:100%). The old
+            // `col-span-2` was a Tailwind GRID utility and did nothing inside
+            // the feed's `columns:2` multicol container, so the block used to
+            // get crushed into a single column ("positionnement incohérent").
+            return '<div style="grid-column:1/-1;column-span:all;width:100%;text-align:center;padding:56px 24px 44px">'
+                + '<div class="mx-auto mb-4 flex items-center justify-center" style="width:76px;height:76px;border-radius:22px;background:linear-gradient(155deg,rgba(0,102,111,.11),rgba(0,102,111,.03));box-shadow:inset 0 0 0 1px rgba(0,102,111,.08)">'
+                + '<span class="material-symbols-outlined" style="font-size:36px;color:#00666f;font-variation-settings:\'FILL\' 1">' + icon + '</span></div>'
+                + '<p class="font-headline font-extrabold text-on-surface" style="font-size:1.0625rem;letter-spacing:-.01em">' + title + '</p>'
+                + '<p class="font-label text-on-surface-variant mx-auto" style="font-size:.8125rem;line-height:1.55;margin-top:7px;max-width:16rem">' + desc + '</p>'
                 + btn + '</div>';
         }
 
@@ -13944,6 +13950,39 @@
         //  SELLER PROFILE VIEW — Trust System
         // ══════════════════════════════════════════════════════════
 
+        // Load a seller's ACTIVE products straight from Supabase into the
+        // PRODUCTS cache. The public storefront (renderSellerProfile) filters
+        // PRODUCTS by sellerId, so without this it only showed whatever the
+        // feed happened to load — a seller's real products read as "0 pwodwi"
+        // depending on the navigation path.
+        async function loadSellerProductsFromSupabase(sellerId) {
+            if (!db || !sellerId) return;
+            try {
+                const { data, error } = await db.from('products')
+                    .select('*, seller:profiles!seller_id(id, display_name, verified_seller, rating_avg, avatar_url)')
+                    .eq('seller_id', sellerId)
+                    .eq('status', 'active')
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+                (data || []).forEach(p => {
+                    const imgs = p.images || [];
+                    const mapped = {
+                        id: p.id, t: p.title, p: p.price, oldP: p.old_price, c: p.category, l: p.location,
+                        desc: p.description, img: imgs.length > 0 ? imgs[0] : null, images: imgs,
+                        s: p.stock, v: p.views || 0, r: p.seller?.rating_avg || 0,
+                        b: p.seller?.verified_seller ? 'Verifye' : '', sellerId: p.seller_id,
+                        sellerName: p.seller?.display_name || 'Vandè',
+                        sellerAvatarUrl: p.seller?.avatar_url || null,
+                        sellerVerified: !!p.seller?.verified_seller,
+                        sizes: p.sizes || [], e: 'palette', ec: '#7c3aed',
+                    };
+                    const i = PRODUCTS.findIndex(x => x.id === mapped.id);
+                    if (i >= 0) PRODUCTS[i] = mapped; else PRODUCTS.push(mapped);
+                });
+            } catch (e) { console.warn('[SellerProducts]', e && e.message); }
+        }
+        window.loadSellerProductsFromSupabase = loadSellerProductsFromSupabase;
+
         async function openSellerProfile(sellerId) {
             let seller = SELLERS[sellerId];
             // Fetch from Supabase if not cached
@@ -13952,6 +13991,9 @@
                 seller = await loadSellerFromSupabase(sellerId);
             }
             if (!seller) { toast('Vandè pa jwenn'); return; }
+            // Pull the seller's live products so the storefront reflects the
+            // DB, not just the in-memory feed cache.
+            await loadSellerProductsFromSupabase(sellerId);
 
             // Push current tab to navigation stack
             A.stack.push(A.tab);
@@ -13976,7 +14018,7 @@
 
         function renderSellerProfile(seller) {
             const sellerProducts = PRODUCTS.filter(p => p.sellerId === seller.id);
-            const totalViews = sellerProducts.reduce((a, p) => a + p.v, 0);
+            const totalViews = sellerProducts.reduce((a, p) => a + (p.v || 0), 0);
 
             // Generate star rating HTML
             const fullStars = Math.floor(seller.rating);
