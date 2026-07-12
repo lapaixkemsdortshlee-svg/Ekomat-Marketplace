@@ -6744,7 +6744,7 @@
       <!-- Banner (koulè oswa foto cover ak dégradé teal pou koyerans) -->
       <div onclick="uploadCoverPhoto()" class="cursor-pointer" style="height:104px;position:relative;overflow:hidden;${u.coverURL ? `background-image:linear-gradient(135deg,rgba(0,102,111,.55),rgba(0,129,140,.30)),url('${u.coverURL}');background-size:cover;background-position:center` : 'background:linear-gradient(135deg,#00666f,#00818c)'}">
         ${u.coverURL ? '' : '<div style="position:absolute;top:-40px;right:-30px;width:160px;height:160px;border-radius:50%;background:rgba(140,242,255,.08);pointer-events:none"></div><div style="position:absolute;bottom:-40px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none"></div>'}
-        <div class="absolute bottom-2 left-3 flex items-center gap-1 px-2 py-1 rounded-full pointer-events-none" style="background:rgba(28,28,25,.28);backdrop-filter:blur(4px)">
+        <div class="absolute bottom-2 right-3 flex items-center gap-1 px-2 py-1 rounded-full pointer-events-none" style="background:rgba(28,28,25,.28);backdrop-filter:blur(4px)">
           <span class="material-symbols-outlined text-white" style="font-size:14px">photo_camera</span>
           <span class="font-label text-[10px] font-bold text-white">Banyè</span>
         </div>
