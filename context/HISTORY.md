@@ -7,6 +7,34 @@
 
 ---
 
+## 2026-07-11 (session 2) : Ekomat post-rebrand — design, features onboarding, durcissement DB, et pipeline mis de côté
+
+Grosse session de suite (branche `claude/prime-sta44n`, repo renommé `Ekomat-Marketplace`, on repart de main à chaque PR). Beaucoup de PR courtes mergées d'affilée. Le pipeline `db-migrate` étant cassé (voir plus bas), les migrations DB ont été appliquées **via le MCP Supabase** (`apply_migration`), pas par le pipeline.
+
+**Logos & identité (PR #152, #157, #158) :**
+- Fichiers logo officiels de Thrasher rangés dans `brand/` ; login/splash passés en logo transparent, icônes 192/512, favicon, og-image régénérés. `index.html` allégé (~240 Ko de base64 retirés).
+- Header : wordmark texte → vrai logo image (28px). Login 240→150px, splash 280→200px (sur retour Thrasher « trop gros/centré »).
+- Splash : wordmark → **icône « e » turquoise** (`brand/splash-icon-teal.png`, recadrée de `mark-teal.png`) centrée style WhatsApp. Fix CSS : `.screen.on{display:block}` cassait le flex du splash → ajout `#s-splash.on{display:flex;center;fixed;inset:0}` (spécificité id+classe, indépendant de Tailwind). Toast « Lang: Kreyòl » retiré à l'ouverture (ne s'affiche plus que sur vrai changement).
+
+**Features onboarding (PR #159, #160) :**
+- **Carte de bienvenue** teal en haut du feed (remplace le toast noir `toast('Byenveni …')`) : icône + prénom + message Kreyòl, se ferme, auto-dismiss 7s.
+- **Tutoriel coach-marks** (nouveau compte, 1 fois, flag `aym_tutorial_done`, passable) : moteur vanilla single-file — backdrop assombri + spotlight (box-shadow troué) + anneau teal pulsant + badge `touch_app` animé + bulle Kreyòl + points + Pase/Anvan/Swivan/Fini. Étapes Feed/Rechèch/Mesaj/Pibliye/Vann rapid(+)/Komand/Panye/Pwofil, saute les cibles cachées. Bouton Swivan/Fini animé (pulse) sur retour Thrasher.
+
+**Durcissement DB (PR #154, #155 mergées ; appliqué en prod via MCP car pipeline cassé) :**
+- **Perf** : 78 lints advisor traités — 18 index couvrants sur FK + 60 réécritures `auth.uid()/auth.role()` → `(select …)` (RLS initplan). DDL généré par Postgres, validé en rollback prod. 143→83 lints (les 27 `unused_index` restants = normal, dont les 18 FK neufs ; ne PAS dropper avant trafic).
+- **Sécurité** : 2 fuites RLS fermées — `profiles_select_public` (USING true → exposait moncash_number/phone/location à l'anon) et `reviews_insert_own` (permettait de poster un avis sans achat). Validé par Thrasher.
+- **Écran de rôle** : bug « l'écran Ki wòl ou? ne s'affiche pas pour un nouveau compte » → cause : `profiles.role` avait DEFAULT 'buyer' + trigger `handle_new_user` → nouveau compte toujours 'buyer', donc `needsRoleSelection` jamais vrai. Fix validé Thrasher : `ALTER TABLE profiles ALTER COLUMN role DROP DEFAULT` (appliqué via MCP). Le code gère déjà le rôle NULL → écran affiché → `supabaseSaveRole` persiste.
+
+**Alerte secret scanning** : GitHub a flaggé la clé Web Firebase → faux positif (publique par design). Documenté dans SECURITY.md ; à restreindre côté Google Cloud (referrers + API) + fermer l'alerte = action Thrasher.
+
+**⚠️ Dette infra — pipeline db-migrate CASSÉ (décision : mis de côté 2026-07-11).** Le workflow `.github/workflows/db-migrate.yml` échoue à `supabase db push` avec `password authentication failed` (SASL, pooler Supavisor). Thrasher a reset le mot de passe DB et mis à jour le secret GitHub `SUPABASE_DB_PASSWORD` plusieurs fois, re-run plusieurs fois → toujours l'erreur. Vérifié via docs officielles (read-the-damn-docs + Supabase search_docs) : pas de ban IP (vérifié dashboard), donc **simple mismatch de valeur** entre le secret et le vrai mot de passe DB. **Décision Thrasher : on laisse le pipeline de côté** — les migrations sont déployées via MCP `apply_migration` (fiable, déjà fait 3× cette session). À reprendre tête reposée : reset password + coller la MÊME valeur alphanumérique des deux côtés en une fois.
+
+**Routines Alita (rappel, du matin) :** recréées en Ekomat mais l'environnement CCR « Thrasher » (env_01RAYcqggJeAogVDUbDcwaqZ) doit être ré-attaché au repo `Ekomat-Marketplace` par Thrasher (le test de session fraîche échouait encore : repo pas cloné). Action console, non automatisable.
+
+**Reste côté Thrasher :** réparer le secret DB (ou laisser, MCP suffit) ; ré-attacher le repo aux routines ; restreindre + fermer l'alerte clé Firebase ; redéployer edge functions send-email/send-push ; renommer Firebase/Google OAuth ; vérifier collisions « Ekomat » puis acheter le domaine ; QA appareil des features onboarding.
+
+---
+
 ## 2026-07-11 : REBRAND COMPLET — AyitiMarket devient EKOMAT (PR #151 mergée + PR #152 logos)
 
 Thrasher a tranché le rebrand (décidé le 2026-07-04) : le nouveau nom est **Ekomat**, avec une identité visuelle créée par lui : un « e »-boule rust (#97422B) avec une anse teal (#00666F) façon sac de course, wordmark « eko » rust + « mat » teal sur fond cream, alignée sur la palette BRAND.md (PR #150).
