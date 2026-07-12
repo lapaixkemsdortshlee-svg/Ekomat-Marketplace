@@ -7,6 +7,24 @@
 
 ---
 
+## 2026-07-12 : QA post-rebrand (produits/feed) + cadrage stratégie « pilote avant vendeurs »
+
+Session de suite (branche `claude/prime-sta44n`, on repart de `main` à chaque PR ; PR #160/#161 déjà mergées au démarrage).
+
+**Deux bugs QA remontés par Thrasher, diagnostiqués et corrigés (PR #162, mergée) :**
+- **Diagnostic base réelle (via Supabase MCP)** : la table `products` ne contient que **3 produits au total, tous du même vendeur (edf9e083)** — 1 actif (« Headphone JBL »), 2 archivés. Le feed n'affiche que les actifs → il a réellement 1 seule carte. Vérifié au niveau RLS (simulation anon/authenticated) : le produit actif est lisible par tous, rien ne le cache. La sensation de vide = catalogue quasi vide + soft-delete qui masque les archivés, PAS un bug de fond.
+- **Bug 1 (vrai)** : `renderSellerProfile()` filtrait le tableau **en mémoire `PRODUCTS`** au lieu d'interroger Supabase → la boutique publique d'un vendeur affichait « 0 pwodwi » selon le chemin de navigation. Fix : `loadSellerProductsFromSupabase(sellerId)` charge les produits actifs du vendeur avant le rendu.
+- **Bug 2 (vrai)** : `emptyState()` renvoyait `col-span-2` (utilitaire **grid** Tailwind) alors que le feed est en `columns:2` (**multicol** CSS) → bloc écrasé dans une colonne, « positionnement incohérent ». Fix : pleine largeur dans tous les contextes (`grid-column:1/-1` + `column-span:all` + `width:100%`) + design refait (bulle dégradée teal, CTA pilule). Aperçu visuel envoyé à Thrasher.
+- Bonus : variable morte `totalViews` retirée (flag CodeQL sur la ligne modifiée). `sw` : `aym-v35 → v36`.
+
+**Correction d'une erreur d'Alita — gstack :** j'avais conclu « gstack pas installé » sur un `Unknown skill: browse`. FAUX : gstack est bien cloné (`~/.claude/skills/gstack`, restauré par le `session-start.sh`). Les sous-commandes (browse/qa/ship...) passent par le **routeur `gstack`**, pas comme skills autonomes. Ne plus jamais appeler `/browse` en direct → invoquer le routeur `gstack`.
+
+**Cadrage stratégie (sparring) :** Thrasher refuse les données de démo. Objectif : préparer une infra prête pour de VRAIS résultats, pas d'acquisition de vendeurs avant que tout soit correct. Validé sur le fond (un faux catalogue tuerait la confiance). Recadrage accepté comme objectif court terme : remplacer « tout est correct » (infini) par **une transaction réelle E2E réussie**, testée en **pilote fermé 2-3 vrais vendeurs**. Prochaine action : **audit chemin-critique** (checklist rouge/jaune/vert des rails escrow/paiement/commandes/litiges/notifs/vérif) sur le vrai code + la vraie base. Ajouté aux objectifs court terme dans CONTEXT.md.
+
+**Autonomie :** Thrasher parti pour la nuit, Alita en auto — gère CI/PR sans attendre de validation, ni merge des PR. Il attend les routines à l'heure prévue.
+
+---
+
 ## 2026-07-11 (session 2) : Ekomat post-rebrand — design, features onboarding, durcissement DB, et pipeline mis de côté
 
 Grosse session de suite (branche `claude/prime-sta44n`, repo renommé `Ekomat-Marketplace`, on repart de main à chaque PR). Beaucoup de PR courtes mergées d'affilée. Le pipeline `db-migrate` étant cassé (voir plus bas), les migrations DB ont été appliquées **via le MCP Supabase** (`apply_migration`), pas par le pipeline.
