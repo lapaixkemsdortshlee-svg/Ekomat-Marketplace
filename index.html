@@ -6739,66 +6739,54 @@
                 refreshUserStats().then(() => renderProfile());
             }
             document.getElementById("profileContent").innerHTML = `
-    <!-- Profile hero -->
-    <div class="relative mx-5 rounded-xl overflow-hidden mb-0" style="background:linear-gradient(135deg,#00666f,#00818c)">
-      <div class="relative px-5 pt-5 pb-16 flex items-center gap-4">
-        <div class="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 amb overflow-hidden cursor-pointer" style="border:4px solid rgba(255,255,255,.2);background:linear-gradient(180deg,#00666f,#00818c)" onclick="openEditProfile()">
-          ${u.photoURL ? '<img src="' + u.photoURL + '" alt="Foto pwofil" class="w-full h-full object-cover"/>' : '<span class="font-headline font-bold text-white text-xl">' + (u.initials || "?") + '</span>'}
-        </div>
-        <div class="flex-1">
-          <h2 class="font-headline font-extrabold text-white text-xl tracking-tight">${esc(u.name)}</h2>
-          <p class="font-body text-white/70 text-sm">${u.phone || ""}</p>
-          <div class="flex items-center gap-1 mt-1">
-            ${u.role === "admin" ? '<span class="admin-badge">ADMIN</span>'
-                    : u.verifiedSeller ? '<span class="material-symbols-outlined fi text-[#8cf2ff]" style="font-size:13px">verified</span><span class="font-label text-[11px] font-bold text-[#8cf2ff]">Vandè Verifye</span>'
-                        : u.role === "seller" ? '<span class="font-label text-[11px] font-bold text-white/70">Verifikasyon an atant</span>'
-                            : '<span class="font-label text-[11px] text-white/70">Achtè</span>'}
-          </div>
-        </div>
-        <button onclick="openEditProfile()" class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 active:scale-90" style="background:rgba(255,255,255,.15)">
-          <span class="material-symbols-outlined fi text-white" style="font-size:16px">edit</span>
+    <!-- Profile hero card (referans-style) -->
+    <div class="mx-4 mt-2 rounded-2xl overflow-hidden amb bg-surface-container-lowest">
+      <!-- Banner -->
+      <div style="height:104px;background:linear-gradient(135deg,#00666f,#00818c);position:relative;overflow:hidden">
+        <div style="position:absolute;top:-40px;right:-30px;width:160px;height:160px;border-radius:50%;background:rgba(140,242,255,.08);pointer-events:none"></div>
+        <div style="position:absolute;bottom:-40px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none"></div>
+        <button onclick="openEditProfile()" aria-label="Modifye pwofil" title="Modifye pwofil" class="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.2);backdrop-filter:blur(6px)">
+          <span class="material-symbols-outlined fi text-white" style="font-size:17px">edit</span>
         </button>
       </div>
+      <!-- Body -->
+      <div class="px-4 pb-4">
+        <!-- Avatar overlapping banner, bottom-left -->
+        <div class="w-[76px] h-[76px] rounded-full flex items-center justify-center overflow-hidden cursor-pointer" style="margin-top:-38px;border:4px solid #fcf9f4;background:linear-gradient(180deg,#00666f,#00818c);box-shadow:0 4px 16px rgba(0,102,111,.2)" onclick="openEditProfile()">
+          ${u.photoURL ? '<img src="' + u.photoURL + '" alt="Foto pwofil" class="w-full h-full object-cover"/>' : '<span class="font-headline font-extrabold text-white text-2xl">' + (u.initials || "?") + '</span>'}
+        </div>
+        <!-- Name + wòl chip -->
+        <div class="flex items-start justify-between gap-2 mt-2.5">
+          <div class="min-w-0">
+            <h2 class="font-headline font-extrabold text-xl text-on-surface tracking-tight truncate">${esc(u.name)}</h2>
+            <p class="font-label text-xs text-on-surface-variant mt-0.5 truncate">${u.phone || ""}</p>
+          </div>
+          <span class="font-label text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1" style="background:rgba(0,102,111,.08);color:#00666f">
+            ${u.role === "admin" ? '<span class="material-symbols-outlined fi" style="font-size:12px">shield</span>Admin'
+                    : u.verifiedSeller ? '<span class="material-symbols-outlined fi" style="font-size:12px">verified</span>Vandè'
+                        : u.role === "seller" ? 'Vandè (an atant)'
+                            : '<span class="material-symbols-outlined fi" style="font-size:12px">shopping_bag</span>Achtè'}
+          </span>
+        </div>
+        <!-- Stats + CTA (referans row) -->
+        <div class="flex items-center gap-2 mt-4">
+          <div class="flex-1 flex items-stretch">
+            ${(() => {
+                const cell = (val, lab, id) => `<div class="flex-1"><p class="font-headline font-extrabold text-base text-primary"${id ? ` id="${id}"` : ''}>${val}</p><p class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant">${lab}</p></div>`;
+                const div = '<div class="w-px bg-[#ede9e3] mx-2 self-stretch"></div>';
+                if (u.role === 'admin') return cell('0', 'Verifikasyon', 'kpiAdminVerif') + div + cell('0', 'Komand', 'kpiAdminOrders') + div + cell('0', 'Itilizatè', 'kpiAdminUsers');
+                if (u.role === 'seller') return cell(u.salesCount || 0, 'Lavant') + div + cell(u.ratingAvg || 0, 'Nòt') + div + cell(A.followers || 0, 'Abonnen');
+                return cell(A.favs.size, 'Favori') + div + cell(u.orderCount || 0, 'Komand') + div + cell(A.followedSellers?.size || 0, 'Swiv');
+            })()}
+          </div>
+          ${(() => {
+                if (u.role === 'admin') return `<button onclick="navTo('admin')" class="cta px-4 py-2.5 rounded-full font-headline font-bold text-sm active:scale-95 flex items-center gap-1.5 flex-shrink-0"><span class="material-symbols-outlined fi" style="font-size:16px">admin_panel_settings</span> Admin</button>`;
+                if (u.role === 'seller') return `<button onclick="openBoutiqueScreen()" class="cta px-4 py-2.5 rounded-full font-headline font-bold text-sm active:scale-95 flex items-center gap-1.5 flex-shrink-0"><span class="material-symbols-outlined fi" style="font-size:16px">storefront</span> Boutik</button>`;
+                return `<button onclick="openSheet('verifySheet')" class="cta px-4 py-2.5 rounded-full font-headline font-bold text-sm active:scale-95 flex items-center gap-1.5 flex-shrink-0"><span class="material-symbols-outlined fi" style="font-size:16px">store</span> Vin Vandè</button>`;
+            })()}
+        </div>
+      </div>
     </div>
-    <!-- Stats -->
-    ${u.role === 'admin' ? `
-    <div class="mx-5 -mt-8 relative z-10 grid grid-cols-3 bg-surface-container-lowest rounded-xl amb overflow-hidden">
-      <div class="flex flex-col items-center py-4 bg-surface-container-low">
-        <span class="font-headline font-extrabold text-xl text-primary" id="kpiAdminVerif">0</span>
-        <span class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant mt-0.5">Verifikasyon</span>
-      </div>
-      <div class="flex flex-col items-center py-4">
-        <span class="font-headline font-extrabold text-xl text-primary" id="kpiAdminOrders">0</span>
-        <span class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant mt-0.5">Komand aktif</span>
-      </div>
-      <div class="flex flex-col items-center py-4 bg-surface-container-low">
-        <span class="font-headline font-extrabold text-xl text-primary" id="kpiAdminUsers">0</span>
-        <span class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant mt-0.5">Itilizatè</span>
-      </div>
-    </div>
-    ` : `
-    <div class="mx-5 -mt-8 relative z-10 grid ${u.role==='buyer'&&!u.verifiedSeller ? 'grid-cols-1' : 'grid-cols-3'} bg-surface-container-lowest rounded-xl amb overflow-hidden">
-      ${u.role==='buyer'&&!u.verifiedSeller ? `
-      <div class="flex flex-col items-center py-5">
-        <span class="font-headline font-extrabold text-2xl text-primary">${A.favs.size}</span>
-        <span class="font-label text-[10px] uppercase tracking-[.08em] text-on-surface-variant mt-0.5">Favori</span>
-      </div>
-      ` : `
-      <div class="flex flex-col items-center py-4 bg-surface-container-low">
-        <span class="font-headline font-extrabold text-xl text-primary">${A.favs.size}</span>
-        <span class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant mt-0.5">Favori</span>
-      </div>
-      <div class="flex flex-col items-center py-4">
-        <span class="font-headline font-extrabold text-xl text-primary">${u.role==='seller' ? (u.salesCount || 0) : (u.orderCount || 0)}</span>
-        <span class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant mt-0.5">${u.role==='seller' ? 'Lavant' : 'Komand'}</span>
-      </div>
-      <div class="flex flex-col items-center py-4 bg-surface-container-low">
-        <span class="font-headline font-extrabold text-xl text-primary">${u.role==='seller' ? (u.ratingAvg || 0) : '★'}</span>
-        <span class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant mt-0.5">${u.role==='seller' ? 'Nòt' : 'Nivo'}</span>
-      </div>
-      `}
-    </div>
-    `}
 
     <!-- Role toggle (hidden for admin) -->
     ${u.role !== 'admin' ? `
@@ -7826,17 +7814,14 @@
                 toast('Ou dezabone');
             }
 
-            // Re-render follow button if visible
+            // Re-render follow bookmark icon if visible
             const followBtn = document.getElementById('followBtn_' + sellerId);
             if (followBtn) {
-                followBtn.innerHTML = isFollowing
-                    ? '<span class="material-symbols-outlined fi" style="font-size:16px">check</span> Abonnen'
-                    : '<span class="material-symbols-outlined" style="font-size:16px">person_add</span> Swiv';
-                followBtn.className = isFollowing
-                    ? 'flex-1 py-3 rounded-xl font-headline font-bold text-sm active:scale-95 flex items-center justify-center gap-2'
-                    : 'flex-1 py-3 rounded-xl cta font-headline font-bold text-sm active:scale-95 flex items-center justify-center gap-2 amb';
-                followBtn.style.background = isFollowing ? '#e5e2dd' : '';
-                followBtn.style.color = isFollowing ? '#1c1c19' : '';
+                const ic = followBtn.querySelector('.material-symbols-outlined');
+                if (ic) {
+                    ic.textContent = isFollowing ? 'bookmark' : 'bookmark_border';
+                    ic.classList.toggle('fi', isFollowing);
+                }
             }
         }
 
@@ -14274,73 +14259,66 @@
         function renderSellerProfile(seller) {
             const sellerProducts = PRODUCTS.filter(p => p.sellerId === seller.id);
 
-            // Generate star rating HTML
-            const fullStars = Math.floor(seller.rating);
-            const halfStar = seller.rating - fullStars >= 0.5;
-            let starsHTML = '';
-            for (let i = 0; i < fullStars; i++) starsHTML += '<span class="material-symbols-outlined fi" style="font-size:16px;color:#d97706">star</span>';
-            if (halfStar) starsHTML += '<span class="material-symbols-outlined fi" style="font-size:16px;color:#d97706">star_half</span>';
-            for (let i = fullStars + (halfStar ? 1 : 0); i < 5; i++) starsHTML += '<span class="material-symbols-outlined" style="font-size:16px;color:#e5e2dd">star</span>';
-
             document.getElementById('sellerProfileContent').innerHTML = `
-    <!-- Back button overlay -->
-    <div class="relative">
-      <!-- Header gradient -->
-      <div style="height:180px;background:linear-gradient(135deg,#00666f,#00818c);position:relative;overflow:hidden">
-        <!-- Decorative orbs -->
-        <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(140,242,255,.07);pointer-events:none"></div>
-        <div style="position:absolute;bottom:-30px;left:-30px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none"></div>
-        <button onclick="goBack()" class="absolute top-10 left-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.2);backdrop-filter:blur(6px)">
+    <!-- Profile hero card (referans-style) -->
+    <div class="mx-4 mt-2 rounded-2xl overflow-hidden amb bg-surface-container-lowest seller-animate">
+      <!-- Banner -->
+      <div style="height:112px;background:linear-gradient(135deg,#00666f,#00818c);position:relative;overflow:hidden">
+        <div style="position:absolute;top:-40px;right:-30px;width:170px;height:170px;border-radius:50%;background:rgba(140,242,255,.08);pointer-events:none"></div>
+        <div style="position:absolute;bottom:-40px;left:-20px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none"></div>
+        <button onclick="goBack()" class="absolute top-3 left-3 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.2);backdrop-filter:blur(6px)">
           <span class="material-symbols-outlined text-white" style="font-size:20px">arrow_back</span>
         </button>
+        <button id="followBtn_${seller.id}" onclick="toggleFollowSeller('${seller.id}')" aria-label="Swiv" title="Swiv" class="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.9);backdrop-filter:blur(6px)">
+          <span class="material-symbols-outlined ${A.followedSellers && A.followedSellers.has(seller.id) ? 'fi' : ''}" style="font-size:19px;color:#00666f">${A.followedSellers && A.followedSellers.has(seller.id) ? 'bookmark' : 'bookmark_border'}</span>
+        </button>
       </div>
-
-      <!-- Avatar overlapping header -->
-      <div class="flex flex-col items-center" style="margin-top:-56px;position:relative;z-index:10">
-        <div class="w-[88px] h-[88px] rounded-full cta flex items-center justify-center amb seller-animate overflow-hidden"
-             style="border:4px solid #fcf9f4;box-shadow:0 4px 20px rgba(0,102,111,.2)">
+      <!-- Body -->
+      <div class="px-4 pb-4">
+        <!-- Avatar overlapping banner, bottom-left -->
+        <div class="w-[76px] h-[76px] rounded-full cta flex items-center justify-center overflow-hidden seller-animate" style="margin-top:-38px;border:4px solid #fcf9f4;box-shadow:0 4px 16px rgba(0,102,111,.2)">
           ${seller.avatarUrl
             ? `<img src="${esc(seller.avatarUrl)}" alt="${esc(seller.name)}" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML='<span class=\\'font-headline font-extrabold text-white text-2xl\\'>${seller.initials}</span>'"/>`
             : `<span class="font-headline font-extrabold text-white text-2xl">${seller.initials}</span>`}
         </div>
-        <div class="flex items-center gap-2 mt-3 seller-animate seller-animate-delay-1">
-          <h2 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">${esc(seller.name)}</h2>
-          ${seller.verified ? '<span class="material-symbols-outlined fi" style="font-size:20px;color:#00666f">verified</span>' : ''}
-        </div>
-        <p class="font-label text-xs text-on-surface-variant mt-1 seller-animate seller-animate-delay-1">${esc(seller.location)}</p>
-        ${seller.badges.length ? `
-        <div class="flex gap-2 mt-2 seller-animate seller-animate-delay-2">
-          ${seller.badges.map(b => `<span class="font-label text-[10px] font-bold px-2.5 py-1 rounded-full" style="background:rgba(0,102,111,.08);color:#00666f">${b}</span>`).join('')}
-        </div>` : ''}
-      </div>
-    </div>
-
-    <!-- Trust Stats -->
-    <div class="px-5 mt-5 seller-animate seller-animate-delay-2">
-      <div class="grid grid-cols-3 gap-2.5">
-        <!-- Rating -->
-        <div class="seller-stat-card">
-          <div class="flex items-center gap-0.5">
-            ${starsHTML}
+        <!-- Name + kategori chip -->
+        <div class="flex items-start justify-between gap-2 mt-2.5 seller-animate seller-animate-delay-1">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h2 class="font-headline font-extrabold text-xl text-on-surface tracking-tight truncate">${esc(seller.name)}</h2>
+              ${seller.verified ? '<span class="material-symbols-outlined fi flex-shrink-0" style="font-size:19px;color:#00666f">verified</span>' : ''}
+            </div>
+            <p class="font-label text-xs text-on-surface-variant mt-0.5 flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">location_on</span> ${esc(seller.location)}</p>
           </div>
-          <p class="font-headline font-extrabold text-lg text-on-surface" style="margin-top:2px">${seller.rating}/5</p>
-          <p class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant">${seller.reviewCount} review</p>
+          ${(seller.specialties && seller.specialties.length) || (seller.badges && seller.badges.length) ? `
+          <span class="font-label text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1" style="background:rgba(0,102,111,.08);color:#00666f">
+            <span class="material-symbols-outlined fi" style="font-size:12px">sell</span>${esc((seller.specialties && seller.specialties[0]) || seller.badges[0])}
+          </span>` : ''}
         </div>
-        <!-- Sales Count -->
-        <div class="seller-stat-card">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(152,68,62,.1)">
-            <span class="material-symbols-outlined fi" style="font-size:18px;color:#98443e">local_fire_department</span>
+        <!-- Stats + CTA (referans row) -->
+        <div class="flex items-center gap-2 mt-4 seller-animate seller-animate-delay-2">
+          <div class="flex-1 flex items-stretch">
+            <div class="flex-1">
+              <div class="flex items-center gap-0.5">
+                <span class="material-symbols-outlined fi" style="font-size:14px;color:#d97706">star</span>
+                <span class="font-headline font-extrabold text-base text-on-surface">${seller.rating}</span>
+              </div>
+              <p class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant">Nòt</p>
+            </div>
+            <div class="w-px bg-[#ede9e3] mx-2 self-stretch"></div>
+            <div class="flex-1">
+              <p class="font-headline font-extrabold text-base" style="color:#98443e">${seller.salesCount}+</p>
+              <p class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant">Lavant</p>
+            </div>
+            <div class="w-px bg-[#ede9e3] mx-2 self-stretch"></div>
+            <div class="flex-1">
+              <p class="font-headline font-extrabold text-base text-on-surface">${seller.reviewCount}</p>
+              <p class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant">Avi</p>
+            </div>
           </div>
-          <p class="font-headline font-extrabold text-lg" style="color:#98443e">${seller.salesCount}+</p>
-          <p class="font-label text-[9px] uppercase tracking-[.08em] text-on-surface-variant">Lavant</p>
-        </div>
-        <!-- Member Since -->
-        <div class="seller-stat-card">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:rgba(0,102,111,.08)">
-            <span class="material-symbols-outlined fi text-primary" style="font-size:18px">calendar_month</span>
-          </div>
-          <p class="font-headline font-bold text-xs text-on-surface text-center" style="line-height:1.2">Manm depi</p>
-          <p class="font-label text-[10px] font-bold text-primary">${seller.memberSince}</p>
+          <button onclick="openChatForSeller('${seller.id}')" class="cta px-4 py-2.5 rounded-full font-headline font-bold text-sm active:scale-95 flex items-center gap-1.5 flex-shrink-0">
+            <span class="material-symbols-outlined fi" style="font-size:16px">chat</span> Kontakte
+          </button>
         </div>
       </div>
     </div>
@@ -14356,20 +14334,9 @@
       </div>
     </div>
 
-    <!-- Response Time + Contact + Follow -->
+    <!-- Response Time -->
     <div class="px-5 mt-4 seller-animate seller-animate-delay-3">
-      <div class="flex gap-3">
-        <button id="followBtn_${seller.id}" onclick="toggleFollowSeller('${seller.id}')" class="${A.followedSellers && A.followedSellers.has(seller.id) ? 'flex-1 py-3 rounded-xl font-headline font-bold text-sm active:scale-95 flex items-center justify-center gap-2' : 'flex-1 py-3 rounded-xl cta font-headline font-bold text-sm active:scale-95 flex items-center justify-center gap-2 amb'}" ${A.followedSellers && A.followedSellers.has(seller.id) ? 'style="background:#e5e2dd;color:#1c1c19"' : ''}>
-          ${A.followedSellers && A.followedSellers.has(seller.id)
-            ? '<span class="material-symbols-outlined fi" style="font-size:16px">check</span> Abonnen'
-            : '<span class="material-symbols-outlined" style="font-size:16px">person_add</span> Swiv'}
-        </button>
-        <button onclick="openChatForSeller('${seller.id}')" class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-[.98] transition-transform" style="background:rgba(0,102,111,.1);color:#00666f">
-          <span class="material-symbols-outlined fi" style="font-size:18px">chat</span>
-          Mesaj
-        </button>
-      </div>
-      <div class="flex items-center gap-2 mt-3 px-3 py-2.5 rounded-lg" style="background:rgba(0,102,111,.05)">
+      <div class="flex items-center gap-2 px-3 py-2.5 rounded-lg" style="background:rgba(0,102,111,.05)">
         <span class="material-symbols-outlined fi text-primary flex-shrink-0" style="font-size:14px">schedule</span>
         <p class="font-label text-[11px] text-on-surface-variant">${seller.responseTime}</p>
       </div>
