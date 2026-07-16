@@ -2720,7 +2720,13 @@
     </div>
     <div class="sheet" id="searchSheet" style="max-height:85vh;overflow-y:auto">
         <div class="handle"></div>
-        <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight mb-3">Rechèch</h3>
+        <div class="flex items-center gap-2 mb-3">
+            <button onclick="closeSheets()" aria-label="Fèmen rechèch la"
+                class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+            </button>
+            <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">Rechèch</h3>
+        </div>
         <!-- Search input -->
         <div class="flex items-center gap-2 mb-4"
             style="background:#e5e2dd;border-radius:.5rem .5rem 0 0;border-bottom:2px solid #00666f">
