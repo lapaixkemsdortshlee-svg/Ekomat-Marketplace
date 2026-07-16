@@ -1796,10 +1796,16 @@
                         </select>
                 </div>
                 <button type="button" onclick="togglePubMore()" id="pubMoreBtn"
-                    class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-label text-sm font-bold text-primary active:opacity-70 transition-opacity"
-                    style="background:rgba(0,102,111,.06);border:1px dashed rgba(0,102,111,.35)">
-                    <span class="material-symbols-outlined transition-transform" style="font-size:18px" id="pubMoreChevron">expand_more</span>
-                    Plis opsyon (kote, estòk, pwomosyon, deskripsyon…)
+                    class="w-full flex items-center gap-3 py-3 px-3.5 rounded-xl active:opacity-70 transition-opacity"
+                    style="background:#f6f3ee">
+                    <span class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.1)">
+                        <span class="material-symbols-outlined fi text-primary" style="font-size:18px">tune</span>
+                    </span>
+                    <span class="flex-1 text-left">
+                        <span class="block font-headline font-bold text-sm text-on-surface">Plis opsyon</span>
+                        <span class="block font-label text-[11px] text-on-surface-variant">Kote, estòk, pwomosyon, deskripsyon</span>
+                    </span>
+                    <span class="material-symbols-outlined text-on-surface-variant transition-transform" style="font-size:20px" id="pubMoreChevron">expand_more</span>
                 </button>
                 <div id="pubMoreFields" class="hidden space-y-4">
                     <div>
@@ -4515,23 +4521,13 @@
             document.getElementById("bottomNav").classList.remove("hidden");
             document.getElementById("fab").classList.remove("hidden");
 
-            // Show admin tab if admin; swap FAB actions for admin
-            if (A.user.role === "admin") {
-                document.getElementById("nav-admin").classList.remove("hidden");
-                document.getElementById("nav-pub").classList.add("hidden");
-                document.getElementById("nav-cart")?.classList.add("hidden");
-                setupAdminFab();
-            } else {
-                document.getElementById("nav-admin").classList.add("hidden");
-                document.getElementById("nav-pub").classList.remove("hidden");
-                document.getElementById("fab")?.classList.remove("hidden");
-            }
-            // Show cart tab for buyers (non-admin)
-            const cartTab = document.getElementById("nav-cart");
-            if (cartTab && A.user.role !== 'admin') {
-                cartTab.classList.remove("hidden");
-                cartTab.style.position = 'relative';
-            }
+            // Nav visibility = fonksyon pi wòl otantik la (rekonsilye nan
+            // updateTopBar tou). Anvan, li te fikse yon sèl fwa isit; si wòl
+            // la te chaje an reta (kach stale sou move koneksyon), yon vandè
+            // te ka wè onglet Admin an paske li pa t janm re-kache.
+            applyRoleNav();
+            if (A.user.role === "admin") setupAdminFab();
+            else document.getElementById("fab")?.classList.remove("hidden");
             updateCartBadge();
 
             updateTopBar();
@@ -4567,8 +4563,23 @@
             }
         }
 
+        // Nav bòtòm = pi wòl otantik la. Idanmpotan; ka rele nenpòt lè wòl la
+        // vin konnen (boot, oswa lè profil live la ranplase kach la).
+        function applyRoleNav() {
+            const isAdmin = A.user?.role === "admin";
+            document.getElementById("nav-admin")?.classList.toggle("hidden", !isAdmin);
+            document.getElementById("nav-pub")?.classList.toggle("hidden", isAdmin);
+            const cartTab = document.getElementById("nav-cart");
+            if (cartTab) {
+                cartTab.classList.toggle("hidden", isAdmin);
+                if (!isAdmin) cartTab.style.position = "relative";
+            }
+        }
+        window.applyRoleNav = applyRoleNav;
+
         function updateTopBar() {
             if (!A.user) return;
+            applyRoleNav();
             const _hLogo = document.getElementById("headerLogo"); const _hTitle = document.getElementById("toptitle");
             if (_hLogo) _hLogo.style.display = "flex";
             if (_hTitle) { _hTitle.style.display = "none"; _hTitle.textContent = "Ekomat"; }
