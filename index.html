@@ -507,8 +507,10 @@
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='none' stroke='%235ad7e6' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' opacity='.05'%3E%3Crect x='22' y='28' width='26' height='24' rx='6'/%3E%3Cpath d='M28 28v-5a7 7 0 0 1 14 0v5'/%3E%3Cg transform='rotate(18 128 32)'%3E%3Crect x='112' y='22' width='30' height='19' rx='5'/%3E%3Ccircle cx='120' cy='31.5' r='2.4'/%3E%3C/g%3E%3Cpath d='M132 96l13 5v9c0 8-5.5 13.5-13 16.5-7.5-3-13-8.5-13-16.5v-9z'/%3E%3Cpath d='M126 110l4.5 4.5 8-8'/%3E%3Crect x='18' y='106' width='34' height='24' rx='7'/%3E%3Cpath d='M30 130l-3 7 9-7'/%3E%3Cpath d='M90 74c-5.5-6.5-13-2.5-13 3 0 6.5 13 12 13 12s13-5.5 13-12c0-5.5-7.5-9.5-13-3z'/%3E%3Ccircle cx='86' cy='152' r='2'/%3E%3Ccircle cx='96' cy='152' r='2'/%3E%3Cpath d='M76 136h5l4 14h14l4-11H84'/%3E%3C/g%3E%3C/svg%3E");
         }
 
-        /* Fèy plen ekran: notifikasyon + verifikasyon vandè + anons platfòm */
-        #notifSheet, #verifySheet, #announceSheet {
+        /* Fèy plen ekran (tach enpòtan/long): notifikasyon, verifikasyon,
+           anons, paramèt, sant èd, modifye pwofil/pwodwi. Fèy aksyon rapid
+           yo rete bottom-sheet ak handle. */
+        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet {
             top: 0;
             height: 100dvh;
             max-height: 100dvh;
@@ -3630,8 +3632,13 @@
 
     <!-- ══ SETTINGS SHEET KONPLÈ ══ -->
     <div class="sheet" id="settingsSheet">
-        <div class="handle"></div>
-        <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-5">Paramèt</h3>
+        <div class="flex items-center gap-2 mb-5">
+            <button onclick="closeSheets()" aria-label="Fèmen paramèt yo"
+                class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+            </button>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Paramèt</h3>
+        </div>
 
         <!-- Aparans -->
         <p class="font-label text-[11px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Aparans</p>
@@ -3780,7 +3787,6 @@
 
     <!-- ══ SANT ÈD — HELP CENTER ══ -->
     <div class="sheet" id="helpSheet">
-        <div class="handle"></div>
         <div class="flex items-center gap-2 mb-1">
             <button onclick="closeSheets();openSheet('settingsSheet')" aria-label="Retounen nan Paramèt"
                 class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
@@ -3864,8 +3870,13 @@
 
     <!-- ══ EDIT PROFILE SHEET ══ -->
     <div class="sheet" id="editProfileSheet">
-        <div class="handle"></div>
-        <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-4">Modifye Pwofil</h3>
+        <div class="flex items-center gap-2 mb-4">
+            <button onclick="closeSheets()" aria-label="Fèmen modifye pwofil"
+                class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+            </button>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Modifye Pwofil</h3>
+        </div>
         <div class="flex flex-col items-center mb-5">
             <div class="w-20 h-20 rounded-full cta flex items-center justify-center mb-3 relative cursor-pointer" onclick="uploadProfilePhoto()" id="editProfileAvatar">
                 <span class="font-headline font-bold text-white text-2xl" id="editProfileInitials">?</span>
@@ -3928,8 +3939,13 @@
 
     <!-- ══ EDIT PRODUCT SHEET (seller) ══ -->
     <div class="sheet" id="editProductSheet">
-        <div class="handle"></div>
-        <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-4">Modifye Pwodwi</h3>
+        <div class="flex items-center gap-2 mb-4">
+            <button onclick="closeSheets()" aria-label="Fèmen modifye pwodwi"
+                class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+            </button>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Modifye Pwodwi</h3>
+        </div>
         <div class="space-y-3 mb-5">
             <div>
                 <p class="font-label text-[11px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">Non pwodwi *</p>
