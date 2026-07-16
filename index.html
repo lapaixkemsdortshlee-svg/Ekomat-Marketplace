@@ -4608,7 +4608,7 @@
             updateTopBar();
 
             if (tab === "feed") renderFeed();
-            if (tab === "pub") checkPubAccess();
+            if (tab === "pub") { checkPubAccess(); if (typeof _syncPubZoneField === 'function') _syncPubZoneField(); }
             if (tab === "order") renderOrderScreen();
             if (tab === "profile") renderProfile();
             if (tab === "admin") renderAdmin();
@@ -5717,6 +5717,7 @@
             const stock = Math.max(1, parseInt(document.getElementById("fStock")?.value, 10) || 1);
             const _pubZone = A.pickupZone || _lastGeocode();
             const loc = (document.getElementById("fLoc")?.value?.trim())
+                || (A.user && A.user.location)
                 || (_pubZone && _pubZone.label) || '';
             if (price <= 0) { toast("Mete yon pri valid"); return; }
 
@@ -6656,7 +6657,7 @@
         <div class="flex items-start justify-between gap-2 mt-2.5">
           <div class="min-w-0">
             <h2 class="font-headline font-extrabold text-xl text-on-surface tracking-tight truncate">${esc(u.name)}</h2>
-            <p class="font-label text-xs text-on-surface-variant mt-0.5 truncate">${u.phone || ""}</p>
+            <p class="font-label text-xs text-on-surface-variant mt-0.5 truncate">${u.moncashNumber || u.phone || ""}</p>
           </div>
           <span class="font-label text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 flex items-center gap-1" style="background:rgba(0,102,111,.08);color:#00666f">
             ${u.role === "admin" ? '<span class="material-symbols-outlined fi" style="font-size:12px">shield</span>Admin'
@@ -7908,13 +7909,19 @@
             if (isSeller && db && u.uid) {
                 try {
                     const { data, error } = await db.from('profiles')
-                        .select('bio, location, shop_name_changed_at')
+                        .select('bio, location, moncash_number, shop_name_changed_at')
                         .eq('id', u.uid).maybeSingle();
                     if (!error && data) {
                         if (bioEl) bioEl.value = data.bio || '';
                         if (cntEl) cntEl.textContent = (data.bio || '').length + ' / 250';
                         const zoneEl = document.getElementById('editSellerZone');
                         if (zoneEl) zoneEl.value = data.location || '';
+                        // Chan MonCash lan chaje fre depi baz la (menm jan ak bio) —
+                        // A.user.moncashNumber ka absan si sesyon an pa t sove l.
+                        if (data.moncash_number) {
+                            document.getElementById('editMoncash').value = data.moncash_number;
+                            u.moncashNumber = data.moncash_number;
+                        }
                         // Bug J — if the seller renamed the shop in the
                         // last 30 days, lock first/last name inputs and
                         // show how many days remain.
@@ -8011,7 +8018,11 @@
                 if (isSeller) {
                     updates.bio = bio || null;
                     const zoneVal = (document.getElementById('editSellerZone')?.value || '').trim();
-                    if (zoneVal) updates.location = zoneVal;
+                    if (zoneVal) {
+                        updates.location = zoneVal;
+                        A.user.location = zoneVal;
+                        if (typeof _syncPubZoneField === 'function') _syncPubZoneField();
+                    }
                 }
                 const { error } = await db.from('profiles').update(updates).eq('id', A.user.uid);
                 if (error) console.warn('[Profile save]', error.message);
@@ -8660,6 +8671,17 @@
                         phone_verified_at: new Date().toISOString(),
                     }).eq('id', A.user.uid);
                     if (pErr) console.warn('[phone profile]', pErr.message);
+                    // Nimewo verifye a vin nimewo payout MonCash otomatikman —
+                    // sèlman si vandè a poko gen youn (nou pa ekraze yon
+                    // nimewo li ta deja pèsonalize nan Modifye Pwofil).
+                    const mcAuto = phone.replace(/\D/g, '');
+                    if (/^509\d{8}$/.test(mcAuto) && !A.user.moncashNumber) {
+                        const { error: mcErr } = await db.from('profiles')
+                            .update({ moncash_number: mcAuto })
+                            .eq('id', A.user.uid).is('moncash_number', null);
+                        if (!mcErr) A.user.moncashNumber = mcAuto;
+                        else console.warn('[moncash auto]', mcErr.message);
+                    }
                     A.user.phone = phone;
                     A.user.phoneVerified = true;
                     try { localStorage.setItem('aym_user', JSON.stringify(A.user)); } catch (_) { }
@@ -9904,12 +9926,14 @@
         }
         window.applyPickupZone = applyPickupZone;
 
-        // Ranpli chan "Kote" nan fòm pibliye a ak zòn GPS detekte a.
+        // Ranpli chan "Kote" nan fòm pibliye a: zòn boutik vandè a an premye,
+        // sinon zòn GPS detekte a. Vandè a pa oblije retape zòn li chak pwodwi.
         function _syncPubZoneField() {
             const fl = document.getElementById('fLoc');
             if (!fl) return;
             const z = A.pickupZone || _lastGeocode();
-            if (z && z.label) fl.value = z.label;
+            const label = (A.user && A.user.location) || (z && z.label) || '';
+            if (label) fl.value = label;
         }
         window._syncPubZoneField = _syncPubZoneField;
 
@@ -14542,6 +14566,8 @@
         A.user = {
             uid, name, initials, email,
             phone: profile?.phone ?? cachedSelf?.phone ?? '',
+            moncashNumber: profile?.moncash_number ?? cachedSelf?.moncashNumber ?? '',
+            location: profile?.location ?? cachedSelf?.location ?? '',
             // Layered fallback: live row > cache from same uid > 'buyer'.
             // Crucially, we never *overwrite* a known role with 'buyer'
             // because the live SELECT happened to return null/error.
