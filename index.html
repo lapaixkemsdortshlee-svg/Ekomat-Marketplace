@@ -164,7 +164,14 @@
         /* ── Screens ── */
         .screen {
             display: none;
-            animation: fu .3s ease;
+            /* Fondu san transform: yon transform k ap anime sou paran an
+               kase position:fixed pitit yo (bar aksyon, nav) sou Safari. */
+            animation: screenfade .3s ease;
+        }
+
+        @keyframes screenfade {
+            from { opacity: 0 }
+            to { opacity: 1 }
         }
 
         .screen.on {
@@ -1680,8 +1687,8 @@
     <div class="screen pb-32 max-w-lg mx-auto" id="s-detail">
         <div id="detailContent"></div>
         <div id="detailBar"
-            class="hidden fixed bottom-[72px] left-0 right-0 z-40 flex items-center gap-3 px-5 py-3 glass"
-            style="border-top:1px solid rgba(188,201,200,.15)"></div>
+            class="hidden fixed bottom-0 left-0 right-0 z-40 flex items-center gap-3 px-5 py-3 glass"
+            style="border-top:1px solid rgba(188,201,200,.15);padding-bottom:calc(env(safe-area-inset-bottom) + 12px)"></div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════
