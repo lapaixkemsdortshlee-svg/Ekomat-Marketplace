@@ -490,8 +490,8 @@
             transform: translateY(0);
         }
 
-        /* Notifikasyon plen ekran */
-        #notifSheet {
+        /* Fèy plen ekran: notifikasyon + verifikasyon vandè */
+        #notifSheet, #verifySheet {
             top: 0;
             height: 100dvh;
             max-height: 100dvh;
@@ -2289,11 +2289,15 @@
 
     <!-- ══ SELLER VERIFICATION SHEET — Flux 4 étapes réel ══ -->
     <div class="sheet" id="verifySheet">
-        <div class="handle"></div>
 
         <!-- Étape 1 : Intro + choix type ID -->
         <div id="vs-step1">
             <div class="flex items-center gap-2 mb-4">
+                <button onclick="closeSheets()" aria-label="Fèmen verifikasyon an"
+                    class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center active:bg-surface-container-high flex-shrink-0">
+                    <span class="material-symbols-outlined text-on-surface-variant"
+                        style="font-size:16px">arrow_back</span>
+                </button>
                 <div
                     class="w-8 h-8 rounded-full cta flex items-center justify-center font-headline font-bold text-sm flex-shrink-0">
                     1</div>
