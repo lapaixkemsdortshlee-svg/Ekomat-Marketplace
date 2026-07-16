@@ -3747,6 +3747,12 @@
                     <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="soundToggleBg" style="background:#00666f"></div>
                 </label>
             </div>
+            <div class="flex items-center gap-2 px-4 py-3" style="border-bottom:1px solid rgba(188,201,200,.1)">
+                <p class="font-label text-[10px] font-bold text-on-surface-variant flex-1">Tande son yo</p>
+                <button onclick="playNotifSound('order')" class="px-3 py-1.5 rounded-full font-label text-[10px] font-bold text-primary active:opacity-60" style="background:rgba(0,102,111,.08)">Komand</button>
+                <button onclick="playNotifSound('chat')" class="px-3 py-1.5 rounded-full font-label text-[10px] font-bold text-primary active:opacity-60" style="background:rgba(0,102,111,.08)">Mesaj</button>
+                <button onclick="playNotifSound('promo')" class="px-3 py-1.5 rounded-full font-label text-[10px] font-bold text-primary active:opacity-60" style="background:rgba(0,102,111,.08)">Pwomo</button>
+            </div>
             <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
                     <span class="material-symbols-outlined fi text-primary" style="font-size:18px">vibration</span>
@@ -7805,7 +7811,7 @@
 
             if (isFollowing) {
                 toast('Ou abonnen! Wap resevwa nouvo pwodwi');
-                playNotifSound();
+                playNotifSound('promo');
                 addNotif({
                     id: 'fol_' + Date.now(), type: 'promo', icon: 'person_add',
                     title: 'Nouvo Abonnman', body: 'Ou swiv yon nouvo vandè. Wap resevwa dènye pwodwi yo!',
@@ -10673,7 +10679,7 @@
                     const n = (payload && payload.notification) || {};
                     const title = n.title || (payload.data && payload.data.title) || 'Ekomat';
                     if (typeof toast === 'function') toast(title);
-                    if (typeof playNotifSound === 'function') playNotifSound();
+                    if (typeof playNotifSound === 'function') playNotifSound(payload.data && payload.data.type);
                     if (typeof navigator !== 'undefined' && navigator.vibrate && typeof VIBRATE_ON !== 'undefined' && VIBRATE_ON) {
                         try { navigator.vibrate(100); } catch (_) { }
                     }
@@ -13877,17 +13883,38 @@
         }
         window.shouldCueNotif = shouldCueNotif;
 
-        function playNotifSound() {
+        // Siyati sonò Ekomat: chak tip gen melodi pa l, e yo tout fini ak
+        // yon "eko" (dènye nòt la repete pi dou) — klen dèy sou non "eko"mat.
+        let _sndCtx = null;
+        function _sndNote(ctx, at, freq, dur, vol, wave) {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.type = wave || 'triangle';
+            o.frequency.value = freq;
+            g.gain.setValueAtTime(0.0001, at);
+            g.gain.exponentialRampToValueAtTime(vol, at + 0.015);
+            g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+            o.start(at); o.stop(at + dur + 0.02);
+        }
+        // [frekans Hz, kòmanse (s), dire (s), volim]
+        const NOTIF_MOTIFS = {
+            order:  [[659.25, 0, .14, .11], [783.99, .11, .14, .11], [1046.5, .22, .22, .13]],
+            chat:   [[783.99, 0, .10, .10], [1174.66, .09, .18, .11]],
+            promo:  [[1046.5, 0, .10, .09], [880, .10, .10, .09], [1318.5, .20, .20, .11]],
+            system: [[880, 0, .25, .10]],
+        };
+        function playNotifSound(kind) {
             if (!SOUND_ON) return;
             try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.connect(g); g.connect(ctx.destination);
-                o.frequency.value = 880; o.type = 'sine';
-                g.gain.setValueAtTime(0.1, ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-                o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.3);
+                _sndCtx = _sndCtx || new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = _sndCtx;
+                if (ctx.state === 'suspended') ctx.resume();
+                const notes = NOTIF_MOTIFS[kind] || NOTIF_MOTIFS.system;
+                const t0 = ctx.currentTime + 0.02;
+                notes.forEach(n => _sndNote(ctx, t0 + n[1], n[0], n[2], n[3]));
+                const last = notes[notes.length - 1];
+                _sndNote(ctx, t0 + last[1] + last[2] + 0.10, last[0], 0.18, last[3] * 0.35, 'sine');
             } catch(e) {}
         }
 
@@ -15219,7 +15246,7 @@
                     if (otherId && m.sender_id !== otherId) {
                         A.unreadMsgCount = (A.unreadMsgCount || 0) + 1;
                         if (typeof updateMsgBadge === 'function') updateMsgBadge();
-                        if (typeof playNotifSound === 'function') playNotifSound();
+                        if (typeof playNotifSound === 'function') playNotifSound('chat');
                         return;
                     }
                     const activePid = A.chatId;
@@ -15233,7 +15260,7 @@
                     renderChatMsgs(activePid);
                     // Mark as read immediately since the user is viewing the chat
                     db.from('messages').update({ read: true }).eq('id', m.id);
-                    if (typeof playNotifSound === 'function') playNotifSound();
+                    if (typeof playNotifSound === 'function') playNotifSound('chat');
                 })
             .subscribe();
     }
@@ -15268,7 +15295,7 @@
                     // Bug 4: only cue sound + vibration if the user opted in
                     // for this notification type.
                     if (shouldCueNotif(n.type)) {
-                        if (typeof playNotifSound === 'function') playNotifSound();
+                        if (typeof playNotifSound === 'function') playNotifSound(n.type);
                         if (typeof vibrate === 'function') vibrate();
                     }
                     // Re-render sheet if open
@@ -15295,7 +15322,7 @@
                 { event: 'INSERT', schema: 'public', table: 'orders' },
                 payload => {
                     const o = payload.new; if (!o) return;
-                    if (typeof playNotifSound === 'function') playNotifSound();
+                    if (typeof playNotifSound === 'function') playNotifSound('order');
                     if (typeof toast === 'function') {
                         toast('Nouvo komand: ' + (o.product_title || 'pwodwi') + ' · ' + fp(o.total_amount || 0) + ' HTG');
                     }
@@ -15316,7 +15343,7 @@
                     // these are the rows the admin needs to action next.
                     if (o.status === 'payment_submitted' && typeof toast === 'function') {
                         toast('Peman pou verifye: ' + (o.product_title || 'komand'));
-                        if (typeof playNotifSound === 'function') playNotifSound();
+                        if (typeof playNotifSound === 'function') playNotifSound('order');
                     }
                 })
             .subscribe();
