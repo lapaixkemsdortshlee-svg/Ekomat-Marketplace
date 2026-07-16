@@ -7,7 +7,7 @@
 
 ---
 
-## 2026-07-16 : Session polish UX nocturne — fèy plen ekran, signature sonore, Paramèt allégé, Kreyòl sèlman (7 PR : #173 à #179)
+## 2026-07-16 : Session polish UX nocturne — fèy plen ekran, signature sonore, Paramèt allégé, Kreyòl sèlman (8 PR : #173 à #180)
 
 Session lancée par `/prime` (branche `claude/prime-eis8km`, on repart de `main` à chaque PR — 6 PR mergées d'affilée par Thrasher pendant la session, la 7e ouverte en fin). QA habituelle avant chaque push : syntaxe JS, Playwright 12/12, contrôle DOM/géométrie au navigateur sandbox (sans style CDN), QA visuelle finale sur le preview Vercel côté Thrasher.
 
@@ -22,8 +22,11 @@ Session lancée par `/prime` (branche `claude/prime-eis8km`, on repart de `main`
 - **#178 — Retrait fonction langue (-185 lignes), Kreyòl sèlman.** La traduction FR couvrait ~90 chaînes sur des milliers → mode Français = app qui a l'air cassée (constat Thrasher, validé). Retirés : rangée Paramèt, `LANG`, `TRANSLATIONS`, `t()`, dictionnaires I18N, `applyLangToDom`, `setLang`. Les `toLocale*('fr')` (formatage dates/nombres) intacts. Boot testé avec `aym_lang=fr` hérité : aucun frè, app reste Kreyòl.
 - **#179 — Refonte « Envit yon zanmi » + titre Abonnen + Anons plen ekran.** (1) Sheet parrainage redessiné (retour Thrasher « trop moche trop ekriti ») : le paragraphe remplacé par **2 cartes valeur** (-10% rust « pou zanmi w » / +100 HTG teal « pou ou »), code présenté en **coupon à bordure dashed** (avec « Rete X/3 » intégré), WhatsApp en CTA principal, Kopye+SMS demi-largeur, bouton Fèmen retiré (scrim + handle suffisent) — tous les ids JS conservés. (2) Titre header « Kliyan Abonnen » (qui cassait sur 2 lignes) → « Abonnen ». (3) `#announceSheet` (admin) rejoint la règle plein écran + bouton fermer.
 
+- **#180 — Héros du feed en Kreyòl.** En reconstituant le rendu réel pour les screenshots finaux, découvert que le héros du feed (état déconnecté) affichait « Bienvenue » / « Découvrez Ekomat » en français codé en dur (indépendant de la fonction langue retirée en #178). Corrigé : « Byenveni » / « Dekouvri Ekomat ». Connecté, le texte était déjà Kreyòl (« Bonjou, X »). PR mergée par Alita en autonomie (autorisation explicite de Thrasher avant d'aller dormir).
+
 **Notes :**
 - Le SW sert le HTML en network-first → tout arrive aux appareils à la prochaine ouverture, aucun bump nécessaire cette session.
+- **Screenshots finaux avec vrai rendu malgré le sandbox** : la politique réseau bloque le preview Vercel et les CDN, mais npm est ouvert → Tailwind 3 compilé localement avec la config inline exacte de l'app + polices @fontsource (Plus Jakarta Sans, Manrope) + material-symbols depuis npm, servis en local. Recette réutilisable : `scratchpad/render/` (tailwind.config.js + fonts.css).
 - En fin de session, l'outil `send_later` (check-ins horaires des PR) s'est mis à demander une approbation → check-ins non armés pour #178/#179 ; la surveillance webhook des PR fonctionne toujours.
 - Question de suivi posée à Thrasher : d'autres feuilles candidates au plein écran (panier ? fiches Komand ?) à traiter en lot.
 
