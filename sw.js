@@ -1,7 +1,8 @@
-const CACHE_NAME = 'aym-v37';
+const CACHE_NAME = 'aym-v38';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/assets/tw.css',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',

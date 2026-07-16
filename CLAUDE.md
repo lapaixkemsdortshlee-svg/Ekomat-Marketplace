@@ -23,6 +23,8 @@ Reach for the right capability by task:
 
 Honor the project's hard rules (single-file architecture, Kreyòl strings, soft-delete, escrow RPC) — see the `ayitimarket` skill (the product is branded **Ekomat** since 2026-07-11; repo, paths and skill slugs keep the old name).
 
+**Tailwind précompilé (depuis 2026-07-16) :** `index.html` ne charge plus le CDN Tailwind — il référence `assets/tw.css`, généré par `npm run build:css` (config : `tailwind.config.cjs`, mêmes tokens que l'ancien bloc inline). **Règle dure : après TOUT changement de classes Tailwind dans `index.html` (ajout d'une classe pas encore utilisée ailleurs), relancer `npm run build:css` et committer `assets/tw.css` dans la même PR.** Sinon la classe n'aura aucun style en prod. Les pages `onboarding.html` et `/l/*` gardent leur CDN (hors scope).
+
 **Migrations Supabase (depuis 2026-07-05) :** toute NOUVELLE migration va dans `supabase/migrations/<timestamp>_nom.sql` (format CLI, ex. `20260705050000_ma_migration.sql`) — plus jamais de fichier ad hoc `supabase/migration-*.sql` (les anciens sont historiques, déjà déployés à la main, ne pas y toucher). Le merge sur `main` déploie automatiquement via `.github/workflows/db-migrate.yml` (`supabase db push`). Règles : migrations idempotentes ; tout changement destructif (DROP, DELETE, ALTER incompatible) exige une revue explicite de Thrasher avant merge ; valider la logique en lecture seule sur la vraie base (MCP) avant d'écrire la migration.
 <!-- SKILLS_POLICY_END -->
 

@@ -7,6 +7,34 @@
 
 ---
 
+## 2026-07-16 (journée) : QA continue + chantier UX designer (PR #181 à #185)
+
+Suite de la session nocturne, même branche `claude/prime-eis8km`, Thrasher en QA continue sur son iPhone + Alita en exécution.
+
+**PR de QA mergées (#181 à #184) :**
+- **#181 — Filigrane chat style WhatsApp** : fond de l'écran conversation habillé d'un motif SVG inline (data URI, zéro asset, CSP ok) — sac, étiquette prix, bouclier escrow, bulle, cœur, panier en teal 6% ; version mode sombre.
+- **#182 — Barre d'action fiche produit stable** : deux causes du « boutons qui montent au scroll » — ancrage bottom:72px pour un nav caché (→ bottom:0 + safe-area) et animation d'écran avec transform qui cassait le position:fixed des enfants (→ fondu opacity pur `screenfade`).
+- **#183 — MonCash validation + Google** : normalisation du numéro (accepte +509…, espaces, tirets, 8 chiffres locaux ; stocke canonique 509XXXXXXXX) ; bouton « Konekte ak Google » retiré de l'edit profil.
+- **#184 — Cohérence MonCash/zone** : cause racine du champ MonCash toujours vide = jamais rechargé depuis la base (ni au boot ni à l'ouverture) → hydraté aux deux endroits ; bannière profil affiche le numéro payout ; le téléphone OTP-vérifié du « Vin yon Vandè » devient automatiquement le payout (si vide, jamais d'écrasement) ; zone produit auto-remplie depuis la zone boutique à la publication.
+
+**Chantier UX (PR #185) — plan « designer UX » validé par Thrasher, un commit par point :**
+- **Point 1 — Tunnel MonCash guidé** : escrowPaySheet en 3 étapes (Voye lajan avec numéro copiable un tap / Referans avec focus auto / Verifye avec vraie confirmation), barre de progression, reprise à l'étape 2 si ref déjà saisie. L'écran le plus critique pour le pilote.
+- **Point 2 — Passe lisibilité** : montée graduée 9→10, 10→11, 11→12px sur 288 occurrences (cible : Android bas de gamme). Vérifié sans débordement.
+- **Point 3 — parké** : feed « mode découverte » pour catalogue clairsemé noté dans CONTEXT.md comme projet différé (comptes actuels = tests, décision Thrasher).
+- **Point 4 — Familles de fermeture** : règle explicite tâche longue = plein écran + retour / action rapide = bottom sheet + handle. Paramèt, Sant Èd, Modifye Pwofil, Modifye Pwodwi passés en plein écran.
+- **Point 5 — Pibliye allégé** : Foto (déplacée en tête), Non, Pri, Kategori visibles ; Kote/Estòk/Pwomosyon/Deskripsyon+IA/chips repliés sous « Plis opsyon ». Kategori gardée visible (qualité catalogue) — écart assumé au spec « 3 champs ».
+- **Point 6 — Tailwind précompilé** : `assets/tw.css` (24 Ko min, 5,4 Ko gzip) remplace le CDN runtime (~110 Ko JS + JIT à chaque ouverture) dans `index.html`. `tailwind.config.cjs` + `npm run build:css` ; règle dure dans CLAUDE.md : tout changement de classes = rebuild + commit du CSS. Audit : zéro classe concaténée dynamiquement. SW bump v38 (+ précache tw.css). Choix pipeline : artefact committé, PAS de buildCommand Vercel (comportement outputDirectory non garanti pour un site « Other » — risque prod refusé). onboarding.html et /l/* gardent leur CDN.
+- **CodeQL rouge sur #185** = baseline re-attribution connue (gros diff), vérifié : aucun nouveau sink dans le diff, documenté en commentaire PR.
+
+**Notes :**
+- Un avis « designer UX » complet a précédé le chantier (verdict : garder identité/stepper/nav, prioriser tunnel paiement + lisibilité + perf ; ne PAS refondre globalement ; l'admin reste fonctionnel-seulement).
+- L'outil de check-ins planifiés (send_later) est devenu indisponible/soumis à approbation en cours de session — surveillance des PR par webhooks seulement.
+- `/find-skills` exécuté sur demande : rien de pertinent dans l'écosystème pour tailwind/checkout — skills locaux suffisants.
+
+**Reste côté Thrasher :** QA du preview #185 (tunnel MonCash de bout en bout, Paramèt/edit plein écran, formulaire Pibliye, vitesse de premier chargement) puis merge. Les chantiers de fond inchangés : audit chemin-critique, compte Google Play + .aab, credentials MonCash.
+
+---
+
 ## 2026-07-16 : Session polish UX nocturne — fèy plen ekran, signature sonore, Paramèt allégé, Kreyòl sèlman (8 PR : #173 à #180)
 
 Session lancée par `/prime` (branche `claude/prime-eis8km`, on repart de `main` à chaque PR — 6 PR mergées d'affilée par Thrasher pendant la session, la 7e ouverte en fin). QA habituelle avant chaque push : syntaxe JS, Playwright 12/12, contrôle DOM/géométrie au navigateur sandbox (sans style CDN), QA visuelle finale sur le preview Vercel côté Thrasher.

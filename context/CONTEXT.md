@@ -47,6 +47,10 @@ Je construis **Ekomat** (ex-AyitiMarket, rebrandée le 2026-07-11), une marketpl
 - Brancher les vrais paiements MonCash (bloqué tant que les credentials Digicel ne sont pas obtenus).
 - Lancer l'acquisition payante (ads Meta/Google) quand le budget le permet + activer Leaked Password Protection (plan pro).
 
+### Projets notés, PAS à exécuter maintenant
+
+- **Feed « mode découverte » pour catalogue clairsemé (décision 2026-07-16)** : tant que le catalogue est petit, basculer le feed en mode découverte (boutiques mises en avant en grand, produits en liste, CTA Vin Vandè proéminent) avec bascule automatique vers la grille masonry dense quand le catalogue grossit. Contexte : les comptes actuels sont des comptes de test, Thrasher ne s'attarde pas sur le feed pour l'instant. À réévaluer quand de vrais vendeurs remplissent le catalogue.
+
 ### Objectifs long terme (1 à 3 ans)
 
 - Faire d'Ekomat la marketplace de référence en Haïti et pour la diaspora.
