@@ -3145,34 +3145,83 @@
     <!-- ══ ESCROW — BUYER PAYMENT INSTRUCTIONS ══ -->
     <div class="sheet" id="escrowPaySheet">
         <div class="handle"></div>
-        <div class="text-center mb-4">
-            <div class="w-14 h-14 rounded-2xl cta flex items-center justify-center mx-auto mb-3 amb">
-                <span class="material-symbols-outlined fi text-white" style="font-size:26px">payments</span>
-            </div>
+        <div class="flex items-center justify-center gap-2 mb-3">
+            <span class="material-symbols-outlined fi text-primary" style="font-size:24px">payments</span>
             <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Peye ak MonCash</h3>
-            <p class="font-body text-sm text-on-surface-variant mt-1 leading-relaxed">
-                Voye montan an sou nimewo Ekomat. Lajan rete bloke nan eskwo jiskaske livrezon konfime.
-            </p>
+        </div>
+        <!-- Endikatè etap (1 Voye · 2 Referans · 3 Verifye) -->
+        <div class="flex items-center gap-1.5 mb-4" id="escPayStepsBar">
+            <div class="flex-1 text-center" data-esc-step="1">
+                <div class="h-1.5 rounded-full mb-1.5" style="background:#00666f"></div>
+                <p class="font-label text-xs font-bold text-on-surface">1. Voye lajan</p>
+            </div>
+            <div class="flex-1 text-center" data-esc-step="2">
+                <div class="h-1.5 rounded-full mb-1.5" style="background:#e5e2dd"></div>
+                <p class="font-label text-xs font-bold text-on-surface-variant">2. Referans</p>
+            </div>
+            <div class="flex-1 text-center" data-esc-step="3">
+                <div class="h-1.5 rounded-full mb-1.5" style="background:#e5e2dd"></div>
+                <p class="font-label text-xs font-bold text-on-surface-variant">3. Verifye</p>
+            </div>
         </div>
         <div class="bg-surface-container-low rounded-xl p-4 mb-3" id="escPayInfo"></div>
-        <div class="rounded-xl p-4 mb-3" style="background:linear-gradient(135deg,#00666f,#00818c);color:#fcf9f4">
-            <p class="font-label text-[10px] font-bold uppercase tracking-[.12em]" style="color:rgba(252,249,244,.7)">Voye lajan a:</p>
-            <p class="font-headline font-extrabold text-2xl mt-1" id="escPayAdminNumber">—</p>
-            <p class="font-label text-[11px] mt-3" style="color:rgba(252,249,244,.7)">Montan egzak:</p>
-            <p class="font-headline font-extrabold text-xl" id="escPayAmount">—</p>
+
+        <!-- ETAP 1: voye lajan an -->
+        <div id="escPayStep1">
+            <div class="rounded-xl p-4 mb-3 text-center" style="background:linear-gradient(135deg,#00666f,#00818c);color:#fcf9f4">
+                <p class="font-label text-xs font-bold uppercase tracking-[.1em]" style="color:rgba(252,249,244,.75)">Voye montan sa a</p>
+                <p class="font-headline font-extrabold text-3xl mt-1" id="escPayAmount">—</p>
+                <p class="font-label text-xs font-bold uppercase tracking-[.1em] mt-4" style="color:rgba(252,249,244,.75)">sou nimewo MonCash Ekomat la</p>
+                <p class="font-headline font-extrabold text-3xl mt-1" id="escPayAdminNumber" style="letter-spacing:.04em">—</p>
+                <button onclick="escPayCopyNumber()" class="mt-3 inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-label text-sm font-bold active:scale-95 transition-transform" style="background:rgba(252,249,244,.16);color:#fcf9f4;border:1px solid rgba(252,249,244,.35)">
+                    <span class="material-symbols-outlined" style="font-size:17px">content_copy</span>Kopye nimewo a
+                </button>
+            </div>
+            <p class="font-label text-xs text-on-surface-variant text-center mb-4 flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined fi text-primary" style="font-size:15px">lock</span>
+                Lajan an rete bloke nan eskwo jiskaske ou konfime livrezon an.
+            </p>
+            <div class="flex gap-3">
+                <button onclick="closeSheets()" class="px-4 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant">
+                    Pita
+                </button>
+                <button onclick="escPayGoStep(2)" class="flex-1 py-3 rounded-xl cta font-label font-bold text-sm active:scale-95">
+                    Mwen voye lajan an
+                    <span class="material-symbols-outlined align-middle ml-1" style="font-size:16px">arrow_forward</span>
+                </button>
+            </div>
         </div>
-        <div class="bg-surface-container-low rounded-xl p-3 mb-4">
-            <p class="font-label text-[10px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1">Etap 2 — kole referans MonCash</p>
-            <input id="escPayRef" class="si" placeholder="ex: 123456789" inputmode="numeric"/>
-            <p class="font-label text-[10px] text-on-surface-variant mt-2">Apre ou voye lajan an, kole nimewo referans tranzaksyon an isit la. Admin ap verifye l.</p>
+
+        <!-- ETAP 2: referans lan -->
+        <div id="escPayStep2" class="hidden">
+            <div class="bg-surface-container-low rounded-xl p-4 mb-3">
+                <p class="font-label text-xs font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Kole referans tranzaksyon an</p>
+                <input id="escPayRef" class="si" placeholder="ex: 123456789" inputmode="numeric"/>
+                <p class="font-label text-xs text-on-surface-variant mt-2 leading-relaxed">W ap jwenn referans lan nan SMS konfimasyon MonCash voye ba ou a.</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="escPayGoStep(1)" aria-label="Retounen nan etap 1"
+                    class="px-4 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant flex items-center gap-1">
+                    <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>
+                </button>
+                <button id="escPaySubmitBtn" onclick="submitPaymentRef()" class="flex-1 py-3 rounded-xl cta font-label font-bold text-sm active:scale-95">
+                    <span class="material-symbols-outlined align-middle mr-1" style="font-size:16px">check_circle</span>
+                    Mwen deja peye
+                </button>
+            </div>
         </div>
-        <div class="flex gap-3">
-            <button onclick="closeSheets()" class="px-4 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant">
-                Pita
-            </button>
-            <button id="escPaySubmitBtn" onclick="submitPaymentRef()" class="flex-1 py-3 rounded-xl cta font-label font-bold text-sm active:scale-95">
-                <span class="material-symbols-outlined align-middle mr-1" style="font-size:16px">check_circle</span>
-                Mwen deja peye
+
+        <!-- ETAP 3: n ap verifye -->
+        <div id="escPayStep3" class="hidden text-center">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3" style="background:rgba(101,124,71,.12)">
+                <span class="material-symbols-outlined fi" style="font-size:32px;color:#657c47">task_alt</span>
+            </div>
+            <p class="font-headline font-extrabold text-lg text-on-surface">Peman ou deklare!</p>
+            <p class="font-body text-sm text-on-surface-variant mt-1 mb-5 leading-relaxed">
+                Admin ap verifye referans lan. W ap resevwa yon notifikasyon kou eskwo a aktive epi vandè a kòmanse prepare pwodwi a.
+            </p>
+            <button onclick="closeSheets()" class="w-full py-3.5 rounded-xl cta font-headline font-bold text-sm active:scale-95">
+                Oke, mwen konprann
             </button>
         </div>
     </div>
@@ -11363,7 +11412,37 @@
         }
         window.fetchOrder = fetchOrder;
 
-        // ─ Buyer: payment instructions sheet ──────────────────────
+        // ─ Buyer: payment instructions sheet (tinèl gide 3 etap) ──
+        function escPayGoStep(n) {
+            [1, 2, 3].forEach(i => {
+                const step = document.getElementById('escPayStep' + i);
+                if (step) step.classList.toggle('hidden', i !== n);
+                const seg = document.querySelector('#escPayStepsBar [data-esc-step="' + i + '"]');
+                if (seg) {
+                    seg.querySelector('div').style.background = i <= n ? '#00666f' : '#e5e2dd';
+                    seg.querySelector('p').className = 'font-label text-xs font-bold ' + (i <= n ? 'text-on-surface' : 'text-on-surface-variant');
+                }
+            });
+            if (n === 2) setTimeout(() => document.getElementById('escPayRef')?.focus(), 150);
+        }
+        window.escPayGoStep = escPayGoStep;
+
+        async function escPayCopyNumber() {
+            const num = document.getElementById('escPayAdminNumber')?.textContent?.trim();
+            if (!num || num.startsWith('—')) { toast('Nimewo a poko disponib'); return; }
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(num);
+                } else {
+                    const ta = document.createElement('textarea');
+                    ta.value = num; document.body.appendChild(ta); ta.select();
+                    document.execCommand('copy'); document.body.removeChild(ta);
+                }
+                toast('Nimewo a kopye! Ouvri MonCash pou voye lajan an.');
+            } catch (_) { toast('Pa ka kopye — ekri nimewo a manyèlman'); }
+        }
+        window.escPayCopyNumber = escPayCopyNumber;
+
         function openEscrowPaymentSheet(order) {
             A._escrowCurrent = order;
             const info = document.getElementById('escPayInfo');
@@ -11371,6 +11450,8 @@
             const amt  = document.getElementById('escPayAmount');
             const ref  = document.getElementById('escPayRef');
             if (ref) ref.value = order.moncash_ref || '';
+            // Si achtè a te deja kòmanse (ref sove), ale dirèk nan etap 2.
+            escPayGoStep(order.moncash_ref ? 2 : 1);
             if (info) info.innerHTML = `
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:rgba(0,102,111,.08)">
@@ -11448,11 +11529,9 @@
                 toast('Erè: ' + failures[0].msg);
                 return;
             }
-            closeSheets();
+            escPayGoStep(3);
             A._escrowGroupIds = null;
-            toast(failures.length > 0
-                ? 'Peman deklare (' + (groupIds.length - failures.length) + '/' + groupIds.length + ')'
-                : 'Peman deklare — admin ap verifye');
+            if (failures.length > 0) toast('Peman deklare (' + (groupIds.length - failures.length) + '/' + groupIds.length + ')');
             // Notify admin(s) once for the whole group via the centralized helper.
             notifyAdmins({
                 type: 'order', icon: 'task',
