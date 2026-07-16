@@ -3565,7 +3565,7 @@
         <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Aparans</p>
         <div class="bg-surface-container-lowest rounded-xl amb overflow-hidden mb-4">
             <!-- Dark Mode -->
-            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
+            <div class="flex items-center gap-3 p-4">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                     style="background:rgba(28,28,25,.08)">
                     <span class="material-symbols-outlined fi text-on-surface" style="font-size:18px">dark_mode</span>
@@ -3580,24 +3580,6 @@
                     <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors"
                         id="darkToggleBg" style="background:#e5e2dd"></div>
                 </label>
-            </div>
-            <!-- Langue -->
-            <div class="flex items-center gap-3 p-4">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style="background:rgba(0,102,111,.08)">
-                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">translate</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Lang / Langue</p>
-                    <p class="font-label text-xs text-on-surface-variant">Chwazi lang ou prefere</p>
-                </div>
-                <div class="flex items-center gap-1 rounded-full p-1" style="background:#e5e2dd">
-                    <button id="lang-ht" onclick="setLang('ht')"
-                        class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all"
-                        style="background:#00666f;color:#fff">Kreyòl</button>
-                    <button id="lang-fr" onclick="setLang('fr')"
-                        class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all text-on-surface-variant">Français</button>
-                </div>
             </div>
         </div>
 
@@ -12196,12 +12178,6 @@
                 ? `$${(3500 / CURRENCY.rate).toFixed(2)}`
                 : '3 500 HTG';
 
-            // Langue
-            const btnHt = document.getElementById('lang-ht');
-            const btnFr = document.getElementById('lang-fr');
-            if (btnHt) { btnHt.style.background = LANG === 'ht' ? '#00666f' : 'transparent'; btnHt.style.color = LANG === 'ht' ? '#fff' : '#3d4949'; }
-            if (btnFr) { btnFr.style.background = LANG === 'fr' ? '#00666f' : 'transparent'; btnFr.style.color = LANG === 'fr' ? '#fff' : '#3d4949'; }
-
             // Quiet Night
             const qb = document.getElementById('quietBg');
             if (qb) qb.style.background = QUIET_NIGHT ? '#00666f' : '#e5e2dd';
@@ -13390,164 +13366,6 @@
         setTimeout(applyDarkMode, 50);
 
         // ══════════════════════════════════════════════════════════
-        //  LANGUE — Kreyòl / Français
-        // ══════════════════════════════════════════════════════════
-        let LANG = localStorage.getItem('aym_lang') || 'ht';
-
-        const TRANSLATIONS = {
-            ht: {
-                feed_title: 'Dekouvri',
-                feed_sub: 'atizana',
-                greet: 'Bonjou',
-                pub_tab: 'Pibliye',
-                order_tab: 'Komand',
-                profile_tab: 'Pwofil',
-                search_ph: 'Chèche pwodwi, vandè…',
-                buy_btn: 'Kòmande',
-                msg_btn: 'Mesaj',
-                settings: 'Paramèt',
-                lite_active: 'Mode Lite aktif — foto yo p ap chaje',
-                lite_off: 'Mode nòmal — foto yo ap chaje',
-            },
-            fr: {
-                feed_title: 'Découvrir',
-                feed_sub: 'l\'artisanat',
-                greet: 'Bonjour',
-                pub_tab: 'Publier',
-                order_tab: 'Commandes',
-                profile_tab: 'Profil',
-                search_ph: 'Rechercher produits, vendeurs…',
-                buy_btn: 'Commander',
-                msg_btn: 'Message',
-                settings: 'Paramètres',
-                lite_active: 'Mode Lite activé — images non chargées',
-                lite_off: 'Mode normal — images chargées',
-            },
-        };
-
-        function t(key) {
-            return TRANSLATIONS[LANG]?.[key] || TRANSLATIONS.ht[key] || key;
-        }
-
-        // ── HT ⇄ FR dictionary for live DOM translation ──
-        const I18N_HT_FR = {
-            'Dekouvri': 'Découvrir', 'atizana ayisyen': 'l\'artisanat haïtien', 'atizana': 'artisanat',
-            'Bonjou': 'Bonjour', 'Bonswa': 'Bonsoir',
-            'Pibliye': 'Publier', 'Pibliye Pwodwi': 'Publier un Produit',
-            'Komand': 'Commandes', 'Kòmande': 'Commander', 'Komand Mwen': 'Mes Commandes',
-            'Pwofil': 'Profil', 'Pwofil Mwen': 'Mon Profil', 'Modifye Pwofil': 'Modifier le Profil',
-            'Mesaj': 'Message', 'Mesaj yo': 'Messages',
-            'Paramèt': 'Paramètres', 'Paramèt Aplikasyon': 'Paramètres de l\'Application',
-            'Dekonekte': 'Déconnexion', 'Konekte': 'Se connecter',
-            'Chèche pwodwi, vandè…': 'Rechercher produits, vendeurs…',
-            'Chèche pwodwi ou vandè': 'Rechercher un produit ou vendeur',
-            'Flash Deals': 'Offres Flash', 'Òf Espesyal': 'Offres Spéciales',
-            'Pa gen Flash Deal disponib kounye a': 'Aucune offre flash disponible pour le moment',
-            'Kategori': 'Catégories', 'Tout': 'Tous',
-            'Mòd': 'Mode', 'Kosmetik': 'Cosmétique', 'Aksesyar': 'Accessoire',
-            'Atizana': 'Artisanat', 'Kay': 'Maison', 'Bebe': 'Bébé',
-            'Mòd Sombre': 'Mode Sombre', 'Mòd klè': 'Mode clair',
-            'Midnight Teal — Prim & Repo je': 'Midnight Teal — Premium & Repose les yeux',
-            'Lang / Langue': 'Langue / Lang', 'Chwazi lang ou prefere': 'Choisissez votre langue préférée',
-            'Mode Lite aktif — foto yo p ap chaje': 'Mode Lite activé — images non chargées',
-            'Mode nòmal — foto yo ap chaje': 'Mode normal — images chargées',
-            'Pwodwi': 'Produits', 'Nan Stòk': 'En Stock', 'Lavant': 'Ventes', 'Vizit': 'Visites',
-            'Pwodwi Mwen': 'Mes Produits',
-            'Modifye': 'Modifier', 'Efase': 'Supprimer', 'Rediksyon': 'Réduction',
-            'Ajoute Nouvo Pwodwi': 'Ajouter un Nouveau Produit',
-            'Boutik Mwen': 'Ma Boutique', 'Boutik': 'Boutique',
-            'Kliyan Abonnen': 'Abonnés', 'Swiv': 'Suivre', 'Abonnen': 'Abonné',
-            'Favori': 'Favoris', 'Favori yo': 'Favoris',
-            'Panye': 'Panier', 'Panye mwen': 'Mon Panier',
-            'Vin yon Vandè': 'Devenir Vendeur', 'Vandè': 'Vendeur', 'Achtè': 'Acheteur',
-            'Admin': 'Admin', 'Panel Admin': 'Panneau Admin', 'Aksè konplè': 'Accès Complet',
-            'Verifye': 'Vérifié', 'Pa Verifye': 'Non Vérifié',
-            'Istorik Komand': 'Historique Commandes',
-            'Metòd Peman': 'Méthode de Paiement',
-            'Non pwodwi': 'Nom du Produit', 'Ranpli non pwodwi a': 'Veuillez remplir le nom du produit',
-            'Ajoute omwen 1 foto': 'Ajoutez au moins 1 photo',
-            'Pri': 'Prix', 'Mete yon pri valid': 'Entrez un prix valide',
-            'Deskripsyon': 'Description', 'Jenere ak IA': 'Générer avec IA',
-            'Kantite': 'Quantité', 'Stòk': 'Stock', 'Stòk Limité': 'Stock Limité',
-            'Pwomosyon / Rediksyon': 'Promotion / Réduction',
-            '% Rediksyon': '% Réduction', 'Pri Apre Rediksyon': 'Prix Après Réduction',
-            'Dire Flash Deal': 'Durée Flash Deal', 'èdtan': 'heures',
-            'Pibliye pwodwi': 'Publier le produit', 'Pibliye!': 'Publié!',
-            'Pwodwi pibliye avèk siksè!': 'Produit publié avec succès!',
-            'Pwodwi efase': 'Produit supprimé', 'Pwodwi modifye': 'Produit modifié',
-            'Ou poko gen pwodwi': 'Vous n\'avez pas encore de produit',
-            'Pa konekte': 'Non connecté',
-            'Chaje...': 'Chargement...',
-            'Retounen': 'Retour', 'Ale': 'Aller', 'Anile': 'Annuler', 'Konfime': 'Confirmer',
-            'Sove': 'Enregistrer', 'Fèmen': 'Fermer', 'OK': 'OK',
-            'Kounye a': 'À l\'instant',
-            'Notifikasyon': 'Notifications', 'Pa gen notifikasyon': 'Aucune notification',
-            'Tèm': 'Thème', 'Tèm Sonore': 'Thème Sonore',
-            'Mode Lite': 'Mode Lite', 'Mode Lite — Ekonomize Done': 'Mode Lite — Économiser les données',
-            'Vizyon Vandè': 'Vision Vendeur', 'Vizyon Achtè': 'Vision Acheteur',
-            'Rezilta': 'Résultats', 'Pa gen rezilta': 'Aucun résultat',
-            'Pwodwi ak bon pri pou ou': 'Produits à bons prix pour vous',
-            'Pwodwi Tandans': 'Produits Tendance',
-            'Pwodwi Popilè': 'Produits Populaires',
-            'Plis...': 'Plus...', 'Wè plis': 'Voir plus',
-        };
-        const I18N_FR_HT = Object.fromEntries(Object.entries(I18N_HT_FR).map(([k, v]) => [v, k]));
-
-        function applyLangToDom(targetLang) {
-            const map = targetLang === 'fr' ? I18N_HT_FR : I18N_FR_HT;
-            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-                acceptNode: (node) => {
-                    const p = node.parentNode;
-                    if (!p) return NodeFilter.FILTER_REJECT;
-                    const tag = p.nodeName;
-                    if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT') return NodeFilter.FILTER_REJECT;
-                    if (p.closest && p.closest('[data-no-i18n]')) return NodeFilter.FILTER_REJECT;
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            });
-            const nodes = [];
-            let n; while ((n = walker.nextNode())) nodes.push(n);
-            nodes.forEach(node => {
-                const txt = node.nodeValue;
-                const trimmed = txt.trim();
-                if (!trimmed) return;
-                if (map[trimmed]) {
-                    node.nodeValue = txt.replace(trimmed, map[trimmed]);
-                }
-            });
-            // Placeholders on inputs
-            document.querySelectorAll('input[placeholder]').forEach(inp => {
-                const ph = inp.placeholder.trim();
-                if (map[ph]) inp.placeholder = map[ph];
-            });
-        }
-
-        function setLang(lang) {
-            const prev = LANG;
-            LANG = lang;
-            localStorage.setItem('aym_lang', lang);
-            // Update toggle buttons
-            const btnHt = document.getElementById('lang-ht');
-            const btnFr = document.getElementById('lang-fr');
-            if (btnHt) {
-                btnHt.style.background = lang === 'ht' ? '#00666f' : 'transparent';
-                btnHt.style.color = lang === 'ht' ? '#fff' : '#3d4949';
-            }
-            if (btnFr) {
-                btnFr.style.background = lang === 'fr' ? '#00666f' : 'transparent';
-                btnFr.style.color = lang === 'fr' ? '#fff' : '#3d4949';
-            }
-            // Re-render feed greeting
-            const greet = document.getElementById('feedGreet');
-            if (greet && A.user) greet.textContent = t('greet') + ', ' + A.user.name.split(' ')[0];
-            // Apply translation to DOM
-            if (prev !== lang) applyLangToDom(lang);
-            document.documentElement.setAttribute('lang', lang === 'fr' ? 'fr' : 'ht');
-            // Toast seulement sur un vrai changement de langue (pas à l'init/ouverture)
-            if (prev !== lang) toast(lang === 'fr' ? 'Langue: Français' : 'Lang: Kreyòl');
-        }
-
-        // ══════════════════════════════════════════════════════════
         //  BOT SUPPORT — Asistan Ekomat
         // ══════════════════════════════════════════════════════════
         const BOT_ANSWERS = {
@@ -13667,9 +13485,6 @@
                 const qb = document.getElementById('quietBg');
                 if (qb) qb.style.background = '#00666f';
             }
-            // Force DOM translation on init if stored lang is FR
-            if (LANG === 'fr') applyLangToDom('fr');
-            setLang(LANG);
         }, 300);
 
         // ── Settings: Son, Vibrasyon, Feedback, Pataje, Note ──
