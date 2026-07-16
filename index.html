@@ -490,6 +490,16 @@
             transform: translateY(0);
         }
 
+        /* Notifikasyon plen ekran */
+        #notifSheet {
+            top: 0;
+            height: 100dvh;
+            max-height: 100dvh;
+            box-sizing: border-box;
+            border-radius: 0;
+            padding-top: calc(env(safe-area-inset-top) + 1rem);
+        }
+
         .handle {
             width: 2rem;
             height: 3px;
@@ -2815,9 +2825,14 @@
 
     <!-- Notifications center sheet -->
     <div class="sheet" id="notifSheet">
-        <div class="handle"></div>
         <div class="flex items-center justify-between mb-4">
-            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Notifikasyon</h3>
+            <div class="flex items-center gap-2">
+                <button onclick="closeSheets()" aria-label="Fèmen notifikasyon yo"
+                    class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+                </button>
+                <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Notifikasyon</h3>
+            </div>
             <button onclick="markAllRead()" class="font-label text-xs font-bold text-primary active:opacity-70">Tout
                 mete lu ✓</button>
         </div>
