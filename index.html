@@ -492,7 +492,7 @@
         /* Fèy plen ekran (tach enpòtan/long): notifikasyon, verifikasyon,
            anons, paramèt, sant èd, modifye pwofil/pwodwi. Fèy aksyon rapid
            yo rete bottom-sheet ak handle. */
-        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet {
+        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet, #escrowPaySheet {
             top: 0;
             height: 100dvh;
             max-height: 100dvh;
@@ -3132,8 +3132,11 @@
 
     <!-- ══ ESCROW — BUYER PAYMENT INSTRUCTIONS ══ -->
     <div class="sheet" id="escrowPaySheet">
-        <div class="handle"></div>
-        <div class="flex items-center justify-center gap-2 mb-3">
+        <div class="flex items-center gap-2 mb-3">
+            <button onclick="closeSheets()" aria-label="Fèmen peman an"
+                class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+            </button>
             <span class="material-symbols-outlined fi text-primary" style="font-size:24px">payments</span>
             <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Peye ak MonCash</h3>
         </div>
