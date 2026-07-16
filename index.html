@@ -3606,7 +3606,7 @@
             Koneksyon</p>
         <div class="bg-surface-container-lowest rounded-xl amb overflow-hidden mb-4">
             <!-- Currency -->
-            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
+            <div class="flex items-center gap-3 p-4">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                     style="background:rgba(0,102,111,.08)">
                     <span class="material-symbols-outlined fi text-primary"
@@ -3623,115 +3623,6 @@
                     <button id="curr-usd" onclick="setCurrency('USD')"
                         class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all text-on-surface-variant">USD</button>
                 </div>
-            </div>
-            <!-- Lite Mode -->
-            <div class="flex items-center gap-3 p-4">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style="background:rgba(151,66,43,.08)">
-                    <span class="material-symbols-outlined fi" style="font-size:18px;color:#97422b">data_saver_on</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Mode Lite</p>
-                    <p class="font-label text-xs text-on-surface-variant">Pa chaje foto — Ekonomize data</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                    <input type="checkbox" id="liteModeCheck" class="sr-only peer"
-                        onchange="toggleLiteMode(this.checked)" />
-                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors"
-                        id="liteToggleBg" style="background:#e5e2dd"></div>
-                </label>
-            </div>
-        </div>
-
-        <!-- Notifikasyon -->
-        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Notifikasyon
-        </p>
-        <div class="bg-surface-container-lowest rounded-xl amb overflow-hidden mb-4">
-            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style="background:rgba(0,102,111,.08)">
-                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">notifications</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Push FCM</p>
-                    <p class="font-label text-xs text-on-surface-variant" id="fcmSettingStatus">Deaktive</p>
-                </div>
-                <button onclick="requestFCMPermission();closeSheets();"
-                    class="px-3 py-1.5 rounded-full cta font-label text-[11px] font-bold active:scale-95">Aktive</button>
-            </div>
-            <div class="flex items-center gap-3 p-4">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style="background:rgba(0,102,111,.08)">
-                    <span class="material-symbols-outlined fi text-primary"
-                        style="font-size:18px">do_not_disturb_on</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Silans Lannwit</p>
-                    <p class="font-label text-xs text-on-surface-variant">Bloke notif 22h–7h</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                    <input type="checkbox" id="quietNightCheck" class="sr-only peer"
-                        onchange="toggleQuietNight(this.checked)" />
-                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors"
-                        id="quietBg" style="background:#e5e2dd"></div>
-                </label>
-            </div>
-        </div>
-
-        <!-- Notifikasyon detaye (Bug 4) -->
-        <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-2">Notifikasyon detaye</p>
-        <div class="bg-surface-container-lowest rounded-xl amb overflow-hidden mb-4">
-            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
-                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">shopping_bag</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Komand</p>
-                    <p class="font-label text-xs text-on-surface-variant">Komand nouvo, peman, livrezon</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                    <input type="checkbox" id="notifTog-order" class="sr-only peer" onchange="setNotifPref('order', this.checked)"/>
-                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="notifTogBg-order" style="background:#00666f"></div>
-                </label>
-            </div>
-            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
-                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">chat</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Mesaj</p>
-                    <p class="font-label text-xs text-on-surface-variant">Chat ak nòt vokal</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                    <input type="checkbox" id="notifTog-chat" class="sr-only peer" onchange="setNotifPref('chat', this.checked)"/>
-                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="notifTogBg-chat" style="background:#00666f"></div>
-                </label>
-            </div>
-            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
-                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">info</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Sistèm</p>
-                    <p class="font-label text-xs text-on-surface-variant">Verifikasyon, ban, anons</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                    <input type="checkbox" id="notifTog-system" class="sr-only peer" onchange="setNotifPref('system', this.checked)"/>
-                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="notifTogBg-system" style="background:#00666f"></div>
-                </label>
-            </div>
-            <div class="flex items-center gap-3 p-4">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
-                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">local_offer</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Pwomosyon</p>
-                    <p class="font-label text-xs text-on-surface-variant">Flash deals ak rabè</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                    <input type="checkbox" id="notifTog-promo" class="sr-only peer" onchange="setNotifPref('promo', this.checked)"/>
-                    <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="notifTogBg-promo" style="background:#00666f"></div>
-                </label>
             </div>
         </div>
 
@@ -3751,13 +3642,7 @@
                     <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="soundToggleBg" style="background:#00666f"></div>
                 </label>
             </div>
-            <div class="flex items-center gap-2 px-4 py-3" style="border-bottom:1px solid rgba(188,201,200,.1)">
-                <p class="font-label text-[10px] font-bold text-on-surface-variant flex-1">Tande son yo</p>
-                <button onclick="playNotifSound('order')" class="px-3 py-1.5 rounded-full font-label text-[10px] font-bold text-primary active:opacity-60" style="background:rgba(0,102,111,.08)">Komand</button>
-                <button onclick="playNotifSound('chat')" class="px-3 py-1.5 rounded-full font-label text-[10px] font-bold text-primary active:opacity-60" style="background:rgba(0,102,111,.08)">Mesaj</button>
-                <button onclick="playNotifSound('promo')" class="px-3 py-1.5 rounded-full font-label text-[10px] font-bold text-primary active:opacity-60" style="background:rgba(0,102,111,.08)">Pwomo</button>
-            </div>
-            <div class="flex items-center gap-3 p-4" style="border-bottom:1px solid rgba(188,201,200,.1)">
+            <div class="flex items-center gap-3 p-4">
                 <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
                     <span class="material-symbols-outlined fi text-primary" style="font-size:18px">vibration</span>
                 </div>
@@ -3769,21 +3654,6 @@
                     <input type="checkbox" id="vibrateCheck" class="sr-only peer" checked onchange="toggleVibration(this.checked)"/>
                     <div class="w-11 h-6 rounded-full after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 transition-colors" id="vibrateToggleBg" style="background:#00666f"></div>
                 </label>
-            </div>
-            <!-- Bug 4: vibration pattern picker -->
-            <div class="flex items-center gap-3 p-4">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
-                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">graphic_eq</span>
-                </div>
-                <div class="flex-1">
-                    <p class="font-headline font-bold text-sm text-on-surface">Tip vibrasyon</p>
-                    <p class="font-label text-xs text-on-surface-variant">Klike pou tande modèl la</p>
-                </div>
-                <div class="flex items-center gap-1 rounded-full p-1" style="background:#e5e2dd">
-                    <button id="vibPat-short" onclick="setVibratePattern('short')" class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all" style="background:#00666f;color:#fff">Kout</button>
-                    <button id="vibPat-medium" onclick="setVibratePattern('medium')" class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all" style="background:transparent;color:#3d4949">Mwayen</button>
-                    <button id="vibPat-long" onclick="setVibratePattern('long')" class="px-3 py-1.5 rounded-full font-label text-[11px] font-bold transition-all" style="background:transparent;color:#3d4949">Long</button>
-                </div>
             </div>
         </div>
 
@@ -11221,12 +11091,9 @@
             toast(on ? 'Mode Lite aktif — Ekonomize data' : 'Mode nòmal — Foto ap chaje');
         }
 
-        // Init Lite Mode au démarrage
+        // Init Lite Mode au démarrage (otomatik — pa gen toggle nan Paramèt ankò)
         function initLiteMode() {
-            if (LITE_MODE) {
-                const check = document.getElementById('liteModeCheck');
-                if (check) { check.checked = true; toggleLiteMode(true); }
-            }
+            if (LITE_MODE) toggleLiteMode(true);
         }
 
         // Override prodPlaceholder pour Lite Mode
