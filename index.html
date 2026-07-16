@@ -490,8 +490,8 @@
             transform: translateY(0);
         }
 
-        /* Fèy plen ekran: notifikasyon + verifikasyon vandè */
-        #notifSheet, #verifySheet {
+        /* Fèy plen ekran: notifikasyon + verifikasyon vandè + anons platfòm */
+        #notifSheet, #verifySheet, #announceSheet {
             top: 0;
             height: 100dvh;
             max-height: 100dvh;
@@ -3233,38 +3233,41 @@
     <!-- ══ REFERRAL SHEET — envit yon zanmi ══ -->
     <div class="sheet" id="referralSheet">
         <div class="handle"></div>
-        <div class="text-center mb-4">
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 amb" style="background:rgba(151,66,43,.08)">
-                <span class="material-symbols-outlined fi" style="font-size:26px;color:#97422b">card_giftcard</span>
-            </div>
+        <div class="flex items-center justify-center gap-2 mb-4">
+            <span class="material-symbols-outlined fi" style="font-size:24px;color:#97422b">card_giftcard</span>
             <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Envit yon zanmi</h3>
-            <p class="font-body text-sm text-on-surface-variant mt-1 leading-relaxed">
-                Zanmi w lan jwenn <strong>10%</strong> rabè sou premye kòmand li — epi lè li achte,
-                <strong>ou menm ou touche 100 HTG</strong> rabè sou pwochen kòmand pa w. Toulède genyen! 🎁
-            </p>
         </div>
-        <div id="referralCodeBox" class="p-4 rounded-xl text-center mb-2" style="background:rgba(0,102,111,.08);border:1.5px solid #00666f">
-            <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-1">Kòd refè ou</p>
-            <p id="referralCode" class="font-headline font-extrabold text-2xl text-primary" style="letter-spacing:.1em">…</p>
+        <!-- Toulède genyen: de kat valè olye yon paragraf -->
+        <div class="flex gap-2 mb-3">
+            <div class="flex-1 py-3 px-2 rounded-xl text-center amb" style="background:rgba(151,66,43,.07)">
+                <p class="font-headline font-extrabold text-2xl" style="color:#97422b">-10%</p>
+                <p class="font-label text-[10px] font-bold text-on-surface-variant mt-0.5">pou zanmi w<br/>sou premye kòmand li</p>
+            </div>
+            <div class="flex-1 py-3 px-2 rounded-xl text-center amb" style="background:rgba(0,102,111,.07)">
+                <p class="font-headline font-extrabold text-2xl text-primary">+100 HTG</p>
+                <p class="font-label text-[10px] font-bold text-on-surface-variant mt-0.5">pou ou<br/>lè li achte</p>
+            </div>
         </div>
-        <p id="referralRemaining" class="font-label text-xs text-center text-on-surface-variant mb-4"></p>
-        <div class="space-y-2 mb-4">
-            <button id="referralCopyBtn" onclick="referralCopy()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">
-                <span class="material-symbols-outlined" style="font-size:18px">content_copy</span>
-                Kopye lyen envitasyon an
-            </button>
-            <button id="referralWhatsBtn" onclick="referralShareWhats()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:#25D366;color:#fff">
-                <span class="material-symbols-outlined" style="font-size:18px">chat</span>
-                Pataje sou WhatsApp
-            </button>
-            <button id="referralSmsBtn" onclick="referralShareSms()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">
-                <span class="material-symbols-outlined" style="font-size:18px">sms</span>
-                Voye pa SMS
-            </button>
+        <!-- Biyè kado: kòd la prezante tankou yon koupon -->
+        <div id="referralCodeBox" class="rounded-xl text-center mb-4" style="border:1.5px dashed #00666f;background:rgba(0,102,111,.05)">
+            <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant pt-3">Kòd refè ou</p>
+            <p id="referralCode" class="font-headline font-extrabold text-3xl text-primary" style="letter-spacing:.08em">…</p>
+            <p id="referralRemaining" class="font-label text-[10px] text-on-surface-variant pb-3"></p>
         </div>
-        <button onclick="closeSheets()" class="w-full py-3.5 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:#e5e2dd;color:#1c1c19">
-            Fèmen
+        <button id="referralWhatsBtn" onclick="referralShareWhats()" class="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-headline font-bold text-sm active:scale-95 mb-2" style="background:#25D366;color:#fff">
+            <span class="material-symbols-outlined" style="font-size:18px">chat</span>
+            Pataje sou WhatsApp
         </button>
+        <div class="flex gap-2">
+            <button id="referralCopyBtn" onclick="referralCopy()" class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">
+                <span class="material-symbols-outlined" style="font-size:18px">content_copy</span>
+                Kopye lyen
+            </button>
+            <button id="referralSmsBtn" onclick="referralShareSms()" class="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-headline font-bold text-sm active:scale-95" style="background:rgba(0,102,111,.08);color:#00666f">
+                <span class="material-symbols-outlined" style="font-size:18px">sms</span>
+                SMS
+            </button>
+        </div>
     </div>
 
     <!-- ══ ADDRESSES SHEET — manage saved addresses (kay, biwo, …) ══ -->
@@ -3435,7 +3438,10 @@
 
     <!-- ══ ADMIN ANNOUNCEMENTS SHEET ══ -->
     <div class="sheet" id="announceSheet">
-        <div class="handle"></div>
+        <button onclick="closeSheets()" aria-label="Fèmen anons yo"
+            class="w-8 h-8 -ml-1 mb-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+            <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+        </button>
         <div class="text-center mb-4">
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 amb" style="background:rgba(0,102,111,.08)">
                 <span class="material-symbols-outlined fi text-primary" style="font-size:26px">campaign</span>
@@ -7708,7 +7714,7 @@
             document.getElementById('fab').classList.add('hidden');
             document.getElementById('backbtn').classList.remove('hidden');
             document.getElementById('backbtn').classList.add('flex');
-            document.getElementById('toptitle').textContent = 'Kliyan Abonnen';
+            document.getElementById('toptitle').textContent = 'Abonnen';
             document.getElementById('headerLogoWrap').querySelector('#headerLogo').style.display = 'none';
             document.getElementById('toptitle').style.display = '';
             const el = document.getElementById('followersContent');

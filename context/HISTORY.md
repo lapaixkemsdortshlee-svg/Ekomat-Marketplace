@@ -7,6 +7,30 @@
 
 ---
 
+## 2026-07-16 : Session polish UX nocturne — fèy plen ekran, signature sonore, Paramèt allégé, Kreyòl sèlman (7 PR : #173 à #179)
+
+Session lancée par `/prime` (branche `claude/prime-eis8km`, on repart de `main` à chaque PR — 6 PR mergées d'affilée par Thrasher pendant la session, la 7e ouverte en fin). QA habituelle avant chaque push : syntaxe JS, Playwright 12/12, contrôle DOM/géométrie au navigateur sandbox (sans style CDN), QA visuelle finale sur le preview Vercel côté Thrasher.
+
+**Discussion stratégie en ouverture (sparring, pas de code) :** avis franc demandé sur Ekomat. Verdict donné : rails techniques solides mais produit sans business encore (zéro transaction réelle, MonCash pas branché — le vrai bloqueur) ; le concurrent réel est WhatsApp, l'amorçage vendeurs est le risque n°1 ; changement e-com en Haïti possible mais local et lent, pas de big bang. **Synthèse clé sur les stores :** Google Play impose aux nouveaux comptes un test fermé (~20 testeurs, 14 jours) avant la prod → le processus Play Store COMMENCE par exactement le pilote fermé déjà décidé. Reco : créer le compte Google Play ($25) + builder l'.aab maintenant, faire le pilote 2-3 vendeurs DANS le closed testing ; iOS plus tard (diaspora). Thrasher d'accord.
+
+**PR mergées :**
+- **#173 — Fèy Notifikasyon plen ekran.** Règle CSS `#notifSheet` (100dvh, coins carrés, safe-area top, `box-sizing:border-box` explicite car le preflight Tailwind CDN peut ne pas être encore chargé) ; handle retiré, bouton retour `arrow_back` + aria-label Kreyòl (pattern Sant Èd).
+- **#174 — Bouton retour fèy Rechèch** (même pattern, la feuille reste bottom-sheet 85vh).
+- **#175 — Signature sonore Ekomat.** `playNotifSound(type)` remplace le bip 880 Hz : 4 motifs Web Audio synthétisés (order=cha-ching montant, chat=pop-ping, promo=rebond, system=note douce 880 Hz) ; **chaque son finit par un « eko »** (dernière note répétée plus doucement) = signature de marque. AudioContext partagé (l'ancien code en créait un par bip sans le fermer, plafond navigateur ~6). Appelants typés (chat realtime, notifs realtime `n.type`, admin orders, FCM foreground `payload.data.type`, follow). WAV d'aperçu générés (OfflineAudioContext headless) et envoyés à Thrasher, validés à l'oreille. Le son « app fermée » style WhatsApp = **impossible en PWA** (le navigateur ne laisse pas choisir le son des push) ; noté pour le build natif Android (fichier son + notification channel), les motifs serviront de base.
+- **#176 — Fèy verifikasyon vandè plen ekran** (rejoint la règle CSS de #173) ; étape 1 reçoit un bouton fermer, étapes 2-4 gardent leurs retours internes.
+- **#177 — Paramèt allégé (-133 lignes).** Retirés de l'UI (fonctions actives en auto avec défauts) : Mode Lite (`initLiteMode` ne dépend plus de la checkbox), Push FCM (activation reste via la barre FCM de la fèy Notifikasyon), Silans Lannwit, Notifikasyon detaye (4 toggles), Tande son yo, Tip vibrasyon. Reste : Son Notifikasyon + Vibrasyon. Toutes les références JS étaient null-guardées, vérifié runtime.
+- **#178 — Retrait fonction langue (-185 lignes), Kreyòl sèlman.** La traduction FR couvrait ~90 chaînes sur des milliers → mode Français = app qui a l'air cassée (constat Thrasher, validé). Retirés : rangée Paramèt, `LANG`, `TRANSLATIONS`, `t()`, dictionnaires I18N, `applyLangToDom`, `setLang`. Les `toLocale*('fr')` (formatage dates/nombres) intacts. Boot testé avec `aym_lang=fr` hérité : aucun frè, app reste Kreyòl.
+- **#179 — Refonte « Envit yon zanmi » + titre Abonnen + Anons plen ekran.** (1) Sheet parrainage redessiné (retour Thrasher « trop moche trop ekriti ») : le paragraphe remplacé par **2 cartes valeur** (-10% rust « pou zanmi w » / +100 HTG teal « pou ou »), code présenté en **coupon à bordure dashed** (avec « Rete X/3 » intégré), WhatsApp en CTA principal, Kopye+SMS demi-largeur, bouton Fèmen retiré (scrim + handle suffisent) — tous les ids JS conservés. (2) Titre header « Kliyan Abonnen » (qui cassait sur 2 lignes) → « Abonnen ». (3) `#announceSheet` (admin) rejoint la règle plein écran + bouton fermer.
+
+**Notes :**
+- Le SW sert le HTML en network-first → tout arrive aux appareils à la prochaine ouverture, aucun bump nécessaire cette session.
+- En fin de session, l'outil `send_later` (check-ins horaires des PR) s'est mis à demander une approbation → check-ins non armés pour #178/#179 ; la surveillance webhook des PR fonctionne toujours.
+- Question de suivi posée à Thrasher : d'autres feuilles candidates au plein écran (panier ? fiches Komand ?) à traiter en lot.
+
+**Reste côté Thrasher :** QA visuelle du preview (#179), merger ; QA sons sur appareil ; et les chantiers de fond en attente : audit chemin-critique (toujours prioritaire), compte Google Play + build .aab, credentials MonCash.
+
+---
+
 ## 2026-07-12 (session 2) : Session UI/UX intensive — Help Center + refonte fiches Komand + cartes profils (5 PR : #164 à #168)
 
 Session lancée par `/prime` (branche `claude/prime-5m9n8n`, on repart de `main` à chaque PR — 5 PR courtes mergées d'affilée par Thrasher). Toutes les modifs dans `index.html` (single-file), Kreyòl, testées (syntaxe JS 8/8 + Playwright 12/12) avant merge. Le style CDN (Tailwind/Material Symbols) n'est pas dispo dans le sandbox, donc QA structurelle en local (audit DOM navigateur) + QA visuelle finale sur le preview Vercel côté Thrasher.
