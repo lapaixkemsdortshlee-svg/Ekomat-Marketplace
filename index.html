@@ -499,6 +499,17 @@
             box-sizing: border-box;
             border-radius: 0;
             padding-top: calc(env(safe-area-inset-top) + 1rem);
+            /* iOS: lè bar Safari a kache/parèt sou scroll, 100dvh chanje →
+               transform:translateY(100%) rekalkile → .sheet transition an fè
+               fèy la "flash" yon fraksyon segond. visibility:hidden lè fèmen
+               anpeche l penn nèt (pa gen flash); delè a kenbe animasyon an. */
+            visibility: hidden;
+            transition: transform .36s cubic-bezier(.32, .72, 0, 1), visibility 0s linear .36s;
+        }
+
+        #notifSheet.on, #verifySheet.on, #announceSheet.on, #settingsSheet.on, #helpSheet.on, #editProfileSheet.on, #editProductSheet.on, #escrowPaySheet.on {
+            visibility: visible;
+            transition: transform .36s cubic-bezier(.32, .72, 0, 1), visibility 0s linear 0s;
         }
 
         .handle {
@@ -1608,7 +1619,7 @@
                 style="background:linear-gradient(120deg,#00666f,#00818c)">
                 <div class="px-5 py-4 relative z-10">
                     <p class="font-label text-[11px] font-bold uppercase tracking-[.12em] text-[#8cf2ff] mb-1">
-                        RecommendationEngine · Aktif</p>
+                        Rekòmande pou ou</p>
                     <p class="font-headline font-extrabold text-white text-lg leading-tight">Pwodwi pou ou<br />baze sou
                         favori ou </p>
                 </div>
