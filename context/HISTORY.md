@@ -7,6 +7,22 @@
 
 ---
 
+## 2026-07-17 : Onglet Admin fantôme — vraie cause = cascade CSS cassée par la précompilation Tailwind (PR #187, #192, #193)
+
+Bug tenace signalé par Thrasher : l'onglet **Admin** restait visible dans la nav d'un compte **vendeur** (confirmé `role=seller` en base). **Trois PR** pour le régler, dont deux ratées — leçon importante.
+
+**#187** (logique de rôle : `applyRoleNav` réconcilié dans updateTopBar) et **#192** (labels nav 10→9px + SW bump) : **n'ont rien changé.** Erreur de méthode : mes tests headless « passaient » (5 onglets, admin caché) parce que mon harness **déplaçait le lien tw.css** sans que je m'en rende compte — ce qui masquait le vrai bug.
+
+**#193 — vraie cause, reproduite sur le VRAI fichier :** régression du **point 6 (précompilation Tailwind)**. Le `<link assets/tw.css>` (ligne 42) charge AVANT le `<style>` inline (ligne 58). `.hidden{display:none}` (tw.css) et `.ntab{display:flex}` (inline) ont **la même spécificité** → la source plus tardive gagne → `.ntab` gagne → **la classe `hidden` était sans effet** sur les onglets nav. `applyRoleNav` posait bien la classe, mais elle était impuissante. D'où l'échec des 2 fixes précédents (ils géraient une classe morte).
+**Fix :** `.ntab.hidden{display:none}` dans le style inline (2 classes = spécificité supérieure, gagne définitivement). Sans `!important` (33 usages de `style.display` en JS le casseraient), sans réordonner le lien (risque preflight). Vérifié sur le vrai fichier : vendeur = 5 onglets Admin caché, admin = 4 onglets. SW v39→v40.
+
+**LEÇONS DURABLES :**
+1. **Toujours reproduire un bug UI en servant le VRAI fichier tel quel** (mêmes positions de `<link>`/`<style>`). Un harness qui réécrit le HTML peut masquer un bug de cascade.
+2. **Dette connue (landmine) :** depuis la précompilation, tw.css chargeant avant le style inline, TOUTE classe custom qui pose `display:` peut battre les utilitaires Tailwind display (`.hidden`, `.flex`…) par ordre de source. Seul `.ntab` était touché (audité), mais à surveiller. Fix propre à terme (risqué, pas maintenant) : charger tw.css APRÈS le style inline avec QA complète du preflight.
+3. Ne pas modifier de zones non demandées (la passe lisibilité #185 avait agrandi les labels nav sans besoin — corrigé #192).
+
+---
+
 ## 2026-07-17 : Incident sécurité — tokens OAuth Google en clair dans error_logs (PR #189)
 
 Signalé par Thrasher (recommandation transmise). **2 lignes** de `error_logs` (2026-07-02 et 07-03) contenaient `access_token` + `refresh_token` Google **en clair**, toutes deux du même crash `TypeError … p.sizes.length`.
