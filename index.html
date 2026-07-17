@@ -6652,9 +6652,10 @@
         }
 
         function callSeller() {
-            if (!A.chatSellerPhone) { toast('Nimewo telefòn vandè pa disponib'); return; }
-            const phone = A.chatSellerPhone.replace(/\s/g, '');
-            window.open('tel:' + phone, '_self');
+            // Apèl vwa nan app la (style WhatsApp) an devlopman — v.beta.
+            // Nou pa konpoze nimewo vandè a dirèkteman: sa pwoteje vi prive li
+            // epi chat tèks la rete kanal prensipal pou kontakte vandè a.
+            toast('Apèl vwa ap vini byento — nan beta pou kounye a. Sèvi ak chat la pou kontakte vandè a.');
         }
 
         function renderChatMsgs(pid) {
