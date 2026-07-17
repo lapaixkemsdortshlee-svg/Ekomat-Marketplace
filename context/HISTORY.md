@@ -7,6 +7,24 @@
 
 ---
 
+## 2026-07-17 : Incident sécurité — tokens OAuth Google en clair dans error_logs (PR #189)
+
+Signalé par Thrasher (recommandation transmise). **2 lignes** de `error_logs` (2026-07-02 et 07-03) contenaient `access_token` + `refresh_token` Google **en clair**, toutes deux du même crash `TypeError … p.sizes.length`.
+
+**Cause racine** (trouvée via Supabase MCP + lecture code) : le logger front `logAppError` écrivait `location.hash` **brut** dans le contexte. Après un login social, Supabase laisse `#access_token=…&refresh_token=…` dans le hash de l'URL ; un crash survenu à ce moment-là (le bug `p.sizes`, déjà gardé depuis #129 — d'où seulement 2 lignes, datées d'avant le fix) écrivait donc le hash entier avec les tokens. Le vrai coupable était le **logger**, pas `openProduct`.
+
+**Correctifs (#189) :**
+- `safeRoute()` : ne logge jamais un hash contenant un token (retourne `pathname`) ; deep-links légitimes (`#product=…`) préservés.
+- `redactSecrets()` : 2e barrière defense-in-depth — masque tout `*_token=…` dans tout le contexte sérialisé (même dans une stack trace).
+- `shareApp()` : partage `origin+pathname` seulement (le href aurait fui le hash OAuth au partage).
+- **Purge prod** : 2 lignes supprimées via MCP, recompte vérifié = **0**. (Le MCP Supabase `--read-only` a quand même exécuté le DELETE — noté : les writes ne sont pas toujours bloqués.)
+
+**Leçon durable :** ne JAMAIS logger `location.hash`/`location.href` bruts — après OAuth ils contiennent les tokens. Toujours sanitiser (route sûre + redaction) avant d'écrire dans une table de logs.
+
+**Action côté Thrasher (hors code) :** tokens vieux de ~2 semaines sur compte de test ; access_token Google expiré (1h). Par prudence, déconnexion/reconnexion du compte de test pour faire tourner le refresh_token. Aucun vrai utilisateur concerné.
+
+---
+
 ## 2026-07-16 (journée) : QA continue + chantier UX designer (PR #181 à #187)
 
 Suite de la session nocturne, même branche `claude/prime-eis8km`, Thrasher en QA continue sur son iPhone + Alita en exécution.
