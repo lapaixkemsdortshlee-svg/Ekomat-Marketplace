@@ -13794,7 +13794,8 @@
             const shareData = {
                 title: 'Ekomat',
                 text: 'Achte & Vann an Ayiti! Telechaje Ekomat, marketplace #1 an Ayiti.',
-                url: window.location.href
+                // origin+pathname sèlman — pa janm pataje hash OAuth la (token)
+                url: window.location.origin + window.location.pathname
             };
             if (navigator.share) {
                 navigator.share(shareData).catch(() => {});
@@ -14472,6 +14473,25 @@
         const seen = new Map();          // key -> last-sent ms (dedupe)
         let sent = 0;
         const MAX_PER_SESSION = 20;
+        // Sekirite (ensidan 2026-07-16): Supabase kite #access_token=…&
+        // refresh_token=… nan hash URL la apre yon login sosyal. Anvan, yon
+        // erè ki te rive nan moman sa a te ekri hash konplè a (ak token yo an
+        // klè) nan error_logs. safeRoute() pa janm logge yon hash ki gen token;
+        // redactSecrets() se yon dezyèm baryè sou tout kontèks la.
+        const TOKEN_RE = /(access_token|refresh_token|provider_token|id_token)=/i;
+        function safeRoute() {
+            const h = location.hash || '';
+            if (TOKEN_RE.test(h)) return location.pathname;
+            return h || location.pathname;
+        }
+        function redactSecrets(obj) {
+            try {
+                const s = JSON.stringify(obj).replace(
+                    /((?:access_token|refresh_token|provider_token|id_token)=)[^"&\s\\]+/gi,
+                    '$1[REDACTED]');
+                return JSON.parse(s);
+            } catch (_) { return obj; }
+        }
         function logAppError(kind, message, extra) {
             try {
                 if (!db || !message || sent >= MAX_PER_SESSION) return;
@@ -14481,9 +14501,9 @@
                 if (seen.has(key) && now - seen.get(key) < 60000) return;
                 seen.set(key, now);
                 sent++;
-                const ctx = Object.assign(
-                    { kind, ua: navigator.userAgent, path: location.hash || location.pathname },
-                    extra || {});
+                const ctx = redactSecrets(Object.assign(
+                    { kind, ua: navigator.userAgent, path: safeRoute() },
+                    extra || {}));
                 db.rpc('log_error', { p_source: 'web', p_message: msg, p_context: ctx })
                     .then(function(){}, function(){});
             } catch (_) { /* never let logging throw */ }
