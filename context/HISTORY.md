@@ -7,6 +7,16 @@
 
 ---
 
+## 2026-07-17 (fin de session) : flash feuille plein écran + bannière Kreyòl + FAB écarté + règle de discipline (PR #194, #195)
+
+Derniers correctifs QA de Thrasher, puis clôture.
+- **#194** : (1) **flash « ← Modifye Pwodwi » au scroll** — les feuilles plein écran (100dvh) flashaient une fraction de seconde à chaque scroll iOS (la barre Safari change `100dvh` → `transform:translateY(100%)` recalculé → `.sheet transition` anime). Fix : `visibility:hidden` quand fermée (ne peut plus peindre) + délai de transition pour garder l'animation. Effet de bord de mon passage plein écran (point 4). (2) Bannière feed `RecommendationEngine · Aktif` → **`Rekòmande pou ou`** (Kreyòl).
+- **#195** : **FAB « + » écarté de la nav** — mesuré : nav 86px de haut, FAB à `bottom:82px` → chevauchement de 3px. Monté à `bottom:100px` (gap 14px). + **Règle de discipline de debug** ajoutée à CLAUDE.md (recadrage Thrasher) : reproduire le bug sur le vrai fichier d'abord ; un fix qui ne change rien = mauvaise couche, remonter à la cause racine ; ne pas s'y reprendre à 3 fois. + cette entrée. SW v41→v42.
+
+**Bilan des deux jours (16→17 juillet) : ~23 PR mergées (#173 à #195).** Polish UX, chantier designer 6 points, incident sécurité tokens OAuth, nettoyage repo, et 3 régressions que MES changements ont créées (nav labels, cascade CSS, flash plein écran) — toutes corrigées. Thrasher satisfait en clôture. **Prioritaire prochaine session : audit chemin-critique (toujours non entamé).**
+
+---
+
 ## 2026-07-17 : Onglet Admin fantôme — vraie cause = cascade CSS cassée par la précompilation Tailwind (PR #187, #192, #193)
 
 Bug tenace signalé par Thrasher : l'onglet **Admin** restait visible dans la nav d'un compte **vendeur** (confirmé `role=seller` en base). **Trois PR** pour le régler, dont deux ratées — leçon importante.
