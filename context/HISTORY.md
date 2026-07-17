@@ -7,6 +7,34 @@
 
 ---
 
+## 2026-07-17 (session 2) : AUDIT CHEMIN-CRITIQUE ✅ + durcissement RLS + protocole pilote + carte plein écran + bouton appel beta (4 PR : #196 à #199)
+
+Session lancée par `/prime` (branche `claude/prime-nx4mqj`, on repart de `main` à chaque PR, les 4 mergées par Thrasher dans la session).
+
+**QA UI (retours iPhone de Thrasher) :**
+- **#196 — Kat lokalizasyon plen ekran** : la feuille « Voye Lokalisasyon » (Chèche pozisyon) était difficile à manœuvrer (carte Leaflet 220px dans un bottom-sheet). Décision Thrasher via AskUserQuestion : « les deux » → feuille passée dans la famille plein écran (100dvh) ET carte 220→300px avec bouton fullscreen dédié (`.map-full` fixed inset:0, `invalidateSize()` après resize, sortie propre via `closeSheets`). Aucune classe Tailwind neuve (pas de rebuild tw.css), pas de bump SW.
+- **#197 — Bouton apèl chat = mesaj beta + nimewo vandè maske.** Décisions Thrasher : chat texte = canal principal ; appels VoIP type WhatsApp REPORTÉS après le build natif (analyse : en PWA impossible de sonner app fermée — CallKit/ConnectionService natifs requis ; serveur TURN payant indispensable en mobile-à-mobile Haïti ; hors chemin critique). `callSeller` ne compose plus `tel:` → toast Kreyòl « Apèl vwa ap vini byento… nan beta ». Gain confidentialité : le numéro du vendeur n'est plus jamais passé au dialer (reste capturé en état pour le futur VoIP).
+
+**#198 — AUDIT CHEMIN-CRITIQUE (l'objectif prioritaire, enfin fait) + durcissement RLS `orders`.**
+Audit des 6 rails sur le VRAI code + la VRAIE base (MCP lecture seule), livré dans `docs/AUDIT-CHEMIN-CRITIQUE.md`.
+- **Constat central : le pilote n'est PAS bloqué par l'API MonCash.** Le rail argent est manuel et fonctionne E2E (acheteur → MonCash admin 50936803970 → vérif ref → OTP → admin libère + paie le vendeur à la main ; `moncashSendPayout` = stub assumé). **3 commandes ont déjà atteint `released` en prod.** L'API Digicel = automatisation future, pas un prérequis.
+- **5 rails verts** : escrow RPC (FOR UPDATE, idempotence, verrou d'états finaux, matrice par rôle, audit admin_actions), machine à états (client 100% via RPC, zéro write direct sur orders — vérifié), litiges (auto-litige 5 OTP ratés + alerte anti-fraude ≥2 litiges/30j), notifications role-aware, vérif vendeur par CIN/Paspò (1 approuvée + 1 rejetée réelles). Bonus : avis impossibles sans achat réel (RLS EXISTS).
+- **1 bloqueur 🔴 trouvé ET corrigé** : les policies RLS UPDATE sur `orders` (`orders_update` + `orders_update_participants`) permettaient à un acheteur/vendeur de modifier `status` en DIRECT, contournant toute la machine à états — et pouvant déclencher `trg_grant_referral_reward` (vérifié : aucun trigger de garde). Migration `20260717140000_harden_orders_update_rls.sql` : UPDATE admin-only (`orders_update_admin` via `is_admin()`), doublon SELECT retiré. Sûr car le client n'écrit jamais orders en direct.
+- **Le workflow db-migrate a encore échoué au merge** (bug auth SASL historique) : vérifié post-merge que la migration n'était PAS appliquée → appliquée via MCP `apply_migration`, puis re-vérifié l'état final des policies en prod. ✅
+- **Décisions Thrasher** : SMS OTP vendeur **OBLIGATOIRE** au pilote (provider Twilio/Vonage à configurer au dashboard — code déjà prêt, `smsRequestOtp`/`smsVerifyOtp`, 0 téléphone vérifié en base = provider absent) ; jaunes cosmétiques notés (statut `completed` jamais atteint, `submitRating` n'utilise pas `notify()`).
+
+**#199 — Protocole du pilote fermé** (`docs/PROTOCOLE-PILOTE-FERME.md`), skill `onboarding` appliqué :
+Portes G1-G5 (G1 RLS ✅ ; restent **G2 provider SMS + G3 test OTP réel** côté Thrasher ; G4/G5 opérationnels), casting (2-3 vendeurs de confiance + 1-2 acheteurs contrôlés par vendeur — PAS le compte admin, juge et partie ; montants 500-2 000 HTG), script onboarding vendeur 5 étapes (~30-45 min, « do don't show », vérif en base à chaque étape), transaction témoin supervisée étape par étape (règle d'or : tout passe par l'app, jamais de contournement), mesures (SQL prêt sur les timestamps `paid_at`→`released_at` ; cibles : vérif admin <1h, payout <24h), plan d'incident par étape (jamais re-payer ; jamais remettre le produit sans OTP validé ; un litige = test réussi du rail litige), critères de sortie (≥3 `released` sur ≥2 vendeurs → closed testing Google Play avec ces mêmes vendeurs).
+
+**LEÇONS DURABLES :**
+1. **Une machine à états protégée par RPC SECURITY DEFINER ne vaut rien si une policy RLS UPDATE permissive autorise le write direct sur la même table.** Auditer toujours policies + triggers de garde ENSEMBLE (ici : zéro trigger de garde, policy participants = contournement total). À re-vérifier sur les autres tables sensibles.
+2. **Vérifier qu'une migration mergée est réellement appliquée** (elle ne l'était pas — db-migrate cassé). Le MCP `apply_migration` reste le canal fiable.
+3. Agentmemory indisponible cette session (serveur MCP jamais connecté) → leçons consignées ici en attendant de les semer au prochain accès.
+
+**Reste côté Thrasher (le goulot n'est plus technique) :** G2 configurer le provider SMS (dashboard, coût), G3 test OTP réel sur numéro Digicel/Natcom, recruter les 2-3 vendeurs pilotes + acheteurs contrôlés. Ensuite : dérouler le protocole.
+
+---
+
 ## 2026-07-17 (fin de session) : flash feuille plein écran + bannière Kreyòl + FAB écarté + règle de discipline (PR #194, #195)
 
 Derniers correctifs QA de Thrasher, puis clôture.
