@@ -7,7 +7,7 @@
 
 ---
 
-## 2026-07-16 (journée) : QA continue + chantier UX designer (PR #181 à #185)
+## 2026-07-16 (journée) : QA continue + chantier UX designer (PR #181 à #187)
 
 Suite de la session nocturne, même branche `claude/prime-eis8km`, Thrasher en QA continue sur son iPhone + Alita en exécution.
 
@@ -26,12 +26,21 @@ Suite de la session nocturne, même branche `claude/prime-eis8km`, Thrasher en Q
 - **Point 6 — Tailwind précompilé** : `assets/tw.css` (24 Ko min, 5,4 Ko gzip) remplace le CDN runtime (~110 Ko JS + JIT à chaque ouverture) dans `index.html`. `tailwind.config.cjs` + `npm run build:css` ; règle dure dans CLAUDE.md : tout changement de classes = rebuild + commit du CSS. Audit : zéro classe concaténée dynamiquement. SW bump v38 (+ précache tw.css). Choix pipeline : artefact committé, PAS de buildCommand Vercel (comportement outputDirectory non garanti pour un site « Other » — risque prod refusé). onboarding.html et /l/* gardent leur CDN.
 - **CodeQL rouge sur #185** = baseline re-attribution connue (gros diff), vérifié : aucun nouveau sink dans le diff, documenté en commentaire PR.
 
+**Suite QA (#186, #187) :**
+- **#186 — Fenêtre MonCash plein écran** : le tunnel de #185 était encore un bottom-sheet ; passé en plein écran (même famille que Notifikasyon/Verifikasyon) + bouton retour. Note process : le commit avait raté le merge de #185 de quelques secondes → ré-expédié proprement depuis main dans sa propre PR.
+- **#187 — Fix onglet Admin fantôme + bouton Plis opsyon + vérif animations.** Trois retours QA, investigués au skill `systematic-debugging` :
+  - **Bug critique (onglet ADMIN visible pour un vendeur)** : vérité terrain Supabase = « Berlly Lapaix » est bien `role=seller`. Cause racine : visibilité de la nav fixée **une seule fois** dans `bootApp` ; sur mauvaise connexion (« 0,0 Ko/s ») la lecture live timeout → fallback sur le rôle **caché** (admin d'un autre compte de test) → onglet admin affiché et jamais re-caché. Fix : `applyRoleNav()` (fonction pure du rôle authentifié) appelée dans `bootApp` ET `updateTopBar` (qui tourne avec le vrai rôle). Testé : admin stale → seller ⇒ admin caché.
+  - **Bouton « Plis opsyon »** (Pibliye) : pilule pointillée qui débordait → rangée propre (pastille icône + titre + sous-titre + chevron).
+  - **« App statique / pas d'animations » = NON-régression, leçon de vérif** : mes premiers greps sur `tw.css` cherchaient la forme *source* (`scale(.98)`, `text-[11px]`) au lieu de la forme *compilée* (`--tw-scale-x:.98`, sélecteur à crochets échappés `.text-\[11px\]`) → faux positif alarmant. Le CSS précompilé contient bien TOUT (active:scale, transitions, tailles arbitraires) ; SW v38 précache tw.css. Le rendu figé chez Thrasher est transitoire : ancien cache + CDN injoignable sur connexion morte ; se répare à la 1re ouverture avec réseau. Scan console des flux vendeur : zéro erreur applicative.
+
+**Leçon durable (à retenir) :** pour vérifier qu'une classe Tailwind existe dans le CSS **compilé**, grepper la forme de sortie (sélecteurs à crochets/points échappés `\[`, `\.` ; `scale` → `--tw-scale-x`), jamais la forme source — sinon faux négatif garanti.
+
 **Notes :**
 - Un avis « designer UX » complet a précédé le chantier (verdict : garder identité/stepper/nav, prioriser tunnel paiement + lisibilité + perf ; ne PAS refondre globalement ; l'admin reste fonctionnel-seulement).
 - L'outil de check-ins planifiés (send_later) est devenu indisponible/soumis à approbation en cours de session — surveillance des PR par webhooks seulement.
 - `/find-skills` exécuté sur demande : rien de pertinent dans l'écosystème pour tailwind/checkout — skills locaux suffisants.
 
-**Reste côté Thrasher :** QA du preview #185 (tunnel MonCash de bout en bout, Paramèt/edit plein écran, formulaire Pibliye, vitesse de premier chargement) puis merge. Les chantiers de fond inchangés : audit chemin-critique, compte Google Play + .aab, credentials MonCash.
+**Reste côté Thrasher :** test décisif = **rouvrir l'app une fois AVEC réseau** (installe le SW v38, met tw.css en cache) → doit corriger d'un coup l'onglet Admin fantôme sur le compte vendeur ET la sensation de figé ; si l'onglet Admin persiste après ça, signal d'une autre source de rôle stale à creuser. Chantiers de fond inchangés et toujours prioritaires : **audit chemin-critique** (non entamé), compte Google Play + build .aab, credentials MonCash. Bilan de la journée : 15 PR mergées (#173 à #187).
 
 ---
 
