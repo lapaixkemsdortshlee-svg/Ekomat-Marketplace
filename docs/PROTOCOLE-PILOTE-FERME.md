@@ -17,12 +17,12 @@
 | # | Porte | État | Qui |
 |---|---|---|---|
 | G1 | Durcissement RLS `orders` en prod (UPDATE participants retiré) | ✅ fait (PR #198, appliqué + vérifié 2026-07-17) | — |
-| G2 | Provider SMS configuré (Supabase → Auth → Providers → Phone, Twilio/Vonage) — décision : OTP vendeur obligatoire | ⬜ | Thrasher (dashboard, coût) |
-| G3 | Test SMS réel : recevoir + valider un OTP sur un numéro Digicel/Natcom réel | ⬜ | Thrasher + Alita (vérif `phone_verified=true` en base) |
+| G2 | ~~Provider SMS configuré~~ **REPORTÉ** (décision 2026-07-17 : abonnement Twilio pas maintenant) — le pilote tourne sur la vérification CIN/Paspò seule | ⏸ reporté | — |
+| G3 | ~~Test SMS réel~~ **REPORTÉ** (dépend de G2) | ⏸ reporté | — |
 | G4 | Compte admin opérationnel : accès MonCash marchand au numéro `50936803970`, solde suffisant pour rembourser si litige | ⬜ | Thrasher |
-| G5 | Numéro MonCash payout renseigné pour CHAQUE vendeur pilote (`profiles.moncash_number`) — sinon `adminReleaseEscrow` bloque (« Vandè a pa antre nimewo MonCash li ») | ⬜ | vendeurs (guidés à l'onboarding) |
+| G5 | Numéro MonCash payout renseigné pour CHAQUE vendeur pilote (`profiles.moncash_number`) — saisi À LA MAIN à l'onboarding (pas d'auto-remplissage OTP tant que G2 est reporté) — sinon `adminReleaseEscrow` bloque (« Vandè a pa antre nimewo MonCash li ») | ⬜ | vendeurs (guidés à l'onboarding) |
 
-G2/G3 sont les seules choses qui manquent techniquement. G4/G5 sont opérationnelles.
+**Plus aucune porte technique.** G4/G5 sont opérationnelles ; la seule action restante avant de dérouler = recruter.
 
 ---
 
@@ -56,14 +56,16 @@ atteindre son « aha » — *premye pwodwi pibliye* — en une séance, et son v
 **Étape A — Kont (5 min).** Inscription (email ou Google), choix wòl « Vandè ».
 Vérifier en base : `profiles.role='seller'`.
 
-**Étape B — Verifikasyon (10 min + délai admin).** CIN oswa Paspò + OTP SMS
-(G2/G3 faits). Annoncer : « verifikasyon an ka pran 24-48 èdtan, men pou pilòt
-la m ap apwouve w menm jou a ». Admin approuve dans la journée.
-Vérifier : `verified_seller=true`, `phone_verified=true`.
+**Étape B — Verifikasyon (10 min + délai admin).** CIN oswa Paspò (l'OTP SMS
+est reporté — G2). Annoncer : « verifikasyon an ka pran 24-48 èdtan, men pou
+pilòt la m ap apwouve w menm jou a ». Admin approuve dans la journée.
+Vérifier : `verified_seller=true`.
 
-**Étape C — MonCash payout (5 min).** Confirmer le numéro payout dans Modifye
-Pwofil (auto-rempli depuis l'OTP si vide). Dire pourquoi : « se sou nimewo sa a
-kòb ou ap rive lè yon lavant fini ». Vérifier : `moncash_number` non vide (G5).
+**Étape C — MonCash payout (5 min).** Saisir le numéro payout À LA MAIN dans
+Modifye Pwofil (pas d'auto-remplissage tant que l'OTP SMS est reporté). Dire
+pourquoi : « se sou nimewo sa a kòb ou ap rive lè yon lavant fini ». Vérifier
+ensemble le numéro chiffre par chiffre (c'est là que l'argent part) :
+`moncash_number` non vide et exact (G5).
 
 **Étape D — Premye pwodwi (10 min).** Le vendeur publie lui-même (pas nous à sa
 place — « do, don't show ») : foto reyèl, non, pri, kategori, zòn. Objectif :
