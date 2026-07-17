@@ -25,3 +25,6 @@ supabase/.temp/
 
 # Generated code-graph artifacts
 graphify-out/
+
+# Generated code-graph HTML (artefact graphify, chemin local)
+graph.html
