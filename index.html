@@ -547,6 +547,15 @@
             transition: all .15s;
         }
 
+        /* Tailwind precompile (point 6): assets/tw.css chaje AVANT style inline
+           sa a, donk .ntab{display:flex} te bat .hidden{display:none} (menm
+           espesifisite, sous pi ta genyen) → onglet 'hidden' yo (Admin, Panye)
+           te toujou parèt. Règ sa a (2 klas = espesifisite pi wo) fè hidden
+           genyen definitivman sou onglet nav yo. */
+        .ntab.hidden {
+            display: none;
+        }
+
         .ntab:active {
             transform: scale(.9);
         }
