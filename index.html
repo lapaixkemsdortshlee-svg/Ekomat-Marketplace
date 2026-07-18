@@ -1263,7 +1263,10 @@
             try {
                 const seen = !!localStorage.getItem('aym_onboarded');
                 const known = !!localStorage.getItem('aym_user');
-                window.__pendingOnboarding = !seen && !known;
+                // Lyen pwodwi pataje (#product=ID): sote onboarding an, vizitè a
+                // dwe wè pwodwi a dirèk kòm envite (katalòg piblik).
+                const sharedLink = /^#product=/.test(location.hash || '');
+                window.__pendingOnboarding = !seen && !known && !sharedLink;
             } catch (_) {
                 window.__pendingOnboarding = true;
             }
@@ -1446,6 +1449,19 @@
                         <button onclick="toggleAuthMode()" class="font-headline font-bold text-primary" id="authToggleLink">Konekte</button>
                     </p>
                 </div>
+
+                <!-- Gade katalòg la san kont (mòd envite — acquisition) -->
+                <div class="flex items-center gap-3 my-5">
+                    <div class="flex-1 h-px" style="background:#e5e2dd"></div>
+                    <span class="font-label text-xs text-on-surface-variant">oswa</span>
+                    <div class="flex-1 h-px" style="background:#e5e2dd"></div>
+                </div>
+                <button onclick="enterGuestMode()"
+                    class="w-full py-3.5 rounded-xl font-headline font-bold text-sm active:scale-[.98] transition-transform flex items-center justify-center gap-2"
+                    style="background:rgba(0,102,111,.08);color:#00666f">
+                    <span class="material-symbols-outlined fi" style="font-size:18px">storefront</span>
+                    Gade katalòg la san kont
+                </button>
 
                 <p class="font-label text-[11px] text-on-surface-variant text-center mt-5 leading-relaxed">
                     En continuant, ou aksepte kondisyon itilizasyon Ekomat.<br/>Done ou yo pwoteje.
@@ -4666,6 +4682,16 @@
             document.getElementById("bottomNav").classList.remove("hidden");
             document.getElementById("fab").classList.remove("hidden");
 
+            // Sòti mòd envite (si vizitè a te konekte): restore topbar konplè a
+            // epi bloke aksyon ki te sispann yo.
+            if (A.isGuest) {
+                A.isGuest = false;
+                document.getElementById('msgBtn')?.classList.remove('hidden');
+                document.getElementById('notifBtn')?.classList.remove('hidden');
+                const av = document.getElementById('topAvatar');
+                if (av) av.onclick = () => navTo('profile');
+            }
+
             // Nav visibility = fonksyon pi wòl otantik la (rekonsilye nan
             // updateTopBar tou). Anvan, li te fikse yon sèl fwa isit; si wòl
             // la te chaje an reta (kach stale sou move koneksyon), yon vandè
@@ -4708,6 +4734,12 @@
             if (db && A.user?.uid) {
                 db.from('orders').select('id', { count: 'exact', head: true }).eq('buyer_id', A.user.uid)
                     .then(({ count }) => { A.user.orderCount = count || 0; });
+            }
+            // Mòd envite: si vizitè a te eseye yon aksyon (kòmande, favori…)
+            // anvan koneksyon, reprann li kounye a apre boot la.
+            if (A._afterLogin) {
+                const fn = A._afterLogin; A._afterLogin = null;
+                setTimeout(() => { try { fn(); } catch (_) { } }, 400);
             }
         }
 
@@ -4783,6 +4815,12 @@
         }
 
         function navTo(tab) {
+            // Mòd envite: sèl feed la aksesib san kont. Tout lòt onglè
+            // (kòmand, pwofil, pibliye, panye, admin) mande koneksyon.
+            if (A.isGuest && tab !== 'feed') {
+                requireLogin(null, 'Konekte oswa kreye yon kont pou kontinye');
+                return;
+            }
             A.tab = tab; A.stack = [];
             document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
             document.getElementById("s-" + tab).classList.add("on");
@@ -4802,6 +4840,8 @@
             if (A.user?.role !== 'admin' || tab === 'feed' || tab === 'admin') {
                 document.getElementById("fab").classList.remove("hidden");
             }
+            // Envite: pa gen FAB pibliye/vann (li mande koneksyon).
+            if (A.isGuest) document.getElementById("fab")?.classList.add("hidden");
             if (typeof fabSpeedDial === 'function') fabSpeedDial(false);
 
             const titles = { feed: "", pub: "Pibliye Pwodwi", order: "Kòmande", profile: "Pwofil Mwen", admin: "Panel Admin" };
@@ -4896,26 +4936,86 @@
             }
         }
 
+        // ══════════════════════════════════════════════════════════
+        //  MÒD ENVITE — gade katalòg la san kont (acquisition)
+        // ══════════════════════════════════════════════════════════
+        // Yon vizitè (egz. moun ki resevwa yon lyen pwodwi pataje) ka fè tou
+        // katalòg la (feed, rechèch, fich pwodwi) SAN kont. Nenpòt aksyon ki
+        // touche lajan oswa idantite (kòmande, panye, favori, chat, swiv,
+        // pibliye…) rele requireLogin() ki mennen l sou ekran koneksyon an.
+        function requireLogin(afterFn, msg) {
+            // Deja konekte → retounen true, aplan lan kontinye poukont li.
+            if (A.isAuth && A.user && A.user.uid) return true;
+            A._afterLogin = (typeof afterFn === 'function') ? afterFn : null;
+            if (msg) toast(msg);
+            closeSheets();
+            // Yon envite ki mande koneksyon deja pase/sote onboarding — libere
+            // pòt onboarding lan pou goTo('s-login') pa yon no-op.
+            window.__pendingOnboarding = false;
+            document.getElementById('bottomNav')?.classList.add('hidden');
+            document.getElementById('fab')?.classList.add('hidden');
+            document.getElementById('topbar')?.classList.add('hidden');
+            goTo('s-login');
+            return false;
+        }
+        window.requireLogin = requireLogin;
+
+        // Antre nan app la kòm envite (san kont): montre feed la ak yon topbar
+        // senplifye. bootApp() PA rele isit — pa gen kont pou chaje.
+        function enterGuestMode() {
+            A.isGuest = true; A.isAuth = false; A.user = null; A.booted = true;
+            closeSheets();
+            hideSplash();
+            document.getElementById('topbar')?.classList.remove('hidden');
+            document.getElementById('bottomNav')?.classList.remove('hidden');
+            document.getElementById('fab')?.classList.add('hidden');
+            _applyGuestTopBar();
+            navTo('feed');
+        }
+        window.enterGuestMode = enterGuestMode;
+
+        // Topbar envite: kache mesaj/notifikasyon, ranplase avatar ak yon
+        // bouton Konekte, chip "Envite". updateTopBar() retounen bonè lè
+        // A.user nil, donk li pa efase eta sa a.
+        function _applyGuestTopBar() {
+            const msgB = document.getElementById('msgBtn');
+            const notifB = document.getElementById('notifBtn');
+            const rb = document.getElementById('topRoleBadge');
+            const av = document.getElementById('topAvatar');
+            const avI = document.getElementById('topAvatarInner');
+            if (msgB) msgB.classList.add('hidden');
+            if (notifB) notifB.classList.add('hidden');
+            if (rb) { rb.className = 'role-chip role-chip--buyer'; rb.innerHTML = '<span class="material-symbols-outlined fi">person</span>Envite'; }
+            if (avI) avI.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px">login</span>';
+            if (av) av.onclick = () => requireLogin(null, 'Konekte pou aksede pwofil ou');
+            const hLogo = document.getElementById('headerLogo'); if (hLogo) hLogo.style.display = 'flex';
+            const hTitle = document.getElementById('toptitle'); if (hTitle) hTitle.style.display = 'none';
+        }
+
         function openProduct(id) {
             A.curProd = PRODUCTS.find(x => x.id === id);
             if (!A.curProd) { toast('Pwodwi pa disponib'); return; }
             const p = A.curProd;
-            if (db && A.user?.uid) {
-                db.from('product_views').insert({ product_id: p.id, viewer_id: A.user.uid })
-                    .then(({ error }) => { if (error) console.warn('[View]', error.message); });
-            }
-            // Bug 6 tès 2-3 moun: konte vizit la sou products.views (kolòn nan
-            // boutik la li). RLS UPDATE sou products se pwopriyetè-sèlman, donk
-            // yon achtè pa t ka enkremante l → li te rete 0 pou tout tan. RPC
-            // SECURITY DEFINER an konte, men li pa konte pwòp vizit vandè a.
-            if (db && p.sellerId !== A.user?.uid) {
-                db.rpc('increment_product_views', { p_product_id: p.id })
-                    .then(({ error }) => {
-                        if (error) { console.warn('[ViewCount]', error.message); return; }
-                        p.v = (p.v || 0) + 1;
-                        const idx = PRODUCTS.findIndex(x => x.id === p.id);
-                        if (idx >= 0) PRODUCTS[idx].v = p.v;
-                    });
+            // Bug 6/14 tès 2-3 moun: konte vizit INIK. RPC increment_product_views
+            // dedup pa (viewer, pwodwi) pou vizitè konekte epi li logge product_views
+            // (pa gen ensèsyon separe ankò). Pou envite (san kont), dedup fèt sou
+            // aparèy la (localStorage) pou menm moun pa gonfle chif la. Pa gen bump
+            // optimis lokal — boutik la rechaje vrè chif la depi baz la.
+            if (db) {
+                let shouldCount = true;
+                if (!A.user?.uid) {
+                    try {
+                        const seen = new Set(JSON.parse(localStorage.getItem('aym_viewed') || '[]'));
+                        if (seen.has(p.id)) shouldCount = false;
+                        else { seen.add(p.id); localStorage.setItem('aym_viewed', JSON.stringify([...seen])); }
+                    } catch (_) { /* si localStorage kraze, konte kanmenm */ }
+                } else if (p.sellerId === A.user.uid) {
+                    shouldCount = false;  // pa konte pwòp vizit vandè a
+                }
+                if (shouldCount) {
+                    db.rpc('increment_product_views', { p_product_id: p.id })
+                        .then(({ error }) => { if (error) console.warn('[ViewCount]', error.message); });
+                }
             }
             A.stack.push(A.tab);
             document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
@@ -5578,6 +5678,7 @@
         }
 
         function toggleFav(id) {
+            if (!requireLogin(() => toggleFav(id), 'Konekte pou sove favori')) return;
             const wasFav = A.favs.has(id);
             wasFav ? A.favs.delete(id) : A.favs.add(id);
             const p = PRODUCTS.find(x => x.id === id); if (p) { track("fav", p.c); bumpInterest(p.c, 6, p.sellerId, 3); }
@@ -6262,6 +6363,8 @@
         //  ORDER
         // ══════════════════════════════════════════════════════════
         function startOrder(id) {
+            // Mòd envite: mande koneksyon anvan kòmande (CTA katalòg → login).
+            if (!requireLogin(() => startOrder(id), 'Konekte oswa kreye yon kont pou kòmande')) return;
             A.curProd = PRODUCTS.find(x => x.id === id) || A.curProd;
             // Reset pwomosyon ki tap kondi (sou yon lòt pwodwi) — pa pèmèt
             // rabè a kontinye sou yon nouvo kòmand san validasyon.
@@ -6944,7 +7047,7 @@
         let rIdx = 0;
 
         function openChatFor(pid) {
-            if (!A.isAuth) { toast('Ou dwe konekte pou voye mesaj'); return; }
+            if (!requireLogin(() => openChatFor(pid), 'Konekte pou voye mesaj bay vandè a')) return;
             const p = PRODUCTS.find(x => x.id === pid);
             if (!p) { toast('Pwodwi pa jwenn'); return; }
             if (!A.msgs[pid]) A.msgs[pid] = [];
@@ -7241,7 +7344,7 @@
         window.loadCartFromSupabase = loadCartFromSupabase;
 
         async function addToCart(productId) {
-            if (!A.isAuth) { toast('Ou dwe konekte pou ajoute nan panye'); return; }
+            if (!requireLogin(() => addToCart(productId), 'Konekte pou ajoute nan panye')) return;
             let p = PRODUCTS.find(x => x.id === productId);
             if (!p && db) {
                 // Defensive fetch — product card may have been rendered from a
@@ -8110,7 +8213,7 @@
         if (!A.followedSellers) A.followedSellers = new Set();
 
         async function toggleFollowSeller(sellerId) {
-            if (!A.isAuth || !A.user?.uid) { toast('Konekte premye'); return; }
+            if (!requireLogin(() => toggleFollowSeller(sellerId), 'Konekte pou swiv vandè sa a')) return;
             if (sellerId === A.user.uid) { toast('Ou pa ka swiv tèt ou'); return; }
 
             const wasFollowing = A.followedSellers.has(sellerId);
@@ -8188,7 +8291,7 @@
         //  INBOX — Conversation history for buyers + sellers
         // ══════════════════════════════════════════════════════════
         function openInbox() {
-            if (!A.isAuth) { toast('Konekte pou wè mesaj'); return; }
+            if (!requireLogin(() => openInbox(), 'Konekte pou wè mesaj ou yo')) return;
             A.stack.push(A.tab);
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
             document.getElementById('s-inbox').classList.add('on');
@@ -10850,6 +10953,7 @@
         }
 
         async function openReferralSheet() {
+            if (!requireLogin(() => openReferralSheet(), 'Konekte pou jwenn kòd envitasyon ou')) return;
             openSheet('referralSheet');
             const codeEl = document.getElementById('referralCode');
             const remEl = document.getElementById('referralRemaining');
@@ -15667,7 +15771,18 @@
                     // Pa gen sesyon
                     console.log('[Auth] INITIAL_SESSION san sesyon → Login');
                     hideAuthLoader(); hideSplash();
-                    if (!A.booted) goTo('s-login');
+                    if (!A.booted) {
+                        // Lyen pwodwi pataje (#product=ID) → antre dirèk kòm
+                        // envite epi louvri fich la (katalòg piblik). Konsa yon
+                        // moun ki resevwa lyen an sou WhatsApp wè pwodwi a san
+                        // kont, epi yo mande koneksyon sèlman pou kòmande.
+                        if (/^#product=/.test(location.hash || '') && typeof enterGuestMode === 'function') {
+                            enterGuestMode();
+                            if (typeof openProductFromHash === 'function') setTimeout(openProductFromHash, 500);
+                        } else {
+                            goTo('s-login');
+                        }
+                    }
                 }
             }
 
