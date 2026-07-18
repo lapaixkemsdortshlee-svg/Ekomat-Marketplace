@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-18 (fin) : AUDIT UX SOLDÉ À 100% — lots P2 fin + rechèch flou + P3 (3 PR : #207 à #209)
+
+- **#207 — Dyalòg admin stile + mode sonm fèy kat.** Nouveau `appPrompt` (modal à champ texte, famille `appConfirm`) remplace les 4 dialogues système admin (rejet produit, « Lage lajan an? » avec montant/vendeur/numéro + rappel transfert manuel, remboursement, résolution litij — raisons obligatoires). **Zéro `prompt()`/`confirm()` natif restant dans l'app.** Dark mode `#mapSheet` (classes `.map-panel` + overrides `--dm-*`). Bonus sécurité : suggestions LocationIQ passées par `esc()` (XSS API externe). Leçon #193 réappliquée : un faux « cassé en sombre » venait d'un harness au markup simplifié — retracé aux pixels avant de conclure.
+- **#208 — Rechèch pwodwi flou sou sèvè.** Correction d'audit honnête : la recherche interrogeait DÉJÀ Supabase (ILIKE) — ce qui manquait : flou, index, ranking. RPC `search_products(q, zone, cat)` SECURITY INVOKER + index GIN trigram sur `products.title`, **seuil 0.28 calibré sur les vraies données** (headfone 0.46 / headpone 0.58 / hedfone 0.29 — le 0.35 initial ratait des fautes réelles), LEFT JOIN profiles voulu (RLS exige un connecté, l'anonyme doit trouver quand même), client RPC-first avec fallback ILIKE. **Prouvé en prod : `search_products('headfone')` → « Headphone JBL ».**
+- **#209 — Lot P3 konplè.** (1) Cycle fermé : noter → `released → completed` (migration : UNE ligne dans la matrice RPC, achtè seulement, cosmétique). (2) `submitRating` via `notify()`. (3) A11y : le focus revient à l'élément qui a ouvert une feuille. (4) **Bouton Pataje** fiche produit (natif/WhatsApp) + **deep-link `#product=ID` créé** — il n'existait PAS (l'audit le croyait présent) ; petit canal d'acquisition WhatsApp neuf. (5) **Notes vocales → Storage** (bucket `chat-voice`), fallback base64, anciens messages compatibles.
+- **Pipeline db-migrate : 2 déploiements autonomes verts** (#208, #209), versions enregistrées alignées, vérifiés en base à chaque fois (RPC + index + bucket + matrice). La réparation tient.
+
+**AUDIT UX 2026-07-18 : 100% traité** (P1 #204, confiance #205, P2 fin #207, recherche #208, P3 #209). Plus rien en réserve technique de l'audit. **Prochaine étape = le terrain : 2-3 vendeurs pilotes.**
+
+---
+
 ## 2026-07-18 (suite) : lot confiance (#205) + PIPELINE db-migrate RÉPARÉ ✅
 
 - **#205 — Lot konfyans (avatars/bannières vendeur publics) + fix upload photos produit.** Migration `20260718090000` : `profiles.cover_url` + policies Storage own-folder sur le bucket `Avatar` (existant mais SANS policy INSERT → tout upload rejeté) et sur `product-images` (même trou → **l'upload des photos produit échouait EN SILENCE depuis toujours**, fallback base64 : vérifié en prod, `products.images` = data URLs — chaque requête feed traînait les images en texte). Code : `_uploadProfileImage` (compression WebP/JPEG → bucket Avatar → `avatar_url`/`cover_url`, fallback local honnête), bannière photo sous voile teal + bouton caméra (profil perso + boutique publique). `avatar_url` étant déjà lu partout, la photo du vendeur s'allume dans toute l'app. Migration appliquée via MCP + vérifiée.
