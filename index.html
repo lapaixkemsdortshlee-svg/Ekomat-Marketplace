@@ -581,6 +581,28 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
         }
 
+        /* ── Chip wòl anba logo a (Achtè/Vandè/Admin) — pa senp tèks ankò ── */
+        .role-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2.5px 9px 2.5px 7px;
+            border-radius: 9999px;
+            font: 800 10px/1.35 'Manrope', sans-serif;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            margin-top: 2px;
+            white-space: nowrap;
+        }
+
+        .role-chip .material-symbols-outlined { font-size: 12px; }
+        .role-chip--buyer { background: rgba(0, 102, 111, .09); color: #00666f; }
+        .role-chip--seller-v { background: #00666f; color: #fcf9f4; }
+        .role-chip--seller-p { background: rgba(151, 66, 43, .1); color: #97422b; }
+        .role-chip--admin { background: #97422b; color: #fcf9f4; }
+        body.dark .role-chip--buyer { background: rgba(90, 215, 230, .12); color: #5ad7e6; }
+        body.dark .role-chip--seller-p { background: rgba(249, 145, 136, .12); color: #f99188; }
+
         #toast.on {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
@@ -1550,7 +1572,7 @@
                     <div id="headerLogo" style="display:flex;flex-direction:column;align-items:flex-start;gap:1px">
                         <!-- Logo Ekomat (mark + wordmark), aligné à gauche -->
                         <img src="brand/logo-ekomat.png" alt="Ekomat" style="height:28px;width:auto;display:block" />
-                        <span id="topRoleBadge" class="font-label text-[11px] font-bold" style="color:#3d4949;letter-spacing:.02em;margin-top:1px"></span>
+                        <span id="topRoleBadge"></span>
                     </div>
                     <h1 class="font-headline font-bold text-base text-primary leading-none" id="toptitle" style="display:none">Ekomat</h1>
                 </div>
@@ -3084,6 +3106,22 @@
             <span class="material-symbols-outlined align-middle mr-1" style="font-size:18px">send</span>
             Voye Lokalisasyon nan Chat
         </button>
+    </div>
+
+    <!-- ══ FAVORIS SHEET — Lis pwodwi favori yo ══ -->
+    <div class="sheet" id="favsSheet" style="max-height:85dvh">
+        <div class="handle"></div>
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Favori Mwen</h3>
+                <p class="font-label text-xs text-on-surface-variant" id="favsCount"></p>
+            </div>
+            <button onclick="closeSheets()" aria-label="Fèmen"
+                class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container active:bg-surface-container-high">
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:16px">close</span>
+            </button>
+        </div>
+        <div id="favsList" class="space-y-2 pb-2"></div>
     </div>
 
     <!-- ══ TRY-ON SHEET — Essayage Virtuel Phase 2 ══ -->
@@ -4654,21 +4692,16 @@
             const av = document.getElementById("topAvatarInner");
             av.textContent = A.user.avatar || A.user.initials || "?";
 
-            // Role badge — short role label only (visible under wordmark)
+            // Role badge — chip vizyèl (ikòn + koulè pa wòl), pa senp tèks
             const rb = document.getElementById("topRoleBadge");
-            if (A.user.role === "admin") {
-                rb.textContent = "Admin";
-                rb.style.color = "#97422b";
-            } else if (A.user.verifiedSeller) {
-                rb.textContent = "Vandè · Verifye";
-                rb.style.color = "#00666f";
-            } else if (A.user.role === "seller") {
-                rb.textContent = "Vandè · An atant";
-                rb.style.color = "#97422b";
-            } else {
-                rb.textContent = "Achtè";
-                rb.style.color = "#3d4949";
-            }
+            const chip = (cls, icon, label) => {
+                rb.className = 'role-chip ' + cls;
+                rb.innerHTML = '<span class="material-symbols-outlined fi">' + icon + '</span>' + label;
+            };
+            if (A.user.role === "admin") chip('role-chip--admin', 'admin_panel_settings', 'Admin');
+            else if (A.user.verifiedSeller) chip('role-chip--seller-v', 'verified', 'Vandè · Verifye');
+            else if (A.user.role === "seller") chip('role-chip--seller-p', 'storefront', 'Vandè · An atant');
+            else chip('role-chip--buyer', 'shopping_bag', 'Achtè');
         }
 
         function showAuthBanner() {
@@ -4876,7 +4909,7 @@
       <button onclick="goBack()" aria-label="Retounen" class="absolute top-10 left-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
         <span class="material-symbols-outlined text-on-surface-variant" style="font-size:20px">arrow_back</span>
       </button>
-      <button onclick="toggleFav(${dpid})" aria-label="${A.favs.has(p.id) ? 'Retire nan favori' : 'Ajoute nan favori'}" aria-pressed="${A.favs.has(p.id) ? 'true' : 'false'}" class="absolute top-10 right-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
+      <button onclick="toggleFav(${dpid})" data-fav="${p.id}" aria-label="${A.favs.has(p.id) ? 'Retire nan favori' : 'Ajoute nan favori'}" aria-pressed="${A.favs.has(p.id) ? 'true' : 'false'}" class="absolute top-10 right-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
         <span class="material-symbols-outlined fi" style="font-size:17px;color:${A.favs.has(p.id) ? '#f99188' : '#3d4949'}">favorite</span>
       </button>
     </div>
@@ -5342,7 +5375,7 @@
          onclick="openProduct(${spid})">
       <div class="relative w-full" style="height:${140 + (i % 2) * 20}px;overflow:hidden;background:#f0ede8">
         ${imgHtml}
-        <button onclick="event.stopPropagation();toggleFav(${spid})"
+        <button onclick="event.stopPropagation();toggleFav(${spid})" data-fav="${p.id}"
                 class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full"
                 style="background:rgba(252,249,244,.88);backdrop-filter:blur(4px)">
           <span class="material-symbols-outlined fi" style="font-size:15px;color:${isFav ? '#f99188' : '#3d4949'}">favorite</span>
@@ -5408,7 +5441,7 @@
                 aria-pressed="${fav ? 'true' : 'false'}"
                 class="absolute top-2.5 right-2.5 w-8 h-8 flex items-center justify-center rounded-full"
                 style="background:rgba(252,249,244,.88);backdrop-filter:blur(4px)"
-                id="fav${p.id}">
+                id="fav${p.id}" data-fav="${p.id}">
           <span class="material-symbols-outlined fi" style="font-size:17px;color:${favColor}">favorite</span>
         </button>
         ${badgeHtml}
@@ -5436,11 +5469,91 @@
         }
 
         function toggleFav(id) {
-            A.favs.has(id) ? A.favs.delete(id) : A.favs.add(id);
+            const wasFav = A.favs.has(id);
+            wasFav ? A.favs.delete(id) : A.favs.add(id);
             const p = PRODUCTS.find(x => x.id === id); if (p) { track("fav", p.c); bumpInterest(p.c, 6, p.sellerId, 3); }
-            const btn = document.getElementById("fav" + id);
-            if (btn) { const on = A.favs.has(id); const ic = btn.querySelector("span"); ic.style.fontVariationSettings = `"FILL" ${on ? 1 : 0},"wght" 400`; ic.classList.toggle('fi', on === 1 || on === true); ic.style.color = on ? "#f99188" : "#3d4949"; }
+            _syncFavBtn(id);
             toast(A.favs.has(id) ? "Ajoute nan favori" : "Retire nan favori");
+            // Bug favori: anvan, chanjman an te rete sèlman an memwa — li te
+            // disparèt apre chak reload (supabaseToggleFavorite pa t janm
+            // rele). Pèsiste kounye a; si Supabase echwe, retounen eta a.
+            if (typeof supabaseToggleFavorite === 'function') {
+                supabaseToggleFavorite(id).catch(() => {
+                    wasFav ? A.favs.add(id) : A.favs.delete(id);
+                    _syncFavBtn(id);
+                    toast('Pa ka sove favori a — tcheke koneksyon ou');
+                });
+            }
+        }
+
+        // Mete AJOU tout kè yo pou yon pwodwi (fich detay + kat feed + kat
+        // similè ka afiche an menm tan — ansyen kòd la te jwenn yon sèl bouton).
+        function _syncFavBtn(id) {
+            const on = A.favs.has(id);
+            document.querySelectorAll('[data-fav="' + id + '"]').forEach(btn => {
+                btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+                btn.setAttribute('aria-label', on ? 'Retire nan favori' : 'Ajoute nan favori');
+                const ic = btn.querySelector('span');
+                if (!ic) return;
+                ic.style.fontVariationSettings = '"FILL" ' + (on ? 1 : 0) + ',"wght" 400';
+                ic.classList.toggle('fi', on);
+                ic.style.color = on ? '#f99188' : '#3d4949';
+            });
+        }
+
+        // ── Fèy "Favori Mwen" (bug: anvan, li te jis yon toast, pa t gen lis) ──
+        async function openFavsSheet() {
+            openSheet('favsSheet');
+            const list = document.getElementById('favsList');
+            const cnt = document.getElementById('favsCount');
+            if (cnt) cnt.textContent = '';
+            if (list) list.innerHTML = '<div class="py-10 text-center"><span class="material-symbols-outlined sp text-primary" style="font-size:28px">progress_activity</span></div>';
+            const prods = await loadFavoriteProducts();
+            renderFavsList(prods);
+        }
+        window.openFavsSheet = openFavsSheet;
+
+        function renderFavsList(prods) {
+            const list = document.getElementById('favsList');
+            const cnt = document.getElementById('favsCount');
+            if (!list) return;
+            if (cnt) cnt.textContent = prods.length ? (prods.length + ' pwodwi') : '';
+            if (!prods.length) {
+                list.innerHTML = `
+      <div class="py-10 flex flex-col items-center gap-2 text-center">
+        <span class="material-symbols-outlined text-on-surface-variant" style="font-size:34px">favorite</span>
+        <p class="font-headline font-bold text-sm text-on-surface">Poko gen favori</p>
+        <p class="font-body text-xs text-on-surface-variant">Peze kè a sou yon pwodwi pou sove l isit la.</p>
+      </div>`;
+                return;
+            }
+            list.innerHTML = prods.map(p => {
+                const pid = `'${String(p.id).replace(/'/g, "\\'")}'`;
+                const img = p.img
+                    ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${esc(p.t)}" onerror="this.onerror=null;this.style.display='none'"/>`
+                    : prodPlaceholder(p, 56);
+                return `
+      <div class="fav-row flex items-center gap-3 p-2.5 rounded-xl bg-surface-container-lowest amb active:scale-[.99] transition-transform cursor-pointer" onclick="closeSheets();openProduct(${pid})">
+        <div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0" style="background:#f0ede8">${img}</div>
+        <div class="flex-1 min-w-0">
+          <p class="font-headline font-bold text-sm text-on-surface truncate">${esc(p.t)}</p>
+          <p class="font-label text-xs text-primary font-bold">${fp(p.p)} HTG</p>
+        </div>
+        <button onclick="event.stopPropagation();toggleFav(${pid});this.closest('.fav-row').remove();_favsAfterRemove()"
+                aria-label="Retire nan favori"
+                class="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container active:scale-90 flex-shrink-0">
+          <span class="material-symbols-outlined fi" style="font-size:17px;color:#f99188">favorite</span>
+        </button>
+      </div>`;
+            }).join('');
+        }
+
+        function _favsAfterRemove() {
+            const list = document.getElementById('favsList');
+            const cnt = document.getElementById('favsCount');
+            const n = list ? list.querySelectorAll('.fav-row').length : 0;
+            if (cnt) cnt.textContent = n ? (n + ' pwodwi') : '';
+            if (!n) renderFavsList([]);
         }
 
         // ══════════════════════════════════════════════════════════
@@ -6864,7 +6977,7 @@
                 items.push({ i: "storefront", l: "Boutik Mwen", s: "Pwodwi, stòk, lavant", a: "openBoutiqueScreen()" });
                 items.push({ i: "group", l: "Kliyan Abonnen", s: (A.followers || 0) + " abonnen", a: "openFollowersScreen()" });
             }
-            items.push({ i: "favorite", l: "Favori Mwen", s: A.favs.size + " pwodwi", a: "toast('Favori yo')" });
+            items.push({ i: "favorite", l: "Favori Mwen", s: A.favs.size + " pwodwi", a: "openFavsSheet()" });
             // Zòn kolekte detekte via GPS — montre li si li egziste,
             // sinon mande vandè a detekte zòn li.
             const _z = A.pickupZone || _lastGeocode();
@@ -14386,7 +14499,7 @@
          onclick="openProduct(${pidAttr})">
       <div class="relative w-full" style="height:${imgHeight}px;overflow:hidden">
         ${imgHtml}
-        <button onclick="event.stopPropagation();toggleFav(${pidAttr})"
+        <button onclick="event.stopPropagation();toggleFav(${pidAttr})" data-fav="${p.id}"
                 class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full"
                 style="background:rgba(252,249,244,.88);backdrop-filter:blur(4px)">
           <span class="material-symbols-outlined fi" style="font-size:15px;color:${isFav ? '#f99188' : '#3d4949'}">favorite</span>
@@ -14843,6 +14956,10 @@
         // Pre-load adrès anrejistre yo pou pwofil menu/komand sheet la wè yo deja.
         if (typeof loadMyAddresses === 'function') {
             loadMyAddresses().catch(() => { /* annilo */ });
+        }
+        // Bug favori: rechaje favori yo depi Supabase apre koneksyon.
+        if (typeof loadMyFavorites === 'function') {
+            loadMyFavorites();
         }
         // Si yon ?ref= te kaptire anvan enskripsyon, lye li ak referrer la.
         try {
@@ -15329,6 +15446,52 @@
     // Feed: ALL active products with stock > 0, newest first. Silent offline-cache
     // stores last 20 in localStorage so repeat visits feel instant and survive a
     // flaky network — no UI indicator shown.
+    // Ranje Supabase → fòm pwodwi an memwa (pataje ant feed ak favori).
+    function _mapProductRow(p) {
+        const imgs = p.images || [];
+        return {
+            id: p.id, t: p.title, p: p.price, oldP: p.old_price, c: p.category, l: p.location,
+            desc: p.description, img: imgs.length > 0 ? imgs[0] : null, images: imgs,
+            s: p.stock, v: p.views, r: p.seller?.rating_avg || 0,
+            b: p.seller?.verified_seller ? 'Verifye' : '', sellerId: p.seller_id,
+            sellerName: p.seller?.display_name || 'Vandè',
+            sellerAvatarUrl: p.seller?.avatar_url || null,
+            sellerVerified: !!p.seller?.verified_seller,
+            sizes: p.sizes || [],
+            e: 'palette', ec: '#7c3aed',
+        };
+    }
+
+    // Bug favori: chaje favori itilizatè a nan boot (anvan, A.favs te toujou
+    // vid apre reload → kè yo te disparèt sou tout pwodwi).
+    async function loadMyFavorites() {
+        if (!db || !A.user?.uid) return;
+        try {
+            const { data } = await db.from('favorites').select('product_id').eq('user_id', A.user.uid);
+            A.favs = new Set((data || []).map(r => r.product_id).filter(Boolean));
+            A.favs.forEach(id => { if (typeof _syncFavBtn === 'function') _syncFavBtn(id); });
+        } catch (_) { /* annilo */ }
+    }
+
+    // Chaje pwodwi favori yo (aktif sèlman) epi mete yo nan PRODUCTS pou
+    // openProduct ka louvri yo menm si feed la pa t chaje yo.
+    async function loadFavoriteProducts() {
+        if (!db || !A.user?.uid) return [];
+        try {
+            const { data: favRows } = await db.from('favorites')
+                .select('product_id').eq('user_id', A.user.uid);
+            const ids = (favRows || []).map(r => r.product_id).filter(Boolean);
+            A.favs = new Set(ids);
+            if (!ids.length) return [];
+            const { data } = await db.from('products')
+                .select('*, seller:profiles!seller_id(id, display_name, verified_seller, rating_avg, avatar_url)')
+                .in('id', ids).eq('status', 'active');
+            const mapped = (data || []).map(_mapProductRow);
+            mapped.forEach(sp => { if (!PRODUCTS.find(x => x.id === sp.id)) PRODUCTS.push(sp); });
+            return mapped;
+        } catch (e) { console.warn('[favs]', e && e.message); return []; }
+    }
+
     async function loadProductsFromSupabase(filters) {
         filters = filters || {};
         const CACHE_KEY = 'aym_feed_cache_v1';
@@ -15347,20 +15510,7 @@
                     new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
                 ]);
                 if (error) throw error;
-                const mapped = (data || []).map(p => {
-                    const imgs = p.images || [];
-                    return {
-                        id: p.id, t: p.title, p: p.price, oldP: p.old_price, c: p.category, l: p.location,
-                        desc: p.description, img: imgs.length > 0 ? imgs[0] : null, images: imgs,
-                        s: p.stock, v: p.views, r: p.seller?.rating_avg || 0,
-                        b: p.seller?.verified_seller ? 'Verifye' : '', sellerId: p.seller_id,
-                        sellerName: p.seller?.display_name || 'Vandè',
-                        sellerAvatarUrl: p.seller?.avatar_url || null,
-                        sellerVerified: !!p.seller?.verified_seller,
-                        sizes: p.sizes || [],
-                        e: 'palette', ec: '#7c3aed',
-                    };
-                });
+                const mapped = (data || []).map(_mapProductRow);
                 // Silent cache: last 20 only when fetching "all"
                 if (!filters.category || filters.category === 'all') {
                     try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items: mapped.slice(0, 20) })); } catch(_){}
