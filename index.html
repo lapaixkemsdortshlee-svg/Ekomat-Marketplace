@@ -4925,6 +4925,9 @@
       <button onclick="toggleFav(${dpid})" data-fav="${p.id}" aria-label="${A.favs.has(p.id) ? 'Retire nan favori' : 'Ajoute nan favori'}" aria-pressed="${A.favs.has(p.id) ? 'true' : 'false'}" class="absolute top-10 right-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
         <span class="material-symbols-outlined fi" style="font-size:17px;color:${A.favs.has(p.id) ? '#f99188' : '#3d4949'}">favorite</span>
       </button>
+      <button onclick="shareProduct(${dpid})" aria-label="Pataje pwodwi a" class="absolute right-4 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="top:86px;background:rgba(252,249,244,.88);backdrop-filter:blur(6px)">
+        <span class="material-symbols-outlined" style="font-size:17px;color:#3d4949">share</span>
+      </button>
     </div>
     <div class="bg-surface-container-low px-5 pt-5 pb-4 space-y-4">
       ${p.b === 'Verifye' ? `<div class="flex items-center gap-1"><span class="material-symbols-outlined fi text-primary" style="font-size:14px">verified</span><span class="font-label text-xs font-bold text-primary">Vandè Verifye</span></div>` : ''}
@@ -11265,14 +11268,31 @@
             toast('Ap voye nòt vokal…');
 
             try {
-                var dataUrl = await new Promise(function(resolve, reject) {
-                    var reader = new FileReader();
-                    reader.onloadend = function() { resolve(reader.result); };
-                    reader.onerror = function() { reject(new Error('Pa ka li odyo')); };
-                    reader.readAsDataURL(blob);
-                });
+                // P3: Storage an premye — base64 nan DB te lou an data pou
+                // voye AK pou chaje fil la. Fallback data URL si upload echwe
+                // (offline, bucket poko la) — player la li toude fòma yo.
+                var voiceUrl = null;
+                try {
+                    var vExt = (blob.type || '').includes('ogg') ? 'ogg'
+                        : (blob.type || '').includes('mp4') ? 'm4a' : 'webm';
+                    var vPath = uid + '/' + Date.now() + '.' + vExt;
+                    var vUp = await db.storage.from('chat-voice')
+                        .upload(vPath, blob, { contentType: blob.type || 'audio/webm' });
+                    if (!vUp.error) {
+                        var vPub = db.storage.from('chat-voice').getPublicUrl(vPath);
+                        voiceUrl = (vPub.data && vPub.data.publicUrl) || null;
+                    } else { console.warn('[voice upload]', vUp.error.message); }
+                } catch (_) { /* fallback anba */ }
+                if (!voiceUrl) {
+                    voiceUrl = await new Promise(function(resolve, reject) {
+                        var reader = new FileReader();
+                        reader.onloadend = function() { resolve(reader.result); };
+                        reader.onerror = function() { reject(new Error('Pa ka li odyo')); };
+                        reader.readAsDataURL(blob);
+                    });
+                }
 
-                var payload = JSON.stringify({ url: dataUrl, dur: dur, size: sizeKb });
+                var payload = JSON.stringify({ url: voiceUrl, dur: dur, size: sizeKb });
                 var dbContent = '[VOICE]' + payload;
 
                 var result = await db.from('messages').insert({
@@ -11284,7 +11304,7 @@
                 if (result.error) throw new Error(result.error.message || 'DB insert echwe');
 
                 if (!A.msgs[pid]) A.msgs[pid] = [];
-                A.msgs[pid].push({ s: true, type: 'voice', url: dataUrl, dur: dur, size: sizeKb, tm: tm });
+                A.msgs[pid].push({ s: true, type: 'voice', url: voiceUrl, dur: dur, size: sizeKb, tm: tm });
                 renderChatMsgs(pid);
                 toast('Nòt vokal voye — ' + dur);
                 // Realtime notification to the peer (works for any role)
@@ -12221,12 +12241,23 @@
             }
             closeSheets();
             toast('Mèsi pou nòt ou! ★' + stars);
-            db.from('notifications').insert({
-                user_id: sellerId, type: 'system', icon: 'star',
+            notify(sellerId, {
+                type: 'system', icon: 'star',
                 title: 'Nouvo evalyasyon',
                 body: (A.user.name || 'Yon achtè') + ' ba ou ' + stars + ' zetwal.',
                 color: '#f59e0b',
             });
+            // P3: fèmen sik la — released → completed apre nòt la (kosmetik,
+            // lajan an deja regle; RPC otorize achtè a depi 20260718150000).
+            if (orderId) {
+                db.rpc('advance_order_status', {
+                    p_order_id: orderId, p_to_status: 'completed',
+                    p_moncash_ref: null, p_admin_note: null,
+                }).then(({ error }) => {
+                    if (error) console.warn('[completed]', error.message);
+                    if (typeof renderOrderScreen === 'function') renderOrderScreen();
+                });
+            }
             if (typeof renderOrderScreen === 'function') renderOrderScreen();
         }
         window.submitRating = submitRating;
@@ -12446,6 +12477,41 @@
             }
         }
 
+        // P3: pataje yon pwodwi — deep-link #product=ID (louvri nan boot).
+        // Nòt sekirite (#189): nou KONSTWI hash la nou menm, nou pa li
+        // location.hash — okenn risk token OAuth.
+        function shareProduct(pid) {
+            const p = PRODUCTS.find(x => x.id === pid) || A.curProd;
+            if (!p) return;
+            const link = window.location.origin + window.location.pathname + '#product=' + encodeURIComponent(pid);
+            const text = '🛍️ Gade "' + p.t + '" sou Ekomat — ' + fp(p.p) + ' HTG. Peman pwoteje ak eskwo. ' + link;
+            if (navigator.share) {
+                navigator.share({ title: p.t, text: text }).catch(() => { /* anile */ });
+                return;
+            }
+            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+        }
+        window.shareProduct = shareProduct;
+
+        // Louvri deep-link #product=ID apre boot (lyen pataje sou WhatsApp).
+        async function openProductFromHash() {
+            try {
+                const m = (location.hash || '').match(/^#product=([\w-]+)$/);
+                if (!m) return;
+                const pid = decodeURIComponent(m[1]);
+                history.replaceState(null, '', location.pathname + location.search);
+                if (!PRODUCTS.find(p => p.id === pid) && db) {
+                    const { data } = await db.from('products')
+                        .select('*, seller:profiles!seller_id(id, display_name, verified_seller, rating_avg, avatar_url)')
+                        .eq('id', pid).eq('status', 'active').maybeSingle();
+                    if (data) PRODUCTS.push(_mapProductRow(data));
+                }
+                if (PRODUCTS.find(p => p.id === pid)) openProduct(pid);
+                else toast('Pwodwi a pa disponib ankò');
+            } catch (_) { /* annilo */ }
+        }
+        window.openProductFromHash = openProductFromHash;
+
         // RPC search_products (flou, LEFT JOIN vandè) → fallback ILIKE dirèk.
         async function _searchProductsServer(query, zone, cat) {
             try {
@@ -12612,6 +12678,9 @@
         //  SHEETS
         // ══════════════════════════════════════════════════════════
         function openSheet(id) {
+            // P3 a11y: sonje ki eleman ki te louvri fèy la pou retounen fokis
+            // la sou li lè fèy la fèmen (klavye/lektè ekran).
+            A._sheetOpener = document.activeElement;
             document.getElementById("scrim").classList.add("on");
             document.getElementById(id).classList.add("on");
             if (id === "notifSheet") renderNotifs('all');
@@ -12678,7 +12747,15 @@
                 }
             });
         }
-        function closeSheets() { document.getElementById("scrim").classList.remove("on"); document.querySelectorAll(".sheet").forEach(s => s.classList.remove("on")); exitMapFull(); }
+        function closeSheets() {
+            document.getElementById("scrim").classList.remove("on");
+            document.querySelectorAll(".sheet").forEach(s => s.classList.remove("on"));
+            exitMapFull();
+            try {
+                if (A._sheetOpener && A._sheetOpener.focus && document.contains(A._sheetOpener)) A._sheetOpener.focus();
+            } catch (_) { /* annilo */ }
+            A._sheetOpener = null;
+        }
 
         // ══════════════════════════════════════════════════════════
         //  SANT ÈD — HELP CENTER (kontni Kreyòl, fidèl ak vrè flux yo)
@@ -15077,6 +15154,11 @@
         // Bug favori: rechaje favori yo depi Supabase apre koneksyon.
         if (typeof loadMyFavorites === 'function') {
             loadMyFavorites();
+        }
+        // P3: si itilizatè a rive ak yon lyen pwodwi pataje (#product=ID),
+        // louvri fich la yon fwa app la pare.
+        if (typeof openProductFromHash === 'function') {
+            setTimeout(openProductFromHash, 600);
         }
         // Si yon ?ref= te kaptire anvan enskripsyon, lye li ak referrer la.
         try {
