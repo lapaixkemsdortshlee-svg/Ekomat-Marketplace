@@ -7,6 +7,18 @@
 
 ---
 
+## 2026-07-18 : QA continue + audit UX complet + lot P1 (3 PR : #202 à #204)
+
+Suite de la session du 17 (même branche `claude/prime-nx4mqj`, on repart de `main` à chaque PR). Trois retours QA de Thrasher + une commande d'audit.
+
+- **#202 — Toast cohérent + rabais 10% filleul automatique.** (1) Le toast (élément unique `#toast`, tous les messages y passent) : fini le blanc-sur-noir qui débordait (`white-space:nowrap` retiré → wrap, max-width 88vw, surface crème + bordure teal + variante sombre, durée adaptative jusqu'à 4,8s). QA sur le vrai fichier servi tel quel. (2) Bug parrainage repéré par Thrasher : le code `?ref=` était capturé puis JETÉ après l'inscription (il ne servait qu'à lier le parrain) — le filleul n'avait nulle part où le saisir. Fix : copie durable `aym_ref_code` + auto-remplissage/application au premier checkout (`_autoApplyReferralPromo`, un essai par session, purge si code invalide). Backend vérifié : codes referral = percent 10, RPC complète.
+- **#203 — Chip de rôle + fix favoris complet + audit UX.** (1) Le rôle sous le logo (simple texte gris) → chip désigné : Achtè teal doux, Vandè Verifye teal plein, Vandè an atant rust doux, Admin rust plein, icônes + mode sombre + nowrap. (2) Bug favoris = TRIPLE trou : `supabaseToggleFavorite` jamais appelé (code mort), aucun rechargement au boot (`A.favs` vide), et « Favori Mwen » = simple toast (pas d'écran). Fix : persistance + revert, `loadMyFavorites()` au boot, nouvelle fèy `#favsSheet` (liste, état vide, compteur), `data-fav` sur les 4 boutons cœur + `_syncFavBtn` (avant, un seul bouton avait un id — la fiche détail ne se mettait même pas à jour). `_mapProductRow` factorisé. (3) `docs/AUDIT-UX-2026-07-18.md` : audit designer complet (contexte Android bas de gamme/data chère/confiance), P1→P3 + non-actions + séquence en 3 lots.
+- **#204 — Lot P1 de l'audit exécuté** : lazy-loading images de cartes (0 occurrence avant !), `confirm()` natif de l'annulation → `appConfirm` stylé avec avertissement lajan, ligne anti-double-paiement dans l'étape Referans du tunnel MonCash, orthographe normalisée `kòmand` (84 occurrences non accentuées corrigées, identifiants vérifiés avant sed).
+- **CodeQL x2** (#203, #204) : « incomplete string escaping » sur les lignes touchées (`replace(/'/g)` sans échapper les backslashes d'abord) — corrigé les deux fois dans la foulée. Leçon : sur ce repo, toute ligne modifiée portant ce pattern sera re-signalée → échapper `\\` avant `'` systématiquement.
+- **Reste des lots audit** (quand Thrasher veut) : lot confiance (avatars/bannières vendeur publics via Storage — prioritaire), dialogues admin stylés, dark mode mapSheet, recherche produits serveur.
+
+---
+
 ## 2026-07-17 (session 2) : AUDIT CHEMIN-CRITIQUE ✅ + durcissement RLS + protocole pilote + carte plein écran + bouton appel beta (4 PR : #196 à #199)
 
 Session lancée par `/prime` (branche `claude/prime-nx4mqj`, on repart de `main` à chaque PR, les 4 mergées par Thrasher dans la session).
