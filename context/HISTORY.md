@@ -7,6 +7,13 @@
 
 ---
 
+## 2026-07-18 (suite) : lot confiance (#205) + PIPELINE db-migrate RÉPARÉ ✅
+
+- **#205 — Lot konfyans (avatars/bannières vendeur publics) + fix upload photos produit.** Migration `20260718090000` : `profiles.cover_url` + policies Storage own-folder sur le bucket `Avatar` (existant mais SANS policy INSERT → tout upload rejeté) et sur `product-images` (même trou → **l'upload des photos produit échouait EN SILENCE depuis toujours**, fallback base64 : vérifié en prod, `products.images` = data URLs — chaque requête feed traînait les images en texte). Code : `_uploadProfileImage` (compression WebP/JPEG → bucket Avatar → `avatar_url`/`cover_url`, fallback local honnête), bannière photo sous voile teal + bouton caméra (profil perso + boutique publique). `avatar_url` étant déjà lu partout, la photo du vendeur s'allume dans toute l'app. Migration appliquée via MCP + vérifiée.
+- **db-migrate RÉPARÉ (demande Thrasher).** Diagnostic par les VRAIS logs (MCP GitHub `get_job_logs`) : le mot de passe n'était PLUS le problème (link + connexion DB passaient) — la vraie casse était la **divergence d'historique** créée par les applies MCP (timestamps différents des fichiers : 4 versions orphelines dont 1 doublon). Fix : réconciliation de `supabase_migrations.schema_migrations` (3 UPDATE de version + 1 DELETE doublon), puis run `workflow_dispatch` déclenché **via MCP** (la limitation 403 de juillet est levée) → **vert**. Règle dure ajoutée à CLAUDE.md : après tout apply MCP de secours, réconcilier immédiatement la version. Le pipeline redéploie désormais les migrations au merge.
+
+---
+
 ## 2026-07-18 : QA continue + audit UX complet + lot P1 (3 PR : #202 à #204)
 
 Suite de la session du 17 (même branche `claude/prime-nx4mqj`, on repart de `main` à chaque PR). Trois retours QA de Thrasher + une commande d'audit.
