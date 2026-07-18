@@ -542,6 +542,18 @@
         .map-full #mapFullBtn { top: calc(env(safe-area-inset-top) + 10px); }
         body.map-full-lock { overflow: hidden; }
 
+        /* Mode sonm pou fèy kat la — panno yo te rete klè (inline styles) */
+        body.dark #mapSheet .map-panel {
+            background: var(--dm-surface, #252521) !important;
+            border-color: rgba(255, 255, 255, .08) !important;
+        }
+        body.dark #geoSuggestions {
+            background: var(--dm-card, #2e2e2a) !important;
+            border-color: rgba(255, 255, 255, .12) !important;
+        }
+        body.dark #leafletMap { background: #252521 !important; }
+        body.dark #mapFullBtn { background: rgba(46, 46, 42, .92); }
+
         .handle {
             width: 2rem;
             height: 3px;
@@ -3028,7 +3040,7 @@
 
         <!-- Rechèch adrès — Forward Geocoding + Autocomplete (LocationIQ) -->
         <div class="relative mb-4">
-            <div class="flex items-center gap-2 px-3.5 py-3 rounded-xl"
+            <div class="flex items-center gap-2 px-3.5 py-3 rounded-xl map-panel"
                 style="background:#f6f3ee;border:1.5px solid rgba(188,201,200,.2)">
                 <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">search</span>
                 <input id="geoSearchInput" type="text" autocomplete="off"
@@ -3057,7 +3069,7 @@
                 </button>
             </div>
             <!-- Contrôles map -->
-            <div class="flex items-center justify-between px-3 py-2.5"
+            <div class="flex items-center justify-between px-3 py-2.5 map-panel"
                 style="background:#f6f3ee;border-top:1px solid rgba(188,201,200,.15)">
                 <p class="font-label text-[11px] text-on-surface-variant" id="mapCoords">Klike sou kat la pou chwazi
                     pwen</p>
@@ -6462,6 +6474,39 @@
         }
         window.appConfirm = appConfirm;
 
+        // Modal ak yon chan tèks (ranplase prompt() natif la — dyalòg sistèm
+        // nan pa Kreyòl epi kase konfyans sou aksyon lajan). Promise<string|null>.
+        function appPrompt(opts) {
+            return new Promise(resolve => {
+                const o = opts || {};
+                const ov = document.createElement('div');
+                ov.className = 'fixed inset-0 z-[300] flex items-center justify-center px-6';
+                ov.style.cssText = 'background:rgba(28,28,25,.55);backdrop-filter:blur(3px);animation:chartFade .2s ease both';
+                const done = (val) => { ov.remove(); resolve(val); };
+                ov.innerHTML = '<div class="w-full max-w-sm rounded-2xl p-5 amb" style="background:#fcf9f4;box-shadow:0 20px 50px rgba(28,28,25,.3)">'
+                    + (o.icon ? '<div class="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:rgba(0,102,111,.1)"><span class="material-symbols-outlined fi text-primary" style="font-size:24px">' + o.icon + '</span></div>' : '')
+                    + '<h3 class="font-headline font-extrabold text-lg text-on-surface text-center tracking-tight">' + esc(o.title || '') + '</h3>'
+                    + (o.body ? '<p class="font-body text-sm text-on-surface-variant text-center mt-2 leading-relaxed">' + esc(o.body).replace(/\n/g, '<br/>') + '</p>' : '')
+                    + '<textarea data-role="input" rows="3" class="si w-full mt-4" placeholder="' + esc(o.placeholder || '') + '"></textarea>'
+                    + '<div class="flex gap-3 mt-4">'
+                    + '<button data-act="cancel" class="flex-1 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant active:scale-95">' + esc(o.cancelLabel || 'Anile') + '</button>'
+                    + '<button data-act="ok" class="flex-1 py-3 rounded-xl cta font-label font-bold text-sm active:scale-95">' + esc(o.okLabel || 'Konfime') + '</button>'
+                    + '</div></div>';
+                const val = () => (ov.querySelector('[data-role="input"]')?.value || '').trim();
+                ov.addEventListener('click', (e) => {
+                    if (e.target === ov) return done(null);
+                    const act = e.target.closest('[data-act]');
+                    if (!act) return;
+                    if (act.getAttribute('data-act') !== 'ok') return done(null);
+                    if (o.required && !val()) { toast(o.requiredMsg || 'Ekri yon rezon anvan'); return; }
+                    done(val());
+                });
+                document.body.appendChild(ov);
+                setTimeout(() => ov.querySelector('[data-role="input"]')?.focus(), 60);
+            });
+        }
+        window.appPrompt = appPrompt;
+
         // ══════════════════════════════════════════════════════════
         //  ESCROW UI — step-by-step tracker + role-specific actions
         // ══════════════════════════════════════════════════════════
@@ -8500,7 +8545,12 @@
 
         async function adminRejectProduct(productId) {
             if (!db) return;
-            const reason = prompt('Rezon rejè (admin sèlman wè li):');
+            const reason = await appPrompt({
+                icon: 'block', title: 'Rejte pwodwi sa a?',
+                body: 'Vandè a ap resevwa yon notifikasyon. Rezon an rete ant admin yo.',
+                placeholder: 'Rezon rejè (admin sèlman wè li)',
+                okLabel: 'Rejte', cancelLabel: 'Anile',
+            });
             if (reason === null) return;   // anile
             const note = (reason || '').trim().slice(0, 200) || 'Pa konfòm';
             const { data: o, error: fetchErr } = await db.from('products')
@@ -9707,7 +9757,15 @@
                 toast('Vandè a pa antre nimewo MonCash li');
                 return;
             }
-            if (!confirm(`Lage ${fp(o.net_amount || o.total_amount)} HTG bay ${seller.display_name || 'vandè a'} sou ${seller.moncash_number}?`)) return;
+            const ok = await appConfirm({
+                icon: 'paid',
+                title: 'Lage lajan an?',
+                body: fp(o.net_amount || o.total_amount) + ' HTG pral bay ' + (seller.display_name || 'vandè a')
+                    + '\nsou MonCash ' + seller.moncash_number
+                    + '.\nFè transfè MonCash la MANYÈLMAN anvan ou konfime isit la.',
+                okLabel: 'Wi, lajan an pati', cancelLabel: 'Poko',
+            });
+            if (!ok) return;
             // Call MonCash adapter (currently stubbed — real call when API ready)
             const result = await moncashSendPayout(seller.moncash_number, o.net_amount || o.total_amount, o.id);
             if (!result.ok) { toast('MonCash echwe: ' + (result.error || 'eseye ankò')); return; }
@@ -9740,7 +9798,12 @@
 
         async function adminRefund(orderId) {
             if (!db) return;
-            const note = prompt('Rezon ranbousman:', '');
+            const note = await appPrompt({
+                icon: 'currency_exchange', title: 'Ranbouse achtè a?',
+                body: 'De pati yo ap resevwa rezon an nan notifikasyon yo.',
+                placeholder: 'Rezon ranbousman', required: true,
+                okLabel: 'Ranbouse', cancelLabel: 'Anile',
+            });
             if (!note) return;
             const { error } = await db.rpc('advance_order_status', {
                 p_order_id: orderId, p_to_status: 'refunded',
@@ -9771,7 +9834,13 @@
 
         async function adminResolveDispute(orderId, outcome) {
             if (!db) return;
-            const note = prompt('Nòt rezolisyon litij:', '');
+            const note = await appPrompt({
+                icon: 'gavel',
+                title: outcome === 'release' ? 'Bay vandè a lajan an?' : 'Ranbouse achtè a?',
+                body: 'Nòt rezolisyon an ap vizib pou de pati yo.',
+                placeholder: 'Nòt rezolisyon litij', required: true,
+                okLabel: 'Konfime desizyon an', cancelLabel: 'Anile',
+            });
             if (!note) return;
             const toStatus = outcome === 'release' ? 'released' : 'refunded';
             const { error } = await db.rpc('advance_order_status', {
@@ -13025,8 +13094,8 @@
                     style="border-bottom:1px solid rgba(188,201,200,.15)">
                     <span class="material-symbols-outlined text-primary flex-shrink-0" style="font-size:16px">location_on</span>
                     <div class="flex-1 min-w-0">
-                        <p class="font-headline font-bold text-[13px] text-on-surface truncate">${main}</p>
-                        <p class="font-label text-[11px] text-on-surface-variant truncate">${sub}</p>
+                        <p class="font-headline font-bold text-[13px] text-on-surface truncate">${esc(main)}</p>
+                        <p class="font-label text-[11px] text-on-surface-variant truncate">${esc(sub)}</p>
                     </div>
                 </button>`;
             }).join('');
