@@ -7,6 +7,26 @@
 
 ---
 
+## 2026-07-18 (nuit) : 11 bugs test 2-3 moun (#212) + mode invité & vrais visiteurs uniques (#213)
+
+Session lancée par `/prime` avec un .docx de Thrasher listant **11 bugs** trouvés en testant l'app à plusieurs comptes. Analyse d'abord : extraction des 11 screenshots (WMF → PNG via parsing DIB), lecture, vérif de chaque bug sur le vrai code + la vraie base (Supabase MCP).
+
+**#212 — Les 11 bugs (mergée, pipeline db-migrate vert).**
+1. Fèy Kòmande → plein écran + bouton retour + redesign (ajout `#orderSheet` aux règles CSS fullscreen). 2. Photo produit dans le tunnel MonCash + fenêtre de célébration acheteur au `payment_verified` (déclenchée dans le handler realtime notif via `n.data.kind`). 3. Preuve MonCash : bucket privé `payment-proofs` + RPC `attach_payment_proof` (acheteur-only, avant vérif) + admin voit le screenshot (signed URL) + bouton « Pa resevwa peman » (`submitAdminRejectPayment` → retour awaiting_payment + notif). 4+8. Notifs : clic → popup carrée centrée avec X + deep-link (`openNotifDetail`/`_notifDeepLink`), `data` porté dans NOTIFS. 5. Étape 6 cochée quand `completed` + bouton « Fèmen tranzaksyon » (released→completed pour vendeur/acheteur/admin ; une ligne dans la matrice RPC). 6. Titre « Boutik », vraies visites (RPC `increment_product_views` — RLS UPDATE products = owner-only, un acheteur ne pouvait pas incrémenter), analytics en USD. 7. Referral `EKO-` (client + migration des codes en base). 9. Devise **par compte** (`aym_currency_<uid>` — avant global = un compte USD forçait tous les autres) + suppression de l'override `window.fp` qui produisait « $11.42 HTG » (désormais `fpc()` = formateur prix, `fp()` = nombre pur ; montants transaction restent HTG). 10. Commande créée **seulement** à la soumission de la ref MonCash (pending order en mémoire via `A._pendingOrder`, insert dans `submitPaymentRef`) → plus de commandes fantômes. 11. **Cause racine uploads cassés** = absence de policy `SELECT` sur `storage.objects` (le `RETURNING *` après upload échoue → « Sove lokalman sèlman ») ; ajouté SELECT-own pour Avatar/product-images/chat-voice ; `saveProfile` remonte la vraie erreur.
+- Migration `20260718230000` appliquée via MCP + **version réconciliée**. e2e CI a échoué sur UN test qui asseyait `AYIM-` → corrigé en `EKO-`. **Merge → db-migrate vert.**
+
+**#213 — Mode invité + vrais visiteurs uniques (draft).**
+- **Bug partage de lien produit** (Thrasher, oublié dans le doc) : le deep-link `#product=ID` n'était ouvert qu'après login → un lien partagé s'ouvrait dans le compte en cache (le vendeur) ; un visiteur sans compte tombait sur le login. **Aucun mode invité n'existait.** Décision Thrasher (AskUserQuestion) : **navigation invité complète**.
+- `enterGuestMode()` (feed lecture seule, topbar simplifiée, pas de FAB), lien partagé sans session → guest + fiche (bypass onboarding), bouton « Gade katalòg la san kont » sur le login, `requireLogin(afterFn)` sur toute action argent/identité avec reprise post-login (`A._afterLogin` dans `bootApp`).
+- **Vrais visiteurs uniques** : RPC `increment_product_views` dédupliqué par (viewer, produit) côté serveur (connectés) + par appareil (localStorage, invités) ; le RPC logge `product_views` lui-même ; compteur recalibré. Migration `20260718234500` (MCP + réconciliée).
+- SW v42→v43 (#212) puis v43→v44 (#213). Tests : ui 11/11 (2 nouveaux mode invité), 0 erreur syntaxe.
+
+**Note hors code (à faire par Thrasher) :** le « Peye AYITIMARKET » dans l'app MonCash = **nom du compte marchand Digicel** (50936803970), pas notre code → renommer chez Digicel. Aucune chaîne AyitiMarket visible dans l'app (reste l'ID projet Firebase `ayitimarket-19c78`, interne).
+
+**Leçons durables (semées agentmemory) :** (1) Storage Supabase : sans policy SELECT sur storage.objects, tout upload échoue au `RETURNING *` même avec INSERT valide — la vraie cause du « sauvegarde locale seulement ». (2) Un override global de `fp()` pour convertir la monnaie casse tous les sites `fp(x)+' HTG'` → séparer formateur nombre (`fp`) et formateur prix (`fpc`). (3) Préférence globale en localStorage = fuite entre comptes sur un même appareil → clé par uid. (4) Compteur incrémenté à chaque ouverture ≠ visiteurs uniques → dedup par (viewer, objet) serveur + par appareil pour invités.
+
+---
+
 ## 2026-07-18 (fin) : AUDIT UX SOLDÉ À 100% — lots P2 fin + rechèch flou + P3 (3 PR : #207 à #209)
 
 - **#207 — Dyalòg admin stile + mode sonm fèy kat.** Nouveau `appPrompt` (modal à champ texte, famille `appConfirm`) remplace les 4 dialogues système admin (rejet produit, « Lage lajan an? » avec montant/vendeur/numéro + rappel transfert manuel, remboursement, résolution litij — raisons obligatoires). **Zéro `prompt()`/`confirm()` natif restant dans l'app.** Dark mode `#mapSheet` (classes `.map-panel` + overrides `--dm-*`). Bonus sécurité : suggestions LocationIQ passées par `esc()` (XSS API externe). Leçon #193 réappliquée : un faux « cassé en sombre » venait d'un harness au markup simplifié — retracé aux pixels avant de conclure.
