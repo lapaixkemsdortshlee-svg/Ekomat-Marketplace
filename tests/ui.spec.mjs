@@ -73,6 +73,33 @@ test.describe('Otantifikasyon (san backend)', () => {
     });
 });
 
+test.describe('Mòd envite (san backend)', () => {
+    test('enterGuestMode montre feed la epi kache aksyon konekte yo', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForTimeout(1500);
+        // Bouton "Gade katalòg la san kont" dwe la sou ekran login.
+        await expect(page.getByText('Gade katalòg la san kont')).toHaveCount(1);
+        await page.evaluate(() => window.enterGuestMode());
+        await page.waitForTimeout(300);
+        await expect(page.locator('#s-feed')).toHaveClass(/on/);
+        // FAB pibliye + bouton mesaj/notif yo kache pou envite.
+        await expect(page.locator('#fab')).toHaveClass(/hidden/);
+        await expect(page.locator('#msgBtn')).toHaveClass(/hidden/);
+        expect(await page.evaluate(() => typeof window.requireLogin === 'function')).toBe(true);
+    });
+
+    test('yon aksyon gated (kòmande) mennen envite sou login', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForTimeout(1500);
+        await page.evaluate(() => window.enterGuestMode());
+        await page.waitForTimeout(200);
+        // Kòmande kòm envite dwe rale ekran koneksyon an (pa kraze).
+        await page.evaluate(() => window.startOrder('nonexistent-id'));
+        await page.waitForTimeout(200);
+        await expect(page.locator('#s-login')).toHaveClass(/on/);
+    });
+});
+
 test('fichye antre + asset kle yo sèvi', async ({ request }) => {
     for (const path of ['/', '/onboarding.html', '/icon-192.png', '/icon-512.png', '/og-image.png',
         '/robots.txt', '/sitemap.xml', '/llms.txt', '/l/elektwonik.html', '/l/potoprens.html']) {
