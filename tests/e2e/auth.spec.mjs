@@ -137,7 +137,9 @@ test('parennaj (UI): kòd refè + kontè limit 3 moun', async ({ page }) => {
     await page.evaluate(() => window.openReferralSheet && window.openReferralSheet());
     const code = page.locator('#referralCode');
     await expect(code).toBeVisible({ timeout: 15_000 });
-    await expect(code).toHaveText(/^AYIM-/, { timeout: 15_000 });
+    // Kòd refè kòmanse pa EKO- depi rebrand la (tès 2-3 moun, Bug 7).
+    // Ansyen kòd AYIM- yo migre nan baz la.
+    await expect(code).toHaveText(/^EKO-/, { timeout: 15_000 });
     // Kontè limit 3 moun nan afiche (swa "Rete X/3 moun" swa "limit").
     await expect(page.locator('#referralRemaining')).toContainText(/moun/, { timeout: 15_000 });
 });
