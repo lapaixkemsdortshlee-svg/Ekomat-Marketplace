@@ -492,7 +492,7 @@
         /* Fèy plen ekran (tach enpòtan/long): notifikasyon, verifikasyon,
            anons, paramèt, sant èd, modifye pwofil/pwodwi, lokalizasyon. Fèy
            aksyon rapid yo rete bottom-sheet ak handle. */
-        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet, #escrowPaySheet, #mapSheet {
+        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet, #escrowPaySheet, #mapSheet, #orderSheet {
             top: 0;
             height: 100dvh;
             max-height: 100dvh;
@@ -507,7 +507,7 @@
             transition: transform .36s cubic-bezier(.32, .72, 0, 1), visibility 0s linear .36s;
         }
 
-        #notifSheet.on, #verifySheet.on, #announceSheet.on, #settingsSheet.on, #helpSheet.on, #editProfileSheet.on, #editProductSheet.on, #escrowPaySheet.on, #mapSheet.on {
+        #notifSheet.on, #verifySheet.on, #announceSheet.on, #settingsSheet.on, #helpSheet.on, #editProfileSheet.on, #editProductSheet.on, #escrowPaySheet.on, #mapSheet.on, #orderSheet.on {
             visibility: visible;
             transition: transform .36s cubic-bezier(.32, .72, 0, 1), visibility 0s linear 0s;
         }
@@ -2389,9 +2389,17 @@
 ══════════════════════════════════════════════════════ -->
     <div class="scrim" id="scrim" onclick="closeSheets()"></div>
 
-    <!-- Order sheet -->
+    <!-- Order sheet — fèy plen ekran (Bug 1): paj enpòtan, li merite tout
+         ekran an ak yon bouton retou, pa yon ti bottom-sheet ki koupe. -->
     <div class="sheet" id="orderSheet">
-        <div class="handle"></div>
+        <div class="flex items-center gap-2 mb-4">
+            <button onclick="closeSheets()" aria-label="Fèmen kòmand lan"
+                class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+            </button>
+            <span class="material-symbols-outlined fi text-primary" style="font-size:24px">shopping_bag</span>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Kòmande</h3>
+        </div>
         <div id="orderSheetContent"></div>
     </div>
 
@@ -3314,6 +3322,18 @@
                 <p class="font-label text-xs text-on-surface-variant mt-2 leading-relaxed">W ap jwenn referans lan nan SMS konfimasyon MonCash voye ba ou a.</p>
                 <p class="font-label text-xs font-bold mt-2 leading-relaxed" style="color:#97422b">⚠️ Ou deja voye lajan an? PA voye l yon dezyèm fwa — antre referans lan, li se prèv peman ou.</p>
             </div>
+            <!-- Prèv screenshot MonCash (opsyonèl men rekòmande) — Bug 3 -->
+            <div class="bg-surface-container-low rounded-xl p-4 mb-3">
+                <p class="font-label text-xs font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Prèv peman (screenshot)</p>
+                <input type="file" id="escPayProofInput" accept="image/*" class="hidden" onchange="escPayPickProof(event)"/>
+                <button type="button" id="escPayProofBtn" onclick="document.getElementById('escPayProofInput').click()"
+                    class="w-full flex items-center justify-center gap-2 py-3 rounded-xl active:scale-95 transition-transform" style="background:rgba(0,102,111,.08);color:#00666f">
+                    <span class="material-symbols-outlined fi" style="font-size:18px">add_a_photo</span>
+                    <span class="font-label text-sm font-bold">Ajoute screenshot MonCash la</span>
+                </button>
+                <div id="escPayProofPreview" class="hidden mt-2"></div>
+                <p class="font-label text-xs text-on-surface-variant mt-2 leading-relaxed">Foto resi/SMS MonCash la ede admin verifye peman ou pi vit.</p>
+            </div>
             <div class="flex gap-3">
                 <button onclick="escPayGoStep(1)" aria-label="Retounen nan etap 1"
                     class="px-4 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant flex items-center gap-1">
@@ -3385,6 +3405,8 @@
             </p>
         </div>
         <div class="bg-surface-container-low rounded-xl p-4 mb-3" id="adminConfPayInfo"></div>
+        <!-- Prèv screenshot achtè a (Bug 3) — signed URL, bucket prive -->
+        <div id="adminConfPayProof" class="mb-3"></div>
         <!-- Verifikasyon otomatik MonCash — montre rezilta adaptè a -->
         <div class="rounded-xl p-3 mb-3" id="adminConfPayVerifyBox"
             style="background:rgba(101,124,71,.06);border:1px solid rgba(101,124,71,.18)">
@@ -3400,13 +3422,18 @@
                 Apre konfimasyon, lajan ap antre nan eskwo, vandè avèk achtè ap resevwa yon notifikasyon, ak vandè a ka prepare pwodwi a.
             </p>
         </div>
+        <button id="adminConfPayBtn" onclick="submitAdminConfirmPayment()" class="w-full py-3 rounded-xl font-label font-bold text-sm active:scale-95 flex items-center justify-center gap-2 mb-2" style="background:#065f46;color:#fcf9f4">
+            <span class="material-symbols-outlined" style="font-size:18px">check_circle</span>
+            Wi, peman resevwa — Konfime
+        </button>
         <div class="flex gap-3">
-            <button onclick="closeSheets()" class="px-4 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant">
+            <button onclick="closeSheets()" class="flex-1 py-3 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant">
                 Anile
             </button>
-            <button id="adminConfPayBtn" onclick="submitAdminConfirmPayment()" class="flex-1 py-3 rounded-xl font-label font-bold text-sm active:scale-95 flex items-center justify-center gap-2" style="background:#065f46;color:#fcf9f4">
-                <span class="material-symbols-outlined" style="font-size:18px">check_circle</span>
-                Wi, peman resevwa — Konfime
+            <!-- Bug 3: admin deklare li PA jwenn peman an → achtè avize -->
+            <button id="adminRejectPayBtn" onclick="submitAdminRejectPayment()" class="flex-1 py-3 rounded-xl font-label font-bold text-sm active:scale-95 flex items-center justify-center gap-2" style="background:rgba(152,68,62,.1);color:#98443e">
+                <span class="material-symbols-outlined" style="font-size:18px">block</span>
+                Pa resevwa peman
             </button>
         </div>
     </div>
@@ -4644,6 +4671,9 @@
             // la te chaje an reta (kach stale sou move koneksyon), yon vandè
             // te ka wè onglet Admin an paske li pa t janm re-kache.
             applyRoleNav();
+            // Monnen pa-kont (Bug 9): idrate preferans kont sa a anvan feed la
+            // rann, konsa yon lòt kont sou menm aparèy la pa fòse USD sou li.
+            if (typeof applyUserCurrency === 'function') applyUserCurrency();
             if (A.user.role === "admin") setupAdminFab();
             else document.getElementById("fab")?.classList.remove("hidden");
             updateCartBadge();
@@ -4873,6 +4903,19 @@
             if (db && A.user?.uid) {
                 db.from('product_views').insert({ product_id: p.id, viewer_id: A.user.uid })
                     .then(({ error }) => { if (error) console.warn('[View]', error.message); });
+            }
+            // Bug 6 tès 2-3 moun: konte vizit la sou products.views (kolòn nan
+            // boutik la li). RLS UPDATE sou products se pwopriyetè-sèlman, donk
+            // yon achtè pa t ka enkremante l → li te rete 0 pou tout tan. RPC
+            // SECURITY DEFINER an konte, men li pa konte pwòp vizit vandè a.
+            if (db && p.sellerId !== A.user?.uid) {
+                db.rpc('increment_product_views', { p_product_id: p.id })
+                    .then(({ error }) => {
+                        if (error) { console.warn('[ViewCount]', error.message); return; }
+                        p.v = (p.v || 0) + 1;
+                        const idx = PRODUCTS.findIndex(x => x.id === p.id);
+                        if (idx >= 0) PRODUCTS[idx].v = p.v;
+                    });
             }
             A.stack.push(A.tab);
             document.querySelectorAll(".screen").forEach(s => s.classList.remove("on"));
@@ -5515,8 +5558,8 @@
       <div class="p-3">
         <h3 class="font-headline font-bold text-on-surface leading-tight" style="font-size:.8rem">${esc(p.t)}</h3>
         <div class="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
-          <p class="font-headline font-extrabold text-primary" style="font-size:.875rem">${fp(p.p)} HTG</p>
-          ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1.5" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
+          <p class="font-headline font-extrabold text-primary" style="font-size:.875rem">${fpc(p.p)}</p>
+          ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fpc(p.oldP)}</span><span class="font-label font-bold rounded-full px-1.5" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
         </div>
         <div class="flex items-center gap-1 mt-1 min-w-0">
           <span class="material-symbols-outlined text-on-surface-variant flex-shrink-0" style="font-size:11px">location_on</span>
@@ -5603,7 +5646,7 @@
         <div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0" style="background:#f0ede8">${img}</div>
         <div class="flex-1 min-w-0">
           <p class="font-headline font-bold text-sm text-on-surface truncate">${esc(p.t)}</p>
-          <p class="font-label text-xs text-primary font-bold">${fp(p.p)} HTG</p>
+          <p class="font-label text-xs text-primary font-bold">${fpc(p.p)}</p>
         </div>
         <button onclick="event.stopPropagation();toggleFav(${pid});this.closest('.fav-row').remove();_favsAfterRemove()"
                 aria-label="Retire nan favori"
@@ -6235,17 +6278,15 @@
             const total = sub + fee - promoDiscount;
             const zone = A.pickupZone || _lastGeocode();
             document.getElementById("orderSheetContent").innerHTML = `
-    <p class="font-label text-[11px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-1">Kòmande</p>
-    <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-4">${esc(p.t)}</h3>
-    <div class="bg-surface-container-lowest rounded-xl p-4 flex items-center gap-4 mb-5">
+    <div class="bg-surface-container-lowest rounded-2xl p-4 flex items-center gap-4 mb-5 amb">
       <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0" style="background:#f0ede8">
         ${(p.img || (p.images && p.images[0]))
           ? `<img src="${esc(p.img || p.images[0])}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=prodPlaceholder(${JSON.stringify({e:p.e,ec:p.ec,id:p.id}).replace(/"/g,'&quot;')},80)"/>`
           : prodPlaceholder(p, 80)}
       </div>
-      <div class="flex-1">
+      <div class="flex-1 min-w-0">
         <p class="font-headline font-bold text-sm text-on-surface">${esc(p.t)}</p>
-        <p class="font-label text-xs text-on-surface-variant">${p.sellerName || 'Vandè'} ${p.b ? '· Verifye' : ''}</p>
+        <p class="font-label text-xs text-on-surface-variant">${esc(p.sellerName || 'Vandè')} ${p.b ? '· Verifye' : ''}</p>
         <div class="flex items-baseline gap-1.5 mt-1 flex-wrap">
           <p class="font-headline font-extrabold text-xl text-primary">${fp(sub)} HTG</p>
           ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.75rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1.5" style="font-size:.625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.5">-${discountPct(p)}%</span>` : ''}
@@ -6306,7 +6347,7 @@
     <div class="rounded-xl p-3 mb-3" style="background:rgba(0,102,111,.04);border:1px solid rgba(0,102,111,.15)">
       <p class="font-label text-[11px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-1.5">Kòd pwomosyon (opsyonèl)</p>
       <div class="flex gap-2">
-        <input id="orderPromoInput" class="si flex-1" style="text-transform:uppercase" placeholder="EGZ: AYIM-XXXXXX"
+        <input id="orderPromoInput" class="si flex-1" style="text-transform:uppercase" placeholder="EGZ: EKO-XXXXXX"
                value="${A._promoCode || ''}"/>
         <button id="orderPromoBtn" onclick="orderApplyPromo()" class="px-3 py-2 rounded-xl font-label font-bold text-xs active:scale-95"
                 style="background:#00666f;color:#fff">
@@ -6605,9 +6646,15 @@
                 </div>`;
             }
             const labels = isSeller ? ESCROW_STEP_LABELS_SELLER : ESCROW_STEP_LABELS_BUYER;
+            // Bug 5 (tès 2-3 moun): lè tranzaksyon an fèmen ('completed'),
+            // dènye etap la ("Tranzaksyon fèmen") dwe KOCHE. Anvan, 'completed'
+            // ak 'released' tou de te bay endèks 5 → etap 6 te rete "aktif"
+            // (nimewo 6) olye de koche. Pouse endèks la pi lwen pase dènye etap
+            // la konsa tout 6 etap yo montre kòm fèt.
+            const effectiveIdx = order.status === 'completed' ? labels.length : currentIdx;
             return '<div class="mt-3 border-t pt-3" style="border-color:#ede9e3">'
                 + labels.map((lab, i) => {
-                    const state = i < currentIdx ? 'done' : (i === currentIdx ? 'active' : 'pending');
+                    const state = i < effectiveIdx ? 'done' : (i === effectiveIdx ? 'active' : 'pending');
                     const tick = state === 'done' ? '✓' : String(i + 1);
                     return `<div class="esc-step ${state}">
                         <div class="esc-bullet">${tick}</div>
@@ -6688,6 +6735,15 @@
                         <span class="material-symbols-outlined" style="font-size:18px">report</span>
                     </button>`);
                 }
+                // Bug 5 (tès 2-3 moun): lè lajan libere, vandè a ka FÈMEN
+                // tranzaksyon an (released → completed) pou dènye etap la koche.
+                if (order.status === 'released') {
+                    buttons.push(`<button onclick="closeTransaction('${id}')"
+                        class="flex-1 py-2 rounded-lg font-label font-bold text-[12px] active:scale-95 cta">
+                        <span class="material-symbols-outlined align-middle" style="font-size:14px">task_alt</span>
+                        Fèmen tranzaksyon
+                    </button>`);
+                }
             }
             // Kòmand fini — achtè AK vandè ka kache/demaske l nan pwòp vi yo
             // (pa efase — dosye a rete entak pou lòt pati a ak odit admin).
@@ -6708,6 +6764,29 @@
                 ? `<div class="flex flex-wrap gap-2 mt-3 justify-center">${buttons.join('')}</div>`
                 : '';
         }
+
+        // Bug 5 (tès 2-3 moun): fèmen tranzaksyon an (released → completed) —
+        // yon fèmti kosmetik ki koche dènye etap la. Vandè, achtè, oswa admin
+        // ka rele l (matris RPC a otorize tou de pati yo + admin).
+        async function closeTransaction(orderId) {
+            if (!db) return;
+            const ok = await appConfirm({
+                icon: 'task_alt',
+                title: 'Fèmen tranzaksyon an?',
+                body: 'Sa make kòmand lan konplètman fini. Lajan an deja libere — se yon fèmti final.',
+                okLabel: 'Wi, fèmen l', cancelLabel: 'Poko',
+            });
+            if (!ok) return;
+            const { error } = await db.rpc('advance_order_status', {
+                p_order_id: orderId, p_to_status: 'completed',
+                p_moncash_ref: null, p_admin_note: null,
+            });
+            if (error) { toast('Erè: ' + error.message); return; }
+            toast('Tranzaksyon fèmen — mèsi!');
+            if (typeof renderOrderScreen === 'function') renderOrderScreen();
+            if (typeof renderAdminOrders === 'function' && A.user?.role === 'admin') renderAdminOrders();
+        }
+        window.closeTransaction = closeTransaction;
 
         function renderOrderCard(o, isSeller) {
             const partner = isSeller ? (o.buyer_name || 'Kliyan') : (o.seller_name || 'Vandè');
@@ -6762,6 +6841,11 @@
             const p = A.curProd;
             if (!p) { toast('Erè: pa gen pwodwi seleksyone'); return; }
             if (!A.isAuth || !A.user?.uid) { toast('Konekte pou kòmande'); return; }
+            if (!p.sellerId) {
+                console.warn('[Order] Pwodwi a pa gen sellerId — kòmand pa ka sove');
+                toast('Erè: pwodwi sa a pa ka kòmande');
+                return;
+            }
             const zone = A.pickupZone || _lastGeocode();
             const pickupLabel = (zone && zone.label) ? zone.label : 'Zòn pa presize';
 
@@ -6782,91 +6866,71 @@
             const netAmount = unitPrice - feeAmount;   // seller payout unchanged
             const sellerName = p.sellerName || p.seller || 'Vandè';
 
-            if (!p.sellerId) {
-                console.warn('[Order] Pwodwi a pa gen sellerId — kòmand pa ka sove');
-                toast('Erè: pwodwi sa a pa ka kòmande');
-                return;
+            // Netwaye nenpòt gwoup panier ki te rete (checkout abandone) pou
+            // submitPaymentRef pa eseye avanse ansyen id yo pou kòmand sa a.
+            A._escrowGroupIds = null;
+            // Bug 10 (tès 2-3 moun): PA kreye fich kòmand la kounye a. Achtè a
+            // ka klike "Kòmande" epi abandone tunèl peman an — sa t ap kite yon
+            // kòmand fantom pou admin. Nou stoke yon kòmand "annatant" an
+            // memwa; li ENSERE nan baz la SÈLMAN nan submitPaymentRef() lè
+            // achtè a antre referans MonCash la (dènye bouton peman an).
+            A._pendingOrder = {
+                buyer_id: A.user.uid, seller_id: p.sellerId, product_id: p.id,
+                product_title: p.t, buyer_name: A.user.name, seller_name: sellerName,
+                unit_price: unitPrice, total_amount: totalAmount, fee_amount: feeAmount,
+                net_amount: netAmount, pickup_location: pickupLabel, otp_code: otp,
+                admin_note: promoCode ? '[Promo: ' + promoCode + ' -' + promoDiscount + ' HTG]' : null,
+                _promoCode: promoCode, _promoDiscount: promoDiscount, _product: p,
+                id: null,
+            };
+            // Ouvri tunèl peman an (etap 1 = voye lajan). Okenn kòmand poko nan
+            // baz la — li kreye lè referans lan soumèt.
+            openEscrowPaymentSheet(A._pendingOrder);
+        }
+
+        // Bug 10: ENSERE reyèlman kòmand annatant lan nan baz la. Rele nan
+        // submitPaymentRef() lè achtè a soumèt referans MonCash la. Retounen
+        // ranje kòmand la, oswa { error } si li echwe.
+        async function _createPendingOrder() {
+            const pend = A._pendingOrder;
+            if (!pend || !db) return null;
+            const p = pend._product;
+            const { data, error } = await db.from('orders').insert({
+                buyer_id: pend.buyer_id,
+                seller_id: pend.seller_id,
+                product_id: pend.product_id,
+                product_title: pend.product_title,
+                buyer_name: pend.buyer_name,
+                seller_name: pend.seller_name,
+                quantity: 1,
+                unit_price: pend.unit_price,
+                total_amount: pend.total_amount,
+                fee_amount: pend.fee_amount,
+                net_amount: pend.net_amount,
+                status: 'awaiting_payment',
+                payment_method: 'MONCASH',
+                pickup_location: pend.pickup_location,
+                otp_code: pend.otp_code,
+                admin_note: pend.admin_note,
+            }).select().single();
+            if (error) { console.warn('[Order insert]', error.message); return { error }; }
+            const newOrder = data;
+            // Redenmsyon pwomosyon (best-effort — pa bloke kòmand lan).
+            if (pend._promoCode && pend._promoDiscount > 0) {
+                applyPromoToOrder(pend._promoCode, newOrder.id, pend._promoDiscount);
             }
-
-            showBusy('N ap kreye kòmand ou…', 'Yon ti moman ankò… n ap sekirize kòmand ou an tout sekirite.');
-            let newOrder = null;
-            if (db) {
-                try {
-                    const { data, error: ordErr } = await db.from('orders').insert({
-                        buyer_id: A.user.uid,
-                        seller_id: p.sellerId,
-                        product_id: p.id,
-                        product_title: p.t,
-                        buyer_name: A.user.name,
-                        seller_name: sellerName,
-                        quantity: 1,
-                        unit_price: unitPrice,
-                        total_amount: totalAmount,
-                        fee_amount: feeAmount,
-                        net_amount: netAmount,
-                        status: 'awaiting_payment',
-                        payment_method: 'MONCASH',
-                        pickup_location: pickupLabel,
-                        otp_code: otp,
-                        admin_note: promoCode ? '[Promo: ' + promoCode + ' -' + promoDiscount + ' HTG]' : null,
-                    }).select().single();
-                    if (ordErr) { console.warn('[Order insert]', ordErr.message); hideBusy(); toast('Erè: ' + ordErr.message); return; }
-                    newOrder = data;
-                    // Anrejistre redenmsyon (best-effort) — pa bloke kòmand
-                    // la si li echwe (admin ka rekonsilye).
-                    if (promoCode && promoDiscount > 0) {
-                        applyPromoToOrder(promoCode, newOrder.id, promoDiscount);
-                    }
-                    A._promoCode = null;
-                    A._promoDiscount = 0;
-
-                    // Decrement stock optimistically (released back if order cancelled)
-                    if (typeof p.s === 'number' && p.s > 0) {
-                        const newStock = p.s - 1;
-                        await db.from('products').update({ stock: newStock }).eq('id', p.id);
-                        p.s = newStock;
-                        const idx = PRODUCTS.findIndex(x => x.id === p.id);
-                        if (idx >= 0) PRODUCTS[idx].s = newStock;
-                    }
-
-                    // Notify seller: new pending-payment order
-                    notify(p.sellerId, {
-                        type: 'order', icon: 'shopping_bag',
-                        title: 'Nouvo kòmand!',
-                        body: (A.user.name || 'Yon kliyan') + ' kòmande ' + p.t + ' — ap tann peman MonCash.',
-                        color: '#00666f',
-                    });
-
-                    // Notify buyer (self): order created, need to pay
-                    notify(A.user.uid, {
-                        type: 'order', icon: 'payments',
-                        title: 'Kòmand kreye — peye kounye a',
-                        body: 'Voye ' + fp(totalAmount) + ' HTG MonCash pou fini kòmand ' + p.t + '.',
-                        color: '#97422b',
-                        data: { order_id: newOrder.id, kind: 'order_placed' },
-                    });
-
-                    // Bug 4.1: alert admins in real time when a new order is active
-                    notifyAdmins({
-                        type: 'order', icon: 'shopping_bag',
-                        title: 'Nouvo kòmand aktif',
-                        body: (A.user.name || 'Yon achtè') + ' kòmande ' + p.t + ' — ap tann peman MonCash.',
-                        color: '#97422b',
-                        data: { order_id: newOrder.id, kind: 'order_placed' },
-                    });
-                } catch(e) {
-                    console.warn('[Order]', e.message);
-                    hideBusy();
-                    toast('Erè anrejistre kòmand la, eseye ankò');
-                    return;
-                }
+            A._promoCode = null;
+            A._promoDiscount = 0;
+            // Bese estòk la (li retounen si kòmand anile) — sèlman kounye a,
+            // pa nan checkout ki abandone.
+            if (p && typeof p.s === 'number' && p.s > 0) {
+                const newStock = p.s - 1;
+                await db.from('products').update({ stock: newStock }).eq('id', p.id);
+                p.s = newStock;
+                const idx = PRODUCTS.findIndex(x => x.id === p.id);
+                if (idx >= 0) PRODUCTS[idx].s = newStock;
             }
-
-            hideBusy();
-            updateNotifBadge();
-            // Show the payment instructions sheet (buyer must now MonCash the admin)
-            if (newOrder) openEscrowPaymentSheet(newOrder);
-            else toast('Kòmand kreye men konsèvasyon an fèt off-line');
+            return newOrder;
         }
 
         function closeSuccess() { document.getElementById("successOverlay").classList.add("hidden"); }
@@ -6928,8 +6992,8 @@
       <div class="flex-1 min-w-0">
         <p class="font-headline font-bold text-xs text-on-surface truncate">${esc(p.t)}</p>
         <div class="flex items-baseline gap-1 flex-wrap">
-          <p class="font-headline font-extrabold text-sm text-primary">${fp(p.p)} HTG</p>
-          ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
+          <p class="font-headline font-extrabold text-sm text-primary">${fpc(p.p)}</p>
+          ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fpc(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
         </div>
       </div>
       <span class="material-symbols-outlined text-on-surface-variant" style="font-size:16px">chevron_right</span>
@@ -7559,7 +7623,7 @@
             document.getElementById('fab').classList.add('hidden');
             document.getElementById('backbtn').classList.remove('hidden');
             document.getElementById('backbtn').classList.add('flex');
-            document.getElementById('toptitle').textContent = 'Boutik Mwen';
+            document.getElementById('toptitle').textContent = 'Boutik';
             document.getElementById('headerLogoWrap').querySelector('#headerLogo').style.display = 'none';
             document.getElementById('toptitle').style.display = '';
             renderBoutiqueContent();
@@ -7656,7 +7720,7 @@
                 return `<div style="margin-bottom:8px">
                     <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#3d4949">
                         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${esc(r.title)}</span>
-                        <span style="color:#00666f;font-weight:700">${fp(r.sales)} HTG</span>
+                        <span style="color:#00666f;font-weight:700">${fpc(r.sales)}</span>
                     </div>
                     <div style="height:6px;background:#e5e2dd;border-radius:999px;overflow:hidden;margin-top:3px">
                         <div class="bar-grow-x" style="width:${pct}%;height:100%;border-radius:999px;background:linear-gradient(90deg,#00666f,#00818c);animation-delay:${(i*0.08).toFixed(2)}s"></div>
@@ -7679,9 +7743,9 @@
                     <p class="font-label text-sm text-on-surface-variant mt-2">Pa gen kòmand pou analize ankò.</p>
                   </div>`
                 : `<div class="grid grid-cols-2 gap-3 mb-3">
-                    ${card(fp(a.paidSales) + ' HTG', 'Lavant Eskwo+')}
+                    ${card(fpc(a.paidSales), 'Lavant Eskwo+')}
                     ${card(a.paidOrders + '', 'Kòmand peye')}
-                    ${card(fp(a.avgOrder) + ' HTG', 'Mwayèn / kòmand')}
+                    ${card(fpc(a.avgOrder), 'Mwayèn / kòmand')}
                     ${card((a.conversion || 0) + '%', 'Konvèsyon (vizit→kòmand)')}
                   </div>
                   <div class="bg-surface-container-lowest rounded-xl p-3 mb-3 amb">
@@ -7760,8 +7824,8 @@
                         ? `<span class="font-label text-[10px] px-1.5 py-0.5 rounded-full" style="background:#e5e2dd;color:#5c6160">${p.status}</span>`
                         : `<span class="font-label text-[10px] px-1.5 py-0.5 rounded-full" style="background:rgba(0,102,111,.1);color:#00666f">aktif</span>`);
                 const priceLine = p.oldP
-                    ? `<p class="font-headline font-extrabold text-sm text-primary mt-0.5">${fp(p.p)} HTG <span class="font-label text-[11px] text-on-surface-variant line-through ml-1">${fp(p.oldP)}</span></p>`
-                    : `<p class="font-headline font-extrabold text-sm text-primary mt-0.5">${fp(p.p)} HTG</p>`;
+                    ? `<p class="font-headline font-extrabold text-sm text-primary mt-0.5">${fpc(p.p)} <span class="font-label text-[11px] text-on-surface-variant line-through ml-1">${fpc(p.oldP)}</span></p>`
+                    : `<p class="font-headline font-extrabold text-sm text-primary mt-0.5">${fpc(p.p)}</p>`;
                 return `
                 <div class="bg-surface-container-lowest rounded-xl p-3 amb">
                   <div class="flex items-center gap-3">
@@ -8412,7 +8476,14 @@
                     }
                 }
                 const { error } = await db.from('profiles').update(updates).eq('id', A.user.uid);
-                if (error) console.warn('[Profile save]', error.message);
+                if (error) {
+                    // Bug 11 (tès 2-3 moun): anvan, erè a te avale (console.warn)
+                    // epi app la te toujou di "Pwofil mete ajou" — Thrasher te
+                    // panse li sove alòs ke non. Kounye a nou montre vrè erè a.
+                    console.warn('[Profile save]', error.message);
+                    toast('Pwofil pa sove: ' + error.message);
+                    return;
+                }
             }
             closeSheets();
             renderProfile();
@@ -8485,6 +8556,9 @@
             A.user = null; A.isAuth = false; A.booted = false;
             localStorage.removeItem("aym_user");
             localStorage.removeItem("aym_supabase_profile");
+            // Reyinisyalize monnen an sou preferans envite a (Bug 9) — pa kite
+            // monnen dènye kont lan kolbore sou pwochen kont ki konekte a.
+            if (typeof applyUserCurrency === 'function') applyUserCurrency();
             document.getElementById("topbar").classList.add("hidden");
             document.getElementById("bottomNav").classList.add("hidden");
             document.getElementById("fab").classList.add("hidden");
@@ -9490,6 +9564,9 @@
                 } else if (o.status === 'disputed') {
                     actions.push(`<button onclick="adminResolveDispute('${o.id}','release')" class="flex-1 py-2 rounded-lg font-label font-bold text-xs" style="background:#065f46;color:#fcf9f4">Ba vandè a</button>`);
                     actions.push(`<button onclick="adminResolveDispute('${o.id}','refund')" class="flex-1 py-2 rounded-lg font-label font-bold text-xs" style="background:#97422b;color:#fcf9f4">Ranbouse achtè</button>`);
+                } else if (o.status === 'released') {
+                    // Bug 5 (tès 2-3 moun): admin ka fèmen tranzaksyon an tou.
+                    actions.push(`<button onclick="closeTransaction('${o.id}')" class="flex-1 py-2 rounded-lg font-label font-bold text-xs active:scale-95 flex items-center justify-center gap-1" style="background:#065f46;color:#fcf9f4"><span class="material-symbols-outlined" style="font-size:13px">task_alt</span> Fèmen tranzaksyon</button>`);
                 }
                 const stepperHtml = _adminOrderTab === 'all' ? renderEscrowStepper(o, false) : '';
                 return `
@@ -9702,6 +9779,9 @@
                 `;
             }
             openSheet('adminConfirmPaymentSheet');
+            // Bug 3: montre prèv screenshot achtè a (si genyen). Bucket prive →
+            // signed URL. Sa bay admin plis konfyans anvan li konfime.
+            _renderAdminProof(o);
             // Lanse verifikasyon adaptè MonCash la otomatikman.
             _renderAdminVerifyBox({ loading: true });
             const v = await moncashVerifyTransaction({
@@ -9711,6 +9791,40 @@
             _renderAdminVerifyBox(v);
         }
         window.openAdminConfirmPayment = openAdminConfirmPayment;
+
+        // Bug 3: rann prèv peman achtè a (screenshot) nan sheet admin lan.
+        async function _renderAdminProof(o) {
+            const box = document.getElementById('adminConfPayProof');
+            if (!box) return;
+            if (!o || !o.payment_proof_path) {
+                box.innerHTML = `<div class="rounded-xl p-3 flex items-center gap-2" style="background:rgba(146,64,14,.06);border:1px dashed rgba(146,64,14,.3)">
+                    <span class="material-symbols-outlined" style="font-size:16px;color:#92400e">image_not_supported</span>
+                    <p class="font-label text-xs text-on-surface-variant">Achtè a pa mete okenn screenshot prèv.</p>
+                </div>`;
+                return;
+            }
+            box.innerHTML = `<div class="rounded-xl p-3" style="background:rgba(0,102,111,.05)">
+                <p class="font-label text-[11px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Prèv peman achtè a</p>
+                <div class="flex items-center gap-2 text-on-surface-variant"><span class="material-symbols-outlined sp" style="font-size:16px">progress_activity</span><span class="font-label text-xs">N ap chaje…</span></div>
+            </div>`;
+            try {
+                const { data, error } = await db.storage.from('payment-proofs')
+                    .createSignedUrl(o.payment_proof_path, 600);
+                if (error || !data?.signedUrl) throw error || new Error('no url');
+                box.innerHTML = `<div class="rounded-xl p-3" style="background:rgba(0,102,111,.05)">
+                    <p class="font-label text-[11px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Prèv peman achtè a</p>
+                    <a href="${esc(data.signedUrl)}" target="_blank" rel="noopener">
+                        <img src="${esc(data.signedUrl)}" alt="Prèv peman" class="rounded-lg w-full" style="max-height:220px;object-fit:contain;background:#f0ede8"/>
+                    </a>
+                    <p class="font-label text-[11px] text-on-surface-variant mt-1">Tape foto a pou wè l an gran.</p>
+                </div>`;
+            } catch (e) {
+                console.warn('[admin proof]', e && e.message);
+                box.innerHTML = `<div class="rounded-xl p-3" style="background:rgba(152,68,62,.06)">
+                    <p class="font-label text-xs" style="color:#98443e">Pa ka chaje prèv la.</p>
+                </div>`;
+            }
+        }
 
         // Trase rezilta verifikasyon MonCash nan sheet admin lan.
         function _renderAdminVerifyBox(v) {
@@ -9807,6 +9921,49 @@
             renderAdminOrders();
         }
         window.submitAdminConfirmPayment = submitAdminConfirmPayment;
+
+        // Bug 3 (tès 2-3 moun): admin deklare li PA jwenn peman an. Anvan, si
+        // admin pa t jwenn kòd/peman an, pa t gen okenn opsyon — sèl chwa se
+        // te "Wi peman resevwa". Kounye a: kòmand lan tounen "awaiting_payment"
+        // (achtè a ka re-verifye referans li / re-voye), epi achtè a resevwa
+        // yon notifikasyon ak rezon an.
+        async function submitAdminRejectPayment() {
+            const o = A._adminConfPayOrder;
+            if (!o) { toast('Pa gen kòmand chwazi'); return; }
+            const reason = await appPrompt({
+                icon: 'block',
+                title: 'Peman pa resevwa?',
+                body: 'Achtè a ap resevwa yon notifikasyon epi kòmand lan ap tounen "ap tann peman" pou li ka korije referans li oswa re-voye lajan an. Bay yon rezon kout.',
+                placeholder: 'ex: Referans lan pa koresponn ak okenn peman sou kont la',
+                okLabel: 'Voye bay achtè a', cancelLabel: 'Anile',
+                required: true, requiredMsg: 'Ekri yon rezon anvan',
+            });
+            if (reason == null) return;
+            const btn = document.getElementById('adminRejectPayBtn');
+            if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+            const verifierTag = A.user && A.user.uid ? ' [by:' + A.user.uid.slice(0, 8) + ']' : '';
+            const { error } = await db.rpc('advance_order_status', {
+                p_order_id: o.id, p_to_status: 'awaiting_payment',
+                p_moncash_ref: null,
+                p_admin_note: '[Peman pa resevwa] ' + reason + verifierTag,
+            });
+            if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+            if (error) { toast('Erè: ' + error.message); return; }
+            closeSheets();
+            A._adminConfPayOrder = null;
+            A._adminConfPayVerify = null;
+            toast('Achtè a avize — kòmand lan tounen ap tann peman');
+            notify(o.buyer_id, {
+                type: 'order', icon: 'error',
+                title: 'Peman pa resevwa',
+                body: 'Admin pa jwenn peman pou "' + (o.product_title || 'kòmand ou') + '". Rezon: '
+                    + reason + '. Tanpri verifye referans MonCash ou oswa re-voye lajan an.',
+                color: '#98443e',
+                data: { order_id: o.id, kind: 'payment_rejected' },
+            });
+            renderAdminOrders();
+        }
+        window.submitAdminRejectPayment = submitAdminRejectPayment;
 
         // Legacy entry point — kept for backwards compatibility with any
         // older code path that calls it; routes through the new sheet UI.
@@ -10593,7 +10750,7 @@
         }
         window.applyPromoToOrder = applyPromoToOrder;
 
-        // Jenere kòd refè inik pou itilizatè aktyèl la — `AYIM-XXXXXX` —
+        // Jenere kòd refè inik pou itilizatè aktyèl la — `EKO-XXXXXX` —
         // sove l sou profil + kreye yon ranje nan promo_codes.
         async function myReferralCode() {
             if (!db || !A.user?.uid) return null;
@@ -10605,7 +10762,7 @@
             // Jenere yon kòd 6 karaktè baz36.
             let code = '';
             do {
-                code = 'AYIM-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+                code = 'EKO-' + Math.random().toString(36).slice(2, 8).toUpperCase();
                 const { data: clash } = await db.from('promo_codes')
                     .select('id').eq('code', code).limit(1);
                 if (!clash || !clash.length) break;
@@ -10971,11 +11128,81 @@
                         .eq('id', id).eq('user_id', A.user.uid)
                         .then(({ error }) => { if (error) console.warn('[ReadNotif]', error.message); });
                 }
-                if (n.action) { closeSheets(); n.action(); return; }
+                updateNotifBadge();
+                // Bug 4+8 (tès 2-3 moun): louvri yon ti fenèt pop-up kare nan
+                // mitan an ak yon ti kwa — montre detay konplè notifikasyon an
+                // epi yon bouton pou ale sou objè ki lye a (kòmand, mesaj...).
+                openNotifDetail(n);
+                return;
             }
             renderNotifList(document.querySelector('.notif-tab.bg-surface-container-lowest')?.id?.replace('nt-', '') || 'all');
             updateNotifBadge();
         }
+
+        // Bug 4+8: fenèt detay notifikasyon (kare, santre, ti kwa pou soti).
+        // Deep-link entèlijan selon done ki tache ak notifikasyon an.
+        function _notifDeepLink(n) {
+            const d = n.data || {};
+            // Notifikasyon ki lye ak yon kòmand → ekran Kòmand.
+            if (d.order_id) {
+                return { label: 'Wè kòmand lan', icon: 'receipt_long', run: () => navTo('order') };
+            }
+            if (n.type === 'chat') {
+                return { label: 'Wè mesaj yo', icon: 'chat', run: () => { if (typeof openInbox === 'function') openInbox(); } };
+            }
+            // Notifikasyon pwodwi pou revize (admin) → panel admin.
+            if (n.type === 'product' && A.user?.role === 'admin') {
+                return { label: 'Wè pwodwi a', icon: 'inventory_2', run: () => { navTo('admin'); if (typeof switchAdminTab === 'function') switchAdminTab('pending'); } };
+            }
+            // Nouvo abonnen / evalyasyon → pwofil.
+            if (n.type === 'follow' || n.type === 'review') {
+                return { label: 'Wè pwofil ou', icon: 'person', run: () => navTo('profile') };
+            }
+            return null;
+        }
+
+        function openNotifDetail(n) {
+            closeNotifDetail();
+            const link = _notifDeepLink(n);
+            const ov = document.createElement('div');
+            ov.id = 'notifDetailOverlay';
+            ov.className = 'fixed inset-0 z-[320] flex items-center justify-center px-8';
+            ov.style.cssText = 'background:rgba(28,28,25,.55);backdrop-filter:blur(3px);animation:chartFade .2s ease both';
+            const go = link
+                ? '<button data-act="go" class="w-full py-3 rounded-xl cta font-label font-bold text-sm active:scale-95 flex items-center justify-center gap-2 mb-2">'
+                    + '<span class="material-symbols-outlined" style="font-size:18px">' + link.icon + '</span>' + esc(link.label) + '</button>'
+                : '';
+            ov.innerHTML = '<div class="w-full max-w-xs rounded-2xl p-5 amb text-center" style="background:#fcf9f4;box-shadow:0 20px 50px rgba(28,28,25,.3)">'
+                + '<div class="flex justify-end -mt-1 -mr-1">'
+                + '<button data-act="close" aria-label="Fèmen" class="w-8 h-8 rounded-full flex items-center justify-center active:scale-90" style="background:rgba(60,73,73,.08);color:#3d4949"><span class="material-symbols-outlined" style="font-size:18px">close</span></button>'
+                + '</div>'
+                + '<div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3" style="background:' + (n.color || '#00666f') + '18">'
+                + '<span class="material-symbols-outlined fi" style="font-size:26px;color:' + (n.color || '#00666f') + '">' + esc(n.icon || 'notifications') + '</span></div>'
+                + '<h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">' + esc(n.title || '') + '</h3>'
+                + (n.body ? '<p class="font-body text-sm text-on-surface-variant mt-2 leading-relaxed">' + esc(n.body) + '</p>' : '')
+                + '<p class="font-label text-[11px] text-on-surface-variant mt-2">' + esc(n.time || '') + '</p>'
+                + '<div class="mt-4">' + go
+                + '<button data-act="close2" class="w-full py-2.5 rounded-xl bg-surface-container font-label font-bold text-sm text-on-surface-variant active:scale-95">Fèmen</button>'
+                + '</div></div>';
+            ov.addEventListener('click', (e) => {
+                if (e.target === ov) return closeNotifDetail();
+                const act = e.target.closest('[data-act]');
+                if (!act) return;
+                const a = act.getAttribute('data-act');
+                if (a === 'go' && link) { closeNotifDetail(); closeSheets(); link.run(); return; }
+                closeNotifDetail();
+            });
+            document.body.appendChild(ov);
+            // Rafrechi lis la dèyè (nòt la kounye a li).
+            renderNotifList(document.querySelector('.notif-tab.bg-surface-container-lowest')?.id?.replace('nt-', '') || 'all');
+        }
+        window.openNotifDetail = openNotifDetail;
+
+        function closeNotifDetail() {
+            const ov = document.getElementById('notifDetailOverlay');
+            if (ov) ov.remove();
+        }
+        window.closeNotifDetail = closeNotifDetail;
 
         // Manual delete from the user's notification history. The card's
         // outer onClick is readNotif; the trash button calls this with
@@ -11441,8 +11668,26 @@
             // first paint, even before the network fetch resolves; default
             // to 130 only when nothing is cached yet.
             rate: parseFloat(localStorage.getItem('aym_currency_rate') || '0') || 130,
-            current: localStorage.getItem('aym_currency') || 'HTG'
+            // Monnen se PA-KONT (Bug 9 tès 2-3 moun): anvan, `aym_currency`
+            // te global sou aparèy la → yon kont an USD te fòse tout lòt kont
+            // yo an USD. Kounye a chak kont gen pwòp kle l (aym_currency_<uid>)
+            // epi applyUserCurrency() idrate l apre koneksyon. Default HTG.
+            current: 'HTG'
         };
+        // Kle monnen pa-kont (envite = 'guest' anvan koneksyon).
+        function _currencyKey() {
+            return 'aym_currency_' + (A.user && A.user.uid ? A.user.uid : 'guest');
+        }
+        // Idrate monnen kont aktyèl la (apre koneksyon oswa apre dekoneksyon).
+        // San toast, san re-render lou — feed la rann apre boot la.
+        function applyUserCurrency() {
+            let cur = 'HTG';
+            try { cur = localStorage.getItem(_currencyKey()) || 'HTG'; } catch (_) { }
+            CURRENCY.current = cur;
+            const lbl = document.getElementById('currLabel');
+            if (lbl) { lbl.textContent = cur; lbl.style.color = cur === 'USD' ? '#d97706' : '#00666f'; }
+        }
+        window.applyUserCurrency = applyUserCurrency;
 
         // Pull a fresh USD→HTG rate from a public ExchangeRate-API endpoint.
         // We cache for 4h to keep app boots cheap and tolerate the API
@@ -11517,7 +11762,8 @@
 
         function setCurrency(cur) {
             CURRENCY.current = cur;
-            localStorage.setItem('aym_currency', cur);
+            // Sove sou kle pa-kont la (pa global ankò — Bug 9).
+            try { localStorage.setItem(_currencyKey(), cur); } catch (_) { }
             const lbl = document.getElementById('currLabel');
             if (lbl) { lbl.textContent = cur; lbl.style.color = cur === 'USD' ? '#d97706' : '#00666f'; }
             // Sync tous les boutons settings (il peut y en avoir plusieurs)
@@ -11545,14 +11791,12 @@
             toast('Monnaie: ' + cur + ' (1 USD = ' + CURRENCY.rate.toFixed(2) + ' HTG)');
         }
 
-        // Override fp() pour supporter la conversion
-        const _origFp = fp;
-        window.fp = function (n) {
-            if (CURRENCY.current === 'USD') {
-                return '$' + (n / CURRENCY.rate).toFixed(2);
-            }
-            return Number(n).toLocaleString('fr');
-        };
+        // fp() rete yon fòmatè NIMEWO pi (separatè milye fransè) — li pa
+        // konvèti monnen. Bug tès 2-3 moun (2026-07-18): ansyen override a te
+        // fè fp() retounen "$X.XX" an mòd USD, men modèl yo mete " HTG" apre
+        // → "$11.42 HTG". Kounye a se fpc() ki fòmatè PRI a (li retire " HTG"
+        // an USD). Montan tranzaksyon reyèl yo (MonCash, admin, eskwo) rete
+        // an HTG toujou paske transfè yo fèt an goud.
 
         // ══════════════════════════════════════════════════════════
         //  FONCTIONNALITE 3 — LITE MODE
@@ -11870,21 +12114,36 @@
 
         function openEscrowPaymentSheet(order) {
             A._escrowCurrent = order;
+            // Si se yon vrè kòmand (gen id), efase nenpòt kòmand annatant an
+            // memwa pou submitPaymentRef() pa eseye re-kreye l (Bug 10).
+            if (order && order.id) A._pendingOrder = null;
             const info = document.getElementById('escPayInfo');
             const num  = document.getElementById('escPayAdminNumber');
             const amt  = document.getElementById('escPayAmount');
             const ref  = document.getElementById('escPayRef');
             if (ref) ref.value = order.moncash_ref || '';
+            // Reyinisyalize prèv peman an chak fwa fèy la louvri (Bug 3).
+            if (typeof escPayClearProof === 'function') escPayClearProof();
             // Si achtè a te deja kòmanse (ref sove), ale dirèk nan etap 2.
             escPayGoStep(order.moncash_ref ? 2 : 1);
+            // Bug 2 (tès 2-3 moun): montre FOTO pwodwi a — kliyan an dwe wè sa
+            // l ap achte pandan l ap fè transfè a. Foto a soti nan kòmand
+            // annatant lan, nan ranje kòmand la, oswa nan kach PRODUCTS la.
+            const _prod = (A._pendingOrder && A._pendingOrder._product)
+                || PRODUCTS.find(x => x.id === order.product_id) || null;
+            const _img = order._img || (_prod && (_prod.img || (_prod.images && _prod.images[0]))) || null;
+            const thumb = _img
+                ? `<img src="${esc(_img)}" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.style.display='none';this.parentElement.innerHTML='&lt;span class=&quot;material-symbols-outlined fi text-primary&quot; style=&quot;font-size:22px&quot;&gt;shopping_bag&lt;/span&gt;'"/>`
+                : '<span class="material-symbols-outlined fi text-primary" style="font-size:22px">shopping_bag</span>';
+            const idLabel = order.id ? ('Kòmand #' + String(order.id).slice(0, 8)) : 'Nouvo kòmand';
             if (info) info.innerHTML = `
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:rgba(0,102,111,.08)">
-                        <span class="material-symbols-outlined fi text-primary" style="font-size:22px">shopping_bag</span>
+                    <div class="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center" style="background:rgba(0,102,111,.08)">
+                        ${thumb}
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="font-headline font-bold text-sm">${esc(order.product_title || 'Pwodwi')}</p>
-                        <p class="font-label text-xs text-on-surface-variant">Kòmand #${(order.id || '').slice(0, 8)}</p>
+                        <p class="font-label text-xs text-on-surface-variant">${idLabel}</p>
                     </div>
                 </div>`;
             if (num) num.textContent = APP_SETTINGS.admin_moncash_number || '— Admin poko konfigire —';
@@ -11896,12 +12155,14 @@
         async function openEscrowPaymentSheetById(orderId) {
             const o = await fetchOrder(orderId);
             if (!o) { toast('Kòmand pa jwenn'); return; }
+            // Kòmand endividyèl — netwaye nenpòt gwoup panier ki te rete.
+            A._escrowGroupIds = null;
             openEscrowPaymentSheet(o);
         }
         window.openEscrowPaymentSheetById = openEscrowPaymentSheetById;
 
         async function submitPaymentRef() {
-            const order = A._escrowCurrent;
+            let order = A._escrowCurrent;
             const refEl = document.getElementById('escPayRef');
             if (!order || !refEl) return;
             const ref = refEl.value.trim();
@@ -11915,16 +12176,33 @@
                 return;
             }
 
+            const restorePay = btnBusy(document.getElementById('escPaySubmitBtn'),
+                'N ap anrejistre peman ou…',
+                'Lajan w pwoteje nan eskwo — li p ap ale bay vandè a toutan livrezon pa konfime.');
+
+            // Bug 10 (tès 2-3 moun): si kòmand la poko nan baz la (li te
+            // annatant nan memwa), kreye l KOUNYE A — se soumèt referans lan ki
+            // reyèlman kreye fich kòmand la, pa klik "Kòmande" a.
+            let justCreated = false;
+            if (!order.id && A._pendingOrder) {
+                const created = await _createPendingOrder();
+                if (!created || created.error) {
+                    restorePay();
+                    toast('Erè: ' + ((created && created.error && created.error.message) || 'pa ka kreye kòmand lan'));
+                    return;
+                }
+                order = created;
+                A._escrowCurrent = created;
+                A._pendingOrder = null;
+                justCreated = true;
+            }
+
             // If this escrow sheet was opened for a multi-order group (cart
             // checkout for a single seller), advance every row with the same
             // MonCash ref so admin sees them as one logical payment.
             const groupIds = Array.isArray(A._escrowGroupIds) && A._escrowGroupIds.length > 1
                 ? A._escrowGroupIds.slice()
                 : [order.id];
-
-            const restorePay = btnBusy(document.getElementById('escPaySubmitBtn'),
-                'N ap anrejistre peman ou…',
-                'Lajan w pwoteje nan eskwo — li p ap ale bay vandè a toutan livrezon pa konfime.');
 
             // Anpeche menm ref MonCash sèvi ankò pou yon lòt kòmand.
             try {
@@ -11948,6 +12226,11 @@
                 });
                 if (error) failures.push({ oid, msg: error.message });
             }
+            // Bug 3 (tès 2-3 moun): tache prèv screenshot MonCash la (opsyonèl)
+            // sou kòmand prensipal la pou admin ka verifye anvan li konfime.
+            if (failures.length < groupIds.length && A._escrowProofFile) {
+                await _uploadPaymentProof(order.id);
+            }
             restorePay();
             if (failures.length === groupIds.length) {
                 console.warn('[submit payment]', failures[0].msg);
@@ -11956,16 +12239,74 @@
             }
             escPayGoStep(3);
             A._escrowGroupIds = null;
+            escPayClearProof();
             if (failures.length > 0) toast('Peman deklare (' + (groupIds.length - failures.length) + '/' + groupIds.length + ')');
+            // Si kòmand la fèk kreye, avize vandè a (achtè a deja peye).
+            if (justCreated && order.seller_id) {
+                notify(order.seller_id, {
+                    type: 'order', icon: 'shopping_bag',
+                    title: 'Nouvo kòmand!',
+                    body: (A.user.name || 'Yon kliyan') + ' kòmande ' + (order.product_title || 'yon pwodwi')
+                        + ' — achtè a deja voye peman, ap tann verifikasyon admin.',
+                    color: '#00666f',
+                    data: { order_id: order.id, kind: 'order_placed' },
+                });
+            }
             // Notify admin(s) once for the whole group via the centralized helper.
             notifyAdmins({
                 type: 'order', icon: 'task',
                 title: 'Peman pou verifye',
                 body: (A.user.name || 'Yon achtè') + ' voye lajan pou '
-                    + (order.product_title || 'yon kòmand') + '. Ref: ' + ref,
+                    + (order.product_title || 'yon kòmand') + '. Ref: ' + ref
+                    + (A._escrowProofFile ? ' (gen screenshot)' : ''),
                 color: '#97422b',
             });
+            updateNotifBadge();
             if (typeof renderOrderScreen === 'function') renderOrderScreen();
+        }
+
+        // ── Bug 3: prèv peman (screenshot MonCash) ────────────────────
+        // Chwazi/anrejistre yon foto resi MonCash pou tache sou kòmand la.
+        function escPayPickProof(ev) {
+            const file = ev && ev.target && ev.target.files && ev.target.files[0];
+            if (!file) return;
+            A._escrowProofFile = file;
+            const prev = document.getElementById('escPayProofPreview');
+            const btn = document.getElementById('escPayProofBtn');
+            if (prev) {
+                const url = URL.createObjectURL(file);
+                prev.innerHTML = '<div class="relative inline-block">'
+                    + '<img src="' + url + '" alt="Prèv peman" class="rounded-lg" style="max-height:120px;border:1px solid rgba(0,102,111,.2)"/>'
+                    + '<button type="button" onclick="escPayClearProof()" aria-label="Retire foto a" class="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center" style="background:#98443e;color:#fff"><span class="material-symbols-outlined" style="font-size:14px">close</span></button>'
+                    + '</div>';
+                prev.classList.remove('hidden');
+            }
+            if (btn) btn.querySelector('span:last-child').textContent = 'Chanje screenshot la';
+        }
+        window.escPayPickProof = escPayPickProof;
+
+        function escPayClearProof() {
+            A._escrowProofFile = null;
+            const prev = document.getElementById('escPayProofPreview');
+            const input = document.getElementById('escPayProofInput');
+            const btn = document.getElementById('escPayProofBtn');
+            if (prev) { prev.innerHTML = ''; prev.classList.add('hidden'); }
+            if (input) input.value = '';
+            if (btn) btn.querySelector('span:last-child').textContent = 'Ajoute screenshot MonCash la';
+        }
+        window.escPayClearProof = escPayClearProof;
+
+        async function _uploadPaymentProof(orderId) {
+            const file = A._escrowProofFile;
+            if (!file || !db || !A.user?.uid || !orderId) return;
+            let toUpload = file;
+            try { const c = await compressImage(file); if (c) toUpload = c; } catch (_) { /* orijinal la */ }
+            const path = A.user.uid + '/' + orderId + '_' + Date.now() + '.jpg';
+            const { error } = await db.storage.from('payment-proofs')
+                .upload(path, toUpload, { upsert: true, contentType: toUpload.type || 'image/jpeg' });
+            if (error) { console.warn('[proof upload]', error.message); return; }
+            const { error: rpcErr } = await db.rpc('attach_payment_proof', { p_order_id: orderId, p_path: path });
+            if (rpcErr) console.warn('[attach proof]', rpcErr.message);
         }
         window.submitPaymentRef = submitPaymentRef;
 
@@ -12445,8 +12786,8 @@
       <div class="flex-1 min-w-0">
         <p class="font-headline font-bold text-xs text-on-surface truncate">${esc(p.t)}</p>
         <div class="flex items-baseline gap-1 flex-wrap">
-          <p class="font-headline font-extrabold text-sm text-primary">${fp(p.p)} HTG</p>
-          ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
+          <p class="font-headline font-extrabold text-sm text-primary">${fpc(p.p)}</p>
+          ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fpc(p.oldP)}</span><span class="font-label font-bold rounded-full px-1" style="font-size:.5625rem;background:rgba(151,66,43,.12);color:#97422b;line-height:1.4">-${discountPct(p)}%</span>` : ''}
         </div>
       </div>
       <span class="material-symbols-outlined text-on-surface-variant" style="font-size:16px">chevron_right</span>
@@ -15645,6 +15986,7 @@
                         id: n.id, type: n.type || 'system', icon: n.icon || 'notifications',
                         title: n.title, body: n.body, time: 'Kounye a',
                         read: n.read || false, color: n.color || '#00666f',
+                        data: n.data || {},
                     });
                     if (NOTIFS.length > 50) NOTIFS.length = 50;
                     updateNotifBadge();
@@ -15653,6 +15995,16 @@
                     if (shouldCueNotif(n.type)) {
                         if (typeof playNotifSound === 'function') playNotifSound(n.type);
                         if (typeof vibrate === 'function') vibrate();
+                    }
+                    // Bug 2 (tès 2-3 moun): lè admin konfime peman achtè a, louvri
+                    // yon fenèt selebrasyon pou achtè a (menm jan ak vandè a lè OTP
+                    // konfime) — li konfime lajan an rive jwenn Ekomat ak siksè.
+                    const _kind = n.data && n.data.kind;
+                    if (_kind === 'payment_verified' && typeof showSuccess === 'function') {
+                        showSuccess('verified_icon', 'Peman ou rive! 🎉',
+                            'Admin resevwa peman ou ak siksè. Lajan ou bloke an sekirite nan eskwo.\nVandè a ap prepare pwodwi a — w ap jwenn kòd OTP ou lè li pare.',
+                            'Eskwo aktive — lajan pwoteje jiskaske ou konfime livrezon.',
+                            'Byen resevwa', false, true);
                     }
                     // Re-render sheet if open
                     const sheet = document.getElementById('notifSheet');
@@ -15903,6 +16255,7 @@
                     id: n.id, type: n.type || 'system', icon: n.icon || 'notifications',
                     title: n.title, body: n.body || '', time: timeAgo(n.created_at),
                     read: n.read || false, color: n.color || '#00666f',
+                    data: n.data || {},
                 });
             });
             updateNotifBadge();
