@@ -12422,57 +12422,55 @@
                 res.innerHTML = skeletonFeedCards(4);
             }
 
-            // Chèche nan Supabase (source of truth)
+            // Chèche nan Supabase (source of truth) — RPC flou an premye
+            // (pg_trgm: tolere fot òtograf + ranking pa pertinans), retonbe
+            // sou rechèch ILIKE dirèk si migration search_products poko la.
             if (typeof db !== 'undefined' && db) {
-                let pq = db.from('products')
-                    .select('*, seller:profiles!seller_id(display_name, verified_seller, rating_avg)')
-                    .eq('status', 'active');
-                if (query) {
-                    pq = pq.or('title.ilike.%' + query + '%,description.ilike.%' + query + '%,category.ilike.%' + query + '%,location.ilike.%' + query + '%');
-                }
-                if (zone) {
-                    pq = pq.ilike('location', '%' + zone + '%');
-                }
-                if (cat) {
-                    pq = pq.eq('category', cat);
-                }
-                pq.limit(12)
-                    .then(({ data, error }) => {
-                        let merged = [...local];
-                        if (!error && data && data.length > 0) {
-                            const sbProducts = data.map(p => {
-                                const imgs = p.images || [];
-                                return {
-                                    id: p.id, t: p.title, p: p.price, oldP: p.old_price,
-                                    c: p.category, l: p.location, desc: p.description,
-                                    img: imgs.length > 0 ? imgs[0] : null, images: imgs,
-                                    s: p.stock, v: p.views, r: p.seller?.rating_avg || 0,
-                                    b: p.seller?.verified_seller ? 'Verifye' : '',
-                                    sellerId: p.seller_id, sellerName: p.seller?.display_name || 'Vandè',
-                                    sizes: p.sizes || [],
-                                    e: p.category === 'mode' ? 'style' : p.category === 'cosmetique' ? 'spa' : 'palette',
-                                    ec: p.category === 'mode' ? '#7c3aed' : p.category === 'cosmetique' ? '#0891b2' : '#059669',
-                                };
-                            });
-                            // Merge ak done lokal (san doub)
-                            sbProducts.forEach(sp => {
-                                if (!merged.find(m => m.t === sp.t)) merged.push(sp);
-                                if (!PRODUCTS.find(p => p.id === sp.id)) PRODUCTS.push(sp);
-                            });
-                            if (merged.length > 0) {
-                                res.innerHTML = merged.map((p, i) => feedCard(p, i)).join("");
-                                _searchIntent(merged, query);
-                            }
-                        }
-                        if (merged.length === 0) {
-                            res.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8 col-span-2">Okenn pwodwi jwenn.</p>';
-                        }
-                    }).catch(() => {
-                        if (local.length === 0) {
-                            res.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8 col-span-2">Okenn pwodwi jwenn.</p>';
-                        }
+                _searchProductsServer(query, zone, cat).then(sbProducts => {
+                    let merged = [...local];
+                    (sbProducts || []).forEach(sp => {
+                        if (!merged.find(m => m.id === sp.id)) merged.push(sp);
+                        if (!PRODUCTS.find(p => p.id === sp.id)) PRODUCTS.push(sp);
                     });
+                    if (merged.length > 0) {
+                        res.innerHTML = merged.map((p, i) => feedCard(p, i)).join("");
+                        _searchIntent(merged, query);
+                    } else {
+                        res.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8 col-span-2">Okenn pwodwi jwenn.</p>';
+                    }
+                }).catch(() => {
+                    if (local.length === 0) {
+                        res.innerHTML = '<p class="font-body text-sm text-on-surface-variant text-center py-8 col-span-2">Okenn pwodwi jwenn.</p>';
+                    }
+                });
             }
+        }
+
+        // RPC search_products (flou, LEFT JOIN vandè) → fallback ILIKE dirèk.
+        async function _searchProductsServer(query, zone, cat) {
+            try {
+                const rpc = await db.rpc('search_products', { q: query || '', zone: zone || '', cat: cat || '' });
+                if (!rpc.error && Array.isArray(rpc.data)) {
+                    return rpc.data.map(r => _mapProductRow({
+                        ...r,
+                        seller: {
+                            display_name: r.seller_name,
+                            verified_seller: r.seller_verified,
+                            rating_avg: r.seller_rating,
+                            avatar_url: r.seller_avatar,
+                        },
+                    }));
+                }
+            } catch (_) { /* fallback anba */ }
+            let pq = db.from('products')
+                .select('*, seller:profiles!seller_id(id, display_name, verified_seller, rating_avg, avatar_url)')
+                .eq('status', 'active');
+            if (query) pq = pq.or('title.ilike.%' + query + '%,description.ilike.%' + query + '%,category.ilike.%' + query + '%,location.ilike.%' + query + '%');
+            if (zone) pq = pq.ilike('location', '%' + zone + '%');
+            if (cat) pq = pq.eq('category', cat);
+            const { data, error } = await pq.limit(40);
+            if (error) throw error;
+            return (data || []).map(_mapProductRow);
         }
 
         // Chèche boutik / vandè pa non (display_name) ak/oswa pa zòn (profiles.location).
