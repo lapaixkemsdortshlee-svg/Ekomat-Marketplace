@@ -4940,6 +4940,25 @@
         ${p.oldP && p.oldP > p.p ? `<span class="font-label text-on-surface-variant line-through pb-1" style="font-size:.875rem">${fpc(p.oldP)}</span><span class="font-label font-bold rounded-full px-2 py-0.5 mb-0.5" style="font-size:.6875rem;background:rgba(151,66,43,.12);color:#97422b">-${discountPct(p)}%</span>` : ''}
         <span class="font-label text-xs text-on-surface-variant pb-1">${p.s <= 2 ? `${p.s} rete` : `An estòk (${p.s})`}</span>
       </div>
+      ${(() => {
+                    // Flash Deal aktif pou pwodwi sa a → bandwòl ak kont tan
+                    // (retou QA Thrasher: dire deal la pa t parèt okenn kote).
+                    const fd = (typeof FLASH_DEALS !== 'undefined')
+                        ? FLASH_DEALS.find(f => f.product_id === p.id && new Date(f.ends_at).getTime() > Date.now())
+                        : null;
+                    if (!fd) return '';
+                    return `<div id="detailFlashBanner" class="flex items-center gap-3 p-3.5 rounded-xl amb" style="background:linear-gradient(135deg,#97422b,#b85c3a);color:#fcf9f4">
+        <span class="material-symbols-outlined fi flash-badge" style="font-size:24px">local_fire_department</span>
+        <div class="flex-1 min-w-0">
+          <p class="font-headline font-extrabold text-sm">Flash Deal −${fd.pct}%</p>
+          <p class="font-label text-[11px] leading-snug" style="color:rgba(252,249,244,.85)">Pri a ap tounen ${fpc(p.oldP || fd.oldP || p.p)} lè tan an fini</p>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <p class="font-headline font-extrabold text-lg" data-fd-countdown="${fd.ends_at}" style="letter-spacing:.05em;font-variant-numeric:tabular-nums">--:--:--</p>
+          <p class="font-label text-[10px] uppercase tracking-[.08em]" style="color:rgba(252,249,244,.8)">tan ki rete</p>
+        </div>
+      </div>`;
+                })()}
       ${p.sizes && p.sizes.length ? `<div><p class="font-label text-[11px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Tay</p><div class="flex flex-wrap gap-2">${p.sizes.map((sz, i) => `<button class="szb w-12 h-10 rounded-lg font-label font-bold text-sm ${i === 0 ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant'}" onclick="selSz(this)">${sz}</button>`).join('')}</div></div>` : ''}
       ${(() => {
                     const cached = SELLERS[p.sellerId] || {};
@@ -5025,6 +5044,37 @@
             setTimeout(() => renderSimilarProducts(p), 80);
             // Wire up the carousel dot indicator now that the DOM exists
             attachDetailCarouselDots();
+            startDetailFdTicker();
+        }
+
+        // ── Kont tan Flash Deal sou fich pwodwi a ─────────────────
+        let _fdTimer = null;
+        function startDetailFdTicker() {
+            clearInterval(_fdTimer); _fdTimer = null;
+            if (!document.querySelector('[data-fd-countdown]')) return;
+            const tick = () => {
+                const el = document.querySelector('[data-fd-countdown]');
+                if (!el) { clearInterval(_fdTimer); _fdTimer = null; return; }
+                const left = new Date(el.getAttribute('data-fd-countdown')).getTime() - Date.now();
+                if (left <= 0) { clearInterval(_fdTimer); _fdTimer = null; _onDetailFdExpired(); return; }
+                const h = Math.floor(left / 3600000), m = Math.floor((left % 3600000) / 60000), s = Math.floor((left % 60000) / 1000);
+                el.textContent = (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+            };
+            tick();
+            _fdTimer = setInterval(tick, 1000);
+        }
+
+        // Deal la fini pandan itilizatè a sou fich la: pri a tounen nòmal
+        // (lokalman + nan DB via expire_flash_deals), bandwòl la disparèt.
+        function _onDetailFdExpired() {
+            const p = A.curProd;
+            if (p && p.oldP && p.oldP > p.p) { p.p = p.oldP; p.oldP = null; }
+            if (typeof FLASH_DEALS !== 'undefined') {
+                FLASH_DEALS.forEach(f => { if (p && f.product_id === p.id) f.ends_at = new Date(0).toISOString(); });
+            }
+            if (db) { try { db.rpc('expire_flash_deals').then(() => { }, () => { }); } catch (_) { } }
+            toast('Flash Deal fini — pri nòmal la tounen');
+            if (p && document.getElementById('s-detail')?.classList.contains('on')) openProduct(p.id);
         }
 
         function selSz(el) { el.closest('div').querySelectorAll('.szb').forEach(b => { b.className = b.className.replace('bg-primary text-white', 'bg-surface-container text-on-surface-variant'); }); el.classList.remove('bg-surface-container', 'text-on-surface-variant'); el.classList.add('bg-primary', 'text-white'); }
@@ -6013,7 +6063,7 @@
                 if (!db || !A.user?.uid) { toast('Pa konekte'); return; }
 
                 // Step 1: Upload images to Supabase Storage
-                addStep('upload', `Upload ${uploadedPhotos.length} foto → Supabase Storage...`);
+                addStep('upload', `Ap voye ${uploadedPhotos.length} foto...`);
                 await sl(200);
                 const imageUrls = [];
                 const ts = Date.now();
@@ -6030,11 +6080,11 @@
                         imageUrls.push(urlData?.publicUrl || photo.dataUrl);
                     }
                 }
-                addStep('check_circle', `${imageUrls.length} foto upload ✓`);
+                addStep('check_circle', `${imageUrls.length} foto voye ✓`);
 
                 // Step 2: Insert product in Supabase
                 await sl(200);
-                addStep('inventory_2', 'Anrejistre pwodwi nan baz done...');
+                addStep('inventory_2', 'Ap anrejistre pwodwi a...');
                 // Premye 3 pwodwi yon vandè ale nan 'pending_review' —
                 // admin dwe apwouve yo anvan yo parèt nan feed la.
                 const _initStatus = await initialProductStatus();
@@ -6053,7 +6103,7 @@
 
                 if (insertErr) throw new Error(insertErr.message);
                 if (_initStatus === 'pending_review') {
-                    addStep('hourglass_top', 'An atant verifikasyon admin ✓');
+                    addStep('hourglass_top', 'Pwodwi a soumèt — l ap tann apwobasyon admin');
                     // Alèt admin yo pou yo revize li
                     if (typeof notifyAdmins === 'function') {
                         notifyAdmins({
@@ -6064,6 +6114,15 @@
                             data: { product_id: newProduct.id, seller_id: A.user.uid, kind: 'pending_product' },
                         });
                     }
+                    // Di VANDÈ a klèman sa k ap pase (li pa t janm resevwa
+                    // okenn mesaj — retou QA Thrasher 2026-07-18).
+                    notify(A.user.uid, {
+                        type: 'system', icon: 'hourglass_top',
+                        title: 'Pwodwi ou ap tann apwobasyon',
+                        body: '"' + t.slice(0, 60) + '" ap parèt nan feed la kou yon admin apwouve l. W ap resevwa yon notifikasyon.',
+                        color: '#97422b',
+                        data: { product_id: newProduct.id, kind: 'product_pending' },
+                    });
                 } else {
                     addStep('check_circle', 'Pwodwi anrejistre ✓');
                 }
@@ -6090,7 +6149,7 @@
                     });
                     if (fdErr) {
                         console.warn('[FlashDeal]', fdErr.message);
-                        addStep('warning', 'Flash deal pa anrejistre: ' + fdErr.message);
+                        addStep('warning', 'Pwomosyon an pa t ka aktive — eseye ankò pita');
                     } else {
                         addStep('check_circle', `Flash Deal aktif pou ${discountDur}h ✓`);
                     }
@@ -6108,8 +6167,12 @@
                         sellerVerified: A.user.verifiedSeller,
                     });
                 }
-                addStep('storefront', 'Pwodwi vizib nan feed ✓');
-                addStep('notifications', 'Status: active — Pibliye!');
+                if (_initStatus === 'pending_review') {
+                    addStep('notifications', 'W ap resevwa yon notifikasyon kou li apwouve ✓');
+                } else {
+                    addStep('storefront', 'Pwodwi a vizib pou tout moun kounye a ✓');
+                    addStep('check_circle', 'Pibliye ✓');
+                }
 
                 // Notify followers: new product from a seller they follow.
                 if (newProduct) {
@@ -15155,6 +15218,8 @@
         if (typeof loadMyFavorites === 'function') {
             loadMyFavorites();
         }
+        // Flash deals: ekspire deal ki fini yo (pri tounen nòmal nan DB).
+        try { db.rpc('expire_flash_deals').then(() => { }, () => { }); } catch (_) { /* annilo */ }
         // P3: si itilizatè a rive ak yon lyen pwodwi pataje (#product=ID),
         // louvri fich la yon fwa app la pare.
         if (typeof openProductFromHash === 'function') {
