@@ -5528,7 +5528,7 @@
                 return;
             }
             list.innerHTML = prods.map(p => {
-                const pid = `'${String(p.id).replace(/'/g, "\\'")}'`;
+                const pid = `'${String(p.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
                 const img = p.img
                     ? `<img src="${esc(p.img)}" class="w-full h-full object-cover" alt="${esc(p.t)}" onerror="this.onerror=null;this.style.display='none'"/>`
                     : prodPlaceholder(p, 56);
