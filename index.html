@@ -6912,10 +6912,13 @@
             document.getElementById("profileContent").innerHTML = `
     <!-- Profile hero card (referans-style) -->
     <div class="mx-4 mt-2 rounded-2xl overflow-hidden amb bg-surface-container-lowest">
-      <!-- Banner (dégradé teal — koyerans mak, san foto pèsonèl) -->
-      <div style="height:104px;background:linear-gradient(135deg,#00666f,#00818c);position:relative;overflow:hidden">
+      <!-- Banner (foto cover ak vwal teal — sinon dégradé mak la) -->
+      <div style="height:104px;background:${u.coverURL ? `linear-gradient(135deg,rgba(0,102,111,.55),rgba(0,129,140,.4)),url('${esc(u.coverURL)}') center/cover` : 'linear-gradient(135deg,#00666f,#00818c)'};position:relative;overflow:hidden">
         <div style="position:absolute;top:-40px;right:-30px;width:160px;height:160px;border-radius:50%;background:rgba(140,242,255,.08);pointer-events:none"></div>
         <div style="position:absolute;bottom:-40px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none"></div>
+        <button onclick="uploadCoverPhoto()" aria-label="Chanje banyè" title="Chanje banyè" class="absolute top-3 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="right:54px;background:rgba(252,249,244,.2);backdrop-filter:blur(6px)">
+          <span class="material-symbols-outlined fi text-white" style="font-size:17px">photo_camera</span>
+        </button>
         <button onclick="openEditProfile()" aria-label="Modifye pwofil" title="Modifye pwofil" class="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.2);backdrop-filter:blur(6px)">
           <span class="material-symbols-outlined fi text-white" style="font-size:17px">edit</span>
         </button>
@@ -8305,23 +8308,60 @@
             toast('Pwofil mete ajou');
         }
 
-        function uploadProfilePhoto() {
+        function uploadProfilePhoto() { _pickProfileImage('avatar'); }
+        function uploadCoverPhoto() { _pickProfileImage('cover'); }
+        window.uploadCoverPhoto = uploadCoverPhoto;
+
+        function _pickProfileImage(kind) {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
             input.onchange = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    A.user.photoURL = ev.target.result;
-                    localStorage.setItem('aym_user', JSON.stringify(A.user));
-                    renderProfile();
-                    toast('Foto pwofil mete ajou');
-                };
-                reader.readAsDataURL(file);
+                _uploadProfileImage(file, kind);
             };
             input.click();
+        }
+
+        // Lot konfyans: anvan, foto pwofil/banyè te rete data URL lokal sèlman
+        // — achtè yo pa t janm wè yo. Kounye a: konprese → upload nan bucket
+        // Avatar → URL piblik nan profiles.avatar_url / cover_url (li deja li
+        // toupatou: kat vandè, chat, rechèch, feed).
+        async function _uploadProfileImage(file, kind) {
+            const isAvatar = kind === 'avatar';
+            let toUpload = file;
+            try { const c = await compressImage(file); if (c) toUpload = c; } catch (_) { /* orijinal la */ }
+            const applyLocal = (url) => {
+                if (isAvatar) A.user.photoURL = url; else A.user.coverURL = url;
+                try { localStorage.setItem('aym_user', JSON.stringify(A.user)); } catch (_) { }
+                renderProfile();
+            };
+            if (db && A.user?.uid) {
+                const path = A.user.uid + '/' + kind + '.jpg';
+                const { error } = await db.storage.from('Avatar')
+                    .upload(path, toUpload, { upsert: true, contentType: toUpload.type || 'image/jpeg' });
+                if (!error) {
+                    const { data: urlData } = db.storage.from('Avatar').getPublicUrl(path);
+                    if (urlData?.publicUrl) {
+                        const url = urlData.publicUrl + '?v=' + Date.now();
+                        const col = isAvatar ? { avatar_url: url } : { cover_url: url };
+                        const { error: pErr } = await db.from('profiles').update(col).eq('id', A.user.uid);
+                        if (pErr) console.warn('[profil ' + kind + ']', pErr.message);
+                        applyLocal(url);
+                        toast(isAvatar ? 'Foto pwofil mete ajou — vizib pou tout moun' : 'Banyè mete ajou — vizib sou boutik ou');
+                        return;
+                    }
+                } else {
+                    console.warn('[upload ' + kind + ']', error.message);
+                }
+            }
+            // Fallback (pa gen koneksyon oswa upload echwe): kenbe lokal.
+            try {
+                const dataUrl = await readAsDataURL(toUpload);
+                applyLocal(dataUrl);
+                toast('Sove lokalman sèlman — eseye ankò ak koneksyon pou tout moun wè l');
+            } catch (_) { toast('Pa ka li foto a'); }
         }
 
         function loginWithGoogle() {
@@ -14378,8 +14418,8 @@
             document.getElementById('sellerProfileContent').innerHTML = `
     <!-- Profile hero card (referans-style) -->
     <div class="mx-4 mt-2 rounded-2xl overflow-hidden amb bg-surface-container-lowest seller-animate">
-      <!-- Banner -->
-      <div style="height:112px;background:linear-gradient(135deg,#00666f,#00818c);position:relative;overflow:hidden">
+      <!-- Banner (foto cover vandè a ak vwal teal — sinon dégradé mak la) -->
+      <div style="height:112px;background:${seller.coverUrl ? `linear-gradient(135deg,rgba(0,102,111,.55),rgba(0,129,140,.4)),url('${esc(seller.coverUrl)}') center/cover` : 'linear-gradient(135deg,#00666f,#00818c)'};position:relative;overflow:hidden">
         <div style="position:absolute;top:-40px;right:-30px;width:170px;height:170px;border-radius:50%;background:rgba(140,242,255,.08);pointer-events:none"></div>
         <div style="position:absolute;bottom:-40px;left:-20px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none"></div>
         <button onclick="goBack()" class="absolute top-3 left-3 w-9 h-9 flex items-center justify-center rounded-full active:scale-90 z-10" style="background:rgba(252,249,244,.2);backdrop-filter:blur(6px)">
@@ -14945,6 +14985,7 @@
                 ? !!profile.verified_seller
                 : !!cachedSelf?.verifiedSeller,
             photoURL: profile?.avatar_url || meta.avatar_url || meta.picture || cachedSelf?.photoURL || null,
+            coverURL: profile?.cover_url || cachedSelf?.coverURL || null,
             salesCount: profile?.sales_count ?? cachedSelf?.salesCount ?? 0,
             orderCount: profile?.order_count ?? cachedSelf?.orderCount ?? 0,
             ratingAvg: profile?.rating_avg ?? cachedSelf?.ratingAvg ?? 0,
@@ -15577,6 +15618,7 @@
                 id: data.id, name,
                 initials: name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
                 avatarUrl: data.avatar_url || null,
+                coverUrl: data.cover_url || null,
                 verified: data.verified_seller || false,
                 rating: data.rating_avg || 0,
                 reviewCount: data.review_count || 0,
