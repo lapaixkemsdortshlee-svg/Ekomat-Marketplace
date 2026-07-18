@@ -7177,7 +7177,7 @@
             const src = p.img || (p.images && p.images[0]) || null;
             const ph = prodPlaceholder(p, sizePx).replace(/"/g, '&quot;');
             if (src) {
-                return '<img src="' + src + '" loading="lazy" decoding="async" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=\'' + ph.replace(/'/g, "\\'") + '\'"/>';
+                return '<img src="' + src + '" loading="lazy" decoding="async" alt="" class="w-full h-full object-cover" onerror="this.onerror=null;this.outerHTML=\'' + ph.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + '\'"/>';
             }
             return prodPlaceholder(p, sizePx);
         }
