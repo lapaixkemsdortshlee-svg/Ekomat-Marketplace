@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-19 (suite 3) : Bannière-horloge vide dans la boutique vendeur → « Manm depi » (ancienneté)
+
+Thrasher (screenshot IMG_7758) : dans la boutique vendeur, une carte grise avec **juste une icône horloge teal et aucun texte** — l'air cassée. « À quoi sert cette icône ? Si inutile, retire-la ; si elle mérite une fonction, donne-lui-en une et rends-la fonctionnelle. »
+
+- **Diagnostic (Supabase MCP, systematic-debugging).** C'était le bandeau « temps de réponse » (`schedule` + `seller.responseTime`). Toujours vide : `profiles.response_time` NULL pour **4/4 profils** (aucune UI ne le remplit). RLS `messages` = **participant-ou-admin**, donc un acheteur sur la fiche publique d'un vendeur **ne peut pas** lire ses messages avec d'autres → calcul côté client impossible sans fuite (faudrait un RPC serveur). Et **8 messages** en tout dans la base ; seul « temps de réponse » calculable = **~16 jours** (artefact des messages de test) → vide ou trompeur.
+- **Décision (sparring, simplicity-first).** Ni RPC spéculatif pour 8 messages, ni faux temps de réponse. **Repurposé la bannière-horloge en signal de confiance réel et toujours dispo : l'ancienneté** (`created_at`, déjà calculée dans `seller.memberSince` mais jamais affichée). Texte « Manm Ekomat depi \<mois année\> » (esc). Bannière rendue **conditionnelle** → disparaît si pas de date → plus jamais de boîte grise vide. Icône `schedule` conservée (police complète chargée, pas de risque du bug d'icône).
+- Champ `responseTime` orphelin retiré de `loadSellerFromSupabase`. SW v47→v48, tw.css inchangé (aucune classe neuve). Template imbriqué validé (rendu avec/sans donnée). PR #218 (draft).
+- Note : le vrai temps de réponse reste une bonne feature **future** — à faire avec du volume de messages + un RPC serveur qui ne renvoie que le label agrégé (jamais le contenu).
+
+---
+
 ## 2026-07-19 (suite 2) : Fix + redesign carte Flash Deal sur la fiche produit (skill ui-ux-pro-max)
 
 Thrasher (screenshot IMG_7757) : « à l'intérieur c'est le chaos » sur la fiche du Bracelet — le bandeau flash deal était énorme et affichait le texte brut « local_fire_department » au lieu de l'icône.
