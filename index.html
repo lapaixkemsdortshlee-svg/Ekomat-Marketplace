@@ -786,6 +786,39 @@
             letter-spacing: .03em;
         }
 
+        /* Badj FLASH ki klignote dirèkteman sou kat pwodwi a nan feed la
+           (Thrasher 2026-07-19 — pa gen carousel separe ankò). Détay yo
+           (% + tan ki rete) parèt lè yo klike sou pwodwi a. */
+        .flash-feed-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 3;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: .05em;
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #98443e, #b65a41);
+            box-shadow: 0 2px 8px rgba(152, 68, 62, .4);
+            animation: flashBlink 1.1s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes flashBlink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .4; transform: scale(.93); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .flash-feed-badge { animation: none; }
+        }
+
         .flash-timer {
             background: #00666f;
             color: #fcf9f4;
@@ -1719,23 +1752,9 @@
                 <span class="material-symbols-outlined absolute right-3 bottom-2 opacity-[.1] pointer-events-none"
                     style="font-size:64px;font-variation-settings:'FILL' 1">storefront</span>
             </div>
-            <!-- ══ FLASH DEALS ENGINE — hidden by default; shown only when active deals exist ══ -->
-            <div id="flashDealsSection" class="mb-5 hidden">
-                <div class="flex items-center justify-between mb-3">
-                    <div>
-                        <p
-                            class="font-label text-[11px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-0.5">
-                            Òf Espesyal</p>
-                        <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">Flash Deals</h3>
-                    </div>
-                    <div class="flash-timer" id="flashMainTimer">
-                        <span class="material-symbols-outlined fi" style="font-size:14px">timer</span>
-                        <span class="flash-timer-digit" id="fd-hh">02</span>:<span class="flash-timer-digit"
-                            id="fd-mm">30</span>:<span class="flash-timer-digit" id="fd-ss">00</span>
-                    </div>
-                </div>
-                <div class="flex gap-3 overflow-x-auto noscroll pb-1" id="flashDealsGrid"></div>
-            </div>
+            <!-- Flash Deals: pa gen carousel separe ankò (Thrasher 2026-07-19).
+                 Yon badj "⚡ FLASH" ki klignote parèt dirèkteman sou kat pwodwi
+                 a nan feed la; détay yo parèt sou fich pwodwi a. -->
 
             <!-- Category chips -->
             <div class="flex gap-2 overflow-x-auto noscroll mb-5" id="catChips">
@@ -5208,6 +5227,9 @@
                 g.innerHTML = emptyState('filter_alt', 'Pa gen pwodwi ki matche', 'Eseye chanje filtè yo.', { label: 'Reyinisyalize filtè', icon: 'restart_alt', onclick: 'resetFeedFilters()' });
                 return;
             }
+            // Kach lis la pou nou ka re-rann badj FLASH yo lè deal yo fin chaje
+            // apre feed la (san re-fetch — gade renderFlashDealCards).
+            A._feedRendered = final;
             g.innerHTML = final.map((p, i) => feedCard(p, i)).join("");
         }
 
@@ -5547,10 +5569,13 @@
             // refreshed by loadFlashDealsFromSupabase, so the lookup is
             // a single Array.find in memory — no per-card network call.
             const flash = (typeof FLASH_DEALS !== 'undefined')
-                ? FLASH_DEALS.find(f => f.product_id && f.product_id === p.id)
+                ? FLASH_DEALS.find(f => f.product_id === p.id && new Date(f.ends_at).getTime() > Date.now())
                 : null;
+            // Badj rust "⚡ FLASH" ki klignote — détay (% + tan ki rete) parèt
+            // sou fich pwodwi a lè yo klike. Li ranplase badj Verifye a nan
+            // kwen anlè-goch la lè gen yon deal aktif.
             const flashBadge = flash
-                ? `<span class="absolute top-2.5 left-2.5 font-label font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1" style="font-size:9px;background:rgba(151,66,43,.92);color:#fff"><span class="material-symbols-outlined" style="font-size:11px">local_fire_department</span>-${flash.pct}%</span>`
+                ? `<span class="flash-feed-badge"><span class="material-symbols-outlined" style="font-size:11px">bolt</span>FLASH</span>`
                 : '';
             const badgeHtml = flashBadge
                 ? flashBadge
@@ -14638,64 +14663,19 @@
             }, 1000);
         }
 
+        // Pa gen carousel Flash Deal separe ankò (Thrasher 2026-07-19). Lè deal
+        // yo fin chaje (oswa yon deal ekspire), nou re-rann kat feed ki deja
+        // afiche yo depi kach la (san re-fetch) pou badj "⚡ FLASH" ki klignote
+        // yo parèt/disparèt sou bon pwodwi a. Détay (% + tan) sou fich la.
         function renderFlashDealCards() {
-            const grid = document.getElementById('flashDealsGrid');
-            const section = document.getElementById('flashDealsSection');
-            if (!grid) return;
-            if (FLASH_DEALS.length === 0) {
-                grid.innerHTML = '';
-                if (section) section.classList.add('hidden');
-                return;
-            }
-            if (section) section.classList.remove('hidden');
-            grid.innerHTML = FLASH_DEALS.map(fd => {
-                const savePct = Math.round((1 - fd.p / fd.oldP) * 100);
-                const color = fd.ec || '#00666f';
-                return `
-    <div class="flash-card flex-shrink-0 rounded-xl amb active:scale-[.97] transition-transform cursor-pointer"
-         style="width:170px;background:#fff" onclick="openFlashDeal(${fd.id})">
-      <div class="relative" style="height:130px;background:linear-gradient(145deg,${color}15,${color}08);display:flex;align-items:center;justify-content:center;border-radius:.75rem .75rem 0 0">
-        <svg width="48" height="48" viewBox="0 0 24 24" style="color:${color};opacity:.65">
-          ${getSVGPath(fd.e)}
-        </svg>
-        <div class="absolute top-2 left-2">
-          <span class="flash-badge" style="background:linear-gradient(135deg,#98443e,#b65a41);gap:3px">
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M13 2L4.09 12.96a1 1 0 0 0 .77 1.64H11l-1 7.4 8.91-10.96A1 1 0 0 0 18 9.4H12l1-7.4z"/></svg>
-            FLASH
-          </span>
-        </div>
-        <div class="absolute top-2 right-2 px-2 py-0.5 rounded-full font-label font-extrabold text-white" style="font-size:9px;background:rgba(0,102,111,.85)">-${savePct}%</div>
-      </div>
-      <div class="p-2.5">
-        <p class="font-headline font-bold text-on-surface leading-tight mb-1" style="font-size:.75rem">${esc(fd.t)}</p>
-        <div class="flex items-center gap-2">
-          <span class="font-headline font-extrabold text-primary" style="font-size:.8125rem">${fp(fd.p)}</span>
-          <span class="font-label text-on-surface-variant line-through" style="font-size:.625rem">${fp(fd.oldP)}</span>
-        </div>
-        <div class="flex items-center justify-between mt-1.5">
-          <p class="font-label text-on-surface-variant" style="font-size:9px">${fd.stock} rete</p>
-          <div class="flex-1 h-1 rounded-full mx-2" style="background:#e5e2dd">
-            <div class="h-full rounded-full" style="background:#98443e;width:${100 - fd.stock * 15}%"></div>
-          </div>
-        </div>
-      </div>
-    </div>`;
-            }).join('');
+            const g = document.getElementById('feedGrid');
+            if (!g || A.tab !== 'feed') return;
+            if (!Array.isArray(A._feedRendered) || A._feedRendered.length === 0) return;
+            g.innerHTML = A._feedRendered.map((p, i) => feedCard(p, i)).join('');
         }
 
-        function openFlashDeal(id) {
-            const fd = FLASH_DEALS.find(x => x.id === id);
-            if (!fd) return;
-            // Map flash deal to product format for openProduct
-            const flashProduct = {
-                id: fd.id, e: fd.e, ec: fd.ec, t: fd.t, p: fd.p, l: fd.l, c: fd.c,
-                r: 0, b: 'FLASH', v: 0, s: fd.stock,
-                desc: `${esc(fd.t)} — Pwomosyon espesyal Flash Deal! Pri orijinal: ${fp(fd.oldP)} HTG → Kounye a: ${fp(fd.p)} HTG. Estòk limite (${fd.stock} rete). Kouri achte anvan li fini!`,
-                sizes: []
-            };
-            if (!PRODUCTS.find(p => p.id === fd.id)) PRODUCTS.push(flashProduct);
-            openProduct(fd.id);
-        }
+        // openFlashDeal retire (Thrasher 2026-07-19): pa gen carousel flash
+        // separe ankò — achtè a klike dirèkteman sou pwodwi a nan feed la.
 
         // ══════════════════════════════════════════════════════════
         //  FEATURE 2 — "SHOP THE LOOK" (Konplete Look sa a)

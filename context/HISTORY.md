@@ -7,6 +7,19 @@
 
 ---
 
+## 2026-07-19 (suite) : Flash Deal — badge clignotant sur la carte produit (fin du carousel)
+
+Retour QA Thrasher sur le flash deal (screenshot IMG_7756) : il ne veut PAS de carte/carousel séparé (« ÒF ESPESYAL / Flash Deals » avec cartes) — quand 5 vendeurs mettent des flash deals ça fait trop de cartes moches, surtout sans image. Il veut juste **un petit badge rust « ⚡ FLASH » qui clignote directement sur la carte du produit** dans le feed, et au clic voir les détails (% + temps restant).
+
+- **Retiré** le `#flashDealsSection` (header + countdown haut + carousel horizontal), `renderFlashDealCards` (repurposé), `openFlashDeal` (orphelin).
+- **Badge `.flash-feed-badge`** : pilule rust « ⚡ FLASH » en absolute top-left sur l'image de la carte, animation `flashBlink` (opacity+scale, 1.1s), `prefers-reduced-motion` respecté. Remplace le badge Verifye quand un deal actif existe. Filtre `ends_at > now`.
+- **Détails au clic** : la fiche produit avait DÉJÀ le banner flash (`−X%` + « tan ki rete » countdown via `data-fd-countdown`/`startDetailFdTicker`) — rien à ajouter.
+- **Race feed/deals** : `renderFeedCards` cache la liste rendue (`A._feedRendered`) ; quand les deals finissent de charger (`renderFlashDealCards`), on re-rend le feed depuis le cache (sans re-fetch, sans double badge).
+- **Démo** : créé un flash deal 24h sur le Bracelet (−20%) pour que Thrasher voie le badge live tout de suite (removable). Avec l'approche badge-sur-carte, 5 vendeurs = 5 badges sur leurs propres cartes, plus de carousel encombré.
+- SW v45→v46, tw.css inchangé (badge = classe custom inline, pas Tailwind). ui/smoke OK, 0 erreur syntaxe, boot headless propre.
+
+---
+
 ## 2026-07-19 : 3 modifs QA (flash deal, try-on, chat admin plein écran) + relecture des 11 bugs
 
 Suite du test 2-3 moun. Thrasher envoie 3 screenshots + 3 modifs, et demande de re-vérifier que les 11 bugs marchent (certains comme flash deal ne marchaient pas).
