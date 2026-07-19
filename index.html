@@ -3160,79 +3160,6 @@
         <div id="favsList" class="space-y-2 pb-2"></div>
     </div>
 
-    <!-- ══ TRY-ON SHEET — Essayage Virtuel Phase 2 ══ -->
-    <div class="sheet" id="tryonSheet">
-        <div class="handle"></div>
-
-        <div class="flex items-center gap-3 mb-5">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
-                <span class="material-symbols-outlined fi text-white" style="font-size:20px">try</span>
-            </div>
-            <div>
-                <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Eseyaj Vityèl</h3>
-                <p class="font-label text-xs text-on-surface-variant">Wè kijan pwodwi a ap sanble sou ou</p>
-            </div>
-        </div>
-
-        <!-- Preview zone — AR placeholder -->
-        <div id="tryonPreview" class="rounded-xl overflow-hidden mb-4 relative"
-            style="height:280px;background:linear-gradient(145deg,#f0ede8,#e5e2dd)">
-
-            <!-- Skeleton AR -->
-            <div class="w-full h-full flex flex-col items-center justify-center gap-3" id="tryonPlaceholder">
-                <!-- Silhouèt kò humain SVG -->
-                <svg width="80" height="140" viewBox="0 0 80 140" fill="none" style="opacity:.25">
-                    <circle cx="40" cy="18" r="14" stroke="#1c1c19" stroke-width="2" fill="none" />
-                    <path d="M20 50c0-10 8-18 20-18s20 8 20 18v35H20V50z" stroke="#1c1c19" stroke-width="2"
-                        fill="none" />
-                    <line x1="20" y1="55" x2="4" y2="80" stroke="#1c1c19" stroke-width="2" stroke-linecap="round" />
-                    <line x1="60" y1="55" x2="76" y2="80" stroke="#1c1c19" stroke-width="2" stroke-linecap="round" />
-                    <line x1="30" y1="85" x2="25" y2="135" stroke="#1c1c19" stroke-width="2" stroke-linecap="round" />
-                    <line x1="50" y1="85" x2="55" y2="135" stroke="#1c1c19" stroke-width="2" stroke-linecap="round" />
-                </svg>
-                <p class="font-headline font-bold text-sm text-on-surface-variant">Zona AR — Phase 2</p>
-                <p class="font-label text-xs text-on-surface-variant text-center px-6">ML Kit ak AR Core ap
-                    entegre<br />nan pwochèn vèsyon an</p>
-            </div>
-
-            <!-- Badge Phase 2 -->
-            <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full font-label text-[11px] font-bold"
-                style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">
-                Phase 2
-            </div>
-        </div>
-
-        <!-- Options koulè / tay -->
-        <div id="tryonOptions" class="mb-5"></div>
-
-        <!-- Stats bouton clicked -->
-        <div class="flex items-center gap-3 p-3.5 rounded-xl mb-4" style="background:rgba(124,58,237,.06)">
-            <span class="material-symbols-outlined fi text-[#7c3aed]" style="font-size:16px">bar_chart</span>
-            <div class="flex-1">
-                <p class="font-label text-xs font-bold text-on-surface">Enterè: <span id="tryonClickCount"
-                        class="text-[#7c3aed]">0</span> klike jodi a</p>
-                <p class="font-label text-[11px] text-on-surface-variant">Done sa a ap ede nou priorize entegrasyon AR
-                    la</p>
-            </div>
-        </div>
-
-        <!-- Bouton principal -->
-        <button onclick="tryonCapture()" id="tryonCaptureBtn"
-            class="w-full py-4 rounded-xl font-headline font-extrabold text-sm active:scale-[.98] transition-transform mb-3 flex items-center justify-center gap-2"
-            style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">
-            <span class="material-symbols-outlined fi text-white" style="font-size:20px">photo_camera</span>
-            Pran yon foto pou Eseyaj
-        </button>
-
-        <button onclick="notifyTryon()"
-            class="w-full py-3 rounded-xl font-label font-bold text-sm active:opacity-70 transition-opacity"
-            style="background:rgba(124,58,237,.08);color:#7c3aed">
-            <span class="material-symbols-outlined align-middle mr-1" style="font-size:16px">notifications</span>
-            Notifye m lè AR disponib
-        </button>
-    </div>
-
     <!-- ══ DELIVERY OTP SHEET ══ -->
     <div class="sheet" id="otpDelivSheet">
         <div class="handle"></div>
@@ -5174,9 +5101,6 @@
                 }
                 let html = chatBtn;
                 html += '<button onclick="addToCart(' + dpid + ')" class="w-12 h-12 ml-2 flex-shrink-0 flex items-center justify-center rounded-xl active:scale-90 transition-transform" style="background:rgba(0,102,111,.1)" title="Ajoute nan Panye"><span class="material-symbols-outlined fi text-primary" style="font-size:20px">add_shopping_cart</span></button>';
-                if (p.c === 'mode' || p.c === 'cosmetique' || p.c === 'accessoire') {
-                    html += '<button onclick="openTryon(' + dpid + ')" class="w-12 h-12 ml-2 flex-shrink-0 flex items-center justify-center rounded-xl active:scale-90 transition-transform" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)" title="Eseyaj Vityèl"><span class="material-symbols-outlined fi text-white" style="font-size:20px">try</span></button>';
-                }
                 html += '<button onclick="startOrder(' + dpid + ')" class="flex-[2] ml-2 flex items-center justify-center gap-2 py-3.5 rounded-xl cta font-headline font-bold text-base active:scale-[.98] amb"><span class="material-symbols-outlined" style="font-size:18px">shopping_bag</span>Kòmande</button>';
                 return html;
             })();
@@ -8180,12 +8104,18 @@
                     active: true,
                     ends_at: endsAt,
                 });
+                // Anvan, erè sa a te avale (console.warn) epi bandwòl Flash
+                // Deal la pa t janm parèt paske policy INSERT te admin-sèlman.
+                // Kounye a vandè ka kreye flash deal pou pwòp pwodwi l — men si
+                // li echwe pou yon lòt rezon, fè vandè a konnen.
                 if (fdErr) console.warn('[FlashDeal] insert:', fdErr.message);
                 // Mirror locally so the feed shows it before the next reload
                 const local = PRODUCTS.find(x => x.id === pid);
                 if (local) { local.p = newPrice; local.oldP = orig; }
                 closeSheets();
-                toast('Rediksyon ' + pct + '% aktive ✓');
+                toast(fdErr
+                    ? 'Rabè aplike, men Flash Deal la pa pase: ' + fdErr.message
+                    : 'Rediksyon ' + pct + '% aktive ✓ — Flash Deal ap parèt nan feed la');
                 if (typeof renderBoutiqueContent === 'function') renderBoutiqueContent();
                 if (typeof loadFlashDealsFromSupabase === 'function') loadFlashDealsFromSupabase();
             } catch (e) {
@@ -10367,6 +10297,12 @@
             var { data: profiles } = await db.from('profiles').select('id, display_name, first_name, last_name, avatar_url').in('id', Array.from(uids));
             var pMap = {};
             (profiles || []).forEach(function(p) { pMap[p.id] = p; });
+            // Rezoud non yo sou chak fil pou viewAdminConvo (plen ekran) ka montre yo.
+            _adminConvos.forEach(function(c) {
+                var pa = pMap[c.sender] || {}, pb = pMap[c.receiver] || {};
+                c.senderName = pa.display_name || [pa.first_name, pa.last_name].filter(Boolean).join(' ') || 'Itilizatè';
+                c.receiverName = pb.display_name || [pb.first_name, pb.last_name].filter(Boolean).join(' ') || 'Itilizatè';
+            });
 
             if (!_adminConvos.length) {
                 if (el) el.innerHTML = '<p class="text-center font-body text-sm text-on-surface-variant py-8">Pa gen konvèsasyon</p>';
@@ -10394,11 +10330,13 @@
         function viewAdminConvo(idx) {
             var c = _adminConvos[idx];
             if (!c) return;
-            var html = '<div class="fixed inset-0 z-[200] bg-black/50 flex items-end justify-center" id="adminConvoOverlay" onclick="if(event.target===this)this.remove()">' +
-                '<div class="w-full max-w-md bg-surface rounded-t-[1.5rem] max-h-[85vh] flex flex-col">' +
-                '<div class="flex items-center justify-between px-4 py-3 border-b" style="border-color:rgba(188,201,200,.15)">' +
-                '<p class="font-headline font-bold text-sm text-on-surface">Konvèsasyon (lekti sèlman)</p>' +
-                '<button onclick="document.getElementById(\'adminConvoOverlay\').remove()" class="w-8 h-8 rounded-full flex items-center justify-center amb"><span class="material-symbols-outlined" style="font-size:18px">close</span></button>' +
+            // Plen ekran (tès 2-3 moun 2026-07-19) — anvan se te yon ti bottom
+            // sheet 85vh; kounye a li pran tout ekran ak yon bouton retou.
+            var partners = esc((c.senderName || 'Achtè') + ' ↔ ' + (c.receiverName || 'Vandè'));
+            var html = '<div class="fixed inset-0 z-[200] flex flex-col" id="adminConvoOverlay" style="background:#fcf9f4">' +
+                '<div class="flex items-center gap-2 px-4 border-b" style="border-color:rgba(188,201,200,.15);padding-top:calc(env(safe-area-inset-top) + 0.75rem);padding-bottom:0.75rem">' +
+                '<button onclick="document.getElementById(\'adminConvoOverlay\').remove()" aria-label="Fèmen" class="w-9 h-9 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low"><span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span></button>' +
+                '<div class="min-w-0"><p class="font-headline font-bold text-base text-on-surface truncate">' + partners + '</p><p class="font-label text-[11px] text-on-surface-variant">Konvèsasyon · lekti sèlman</p></div>' +
                 '</div>' +
                 '<div class="flex-1 overflow-y-auto p-4 space-y-2">';
             c.msgs.slice().reverse().forEach(function(m) {
@@ -10415,7 +10353,7 @@
                     '<p class="font-label text-[11px] mt-1 ' + (m.sender_id === c.sender ? 'text-white/60' : 'text-on-surface-variant') + '">' + tm + '</p>' +
                     '</div></div>';
             });
-            html += '</div></div></div>';
+            html += '</div></div>';
             document.body.insertAdjacentHTML('beforeend', html);
         }
         window.viewAdminConvo = viewAdminConvo;
@@ -14272,112 +14210,8 @@
   </div>`;
         }
 
-        // ══════════════════════════════════════════════════════════
-        //  MODULE 2 — ESSAYAGE VIRTUEL (Try-On Phase 2)
-        // ══════════════════════════════════════════════════════════
-
-        // Compteur de clicks try-on par produit (stats pour Phase 2)
-        let TRYON_STATS = JSON.parse(localStorage.getItem('aym_tryon') || '{}');
-
-        function openTryon(productId) {
-            const p = PRODUCTS.find(x => x.id === productId);
-            if (!p) return;
-
-            // Incrémenter le compteur de clicks
-            TRYON_STATS[productId] = (TRYON_STATS[productId] || 0) + 1;
-            localStorage.setItem('aym_tryon', JSON.stringify(TRYON_STATS));
-
-            // Total clicks today pour ce produit
-            const total = Object.values(TRYON_STATS).reduce((a, b) => a + b, 0);
-            document.getElementById('tryonClickCount').textContent = total;
-
-            // Options taille / couleur selon le produit
-            renderTryonOptions(p);
-            openSheet('tryonSheet');
-        }
-
-        function renderTryonOptions(p) {
-            const el = document.getElementById('tryonOptions');
-            let html = '';
-
-            // Tailles si disponibles
-            if (p.sizes && p.sizes.length > 0) {
-                html += `
-    <div class="mb-3">
-      <p class="font-label text-[11px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Tay</p>
-      <div class="flex flex-wrap gap-2">
-        ${p.sizes.map((sz, i) => `
-        <button class="tryon-sz w-11 h-10 rounded-lg font-label font-bold text-sm transition-all active:scale-90
-          ${i === 0 ? 'text-white' : 'bg-surface-container text-on-surface-variant'}"
-          style="${i === 0 ? 'background:linear-gradient(135deg,#7c3aed,#4f46e5)' : ''}"
-          onclick="selectTryonSz(this)">${sz}</button>`).join('')}
-      </div>
-    </div>`;
-            }
-
-            // Couleurs simulées
-            const colors = ['#1c1c19', '#00666f', '#98443e', '#d97706', '#f0ede8'];
-            html += `
-  <div>
-    <p class="font-label text-[11px] font-bold uppercase tracking-[.1em] text-on-surface-variant mb-2">Koulè</p>
-    <div class="flex gap-2">
-      ${colors.map((c, i) => `
-      <button class="tryon-col w-8 h-8 rounded-full active:scale-90 transition-transform flex-shrink-0"
-              style="background:${c};${i === 0 ? 'box-shadow:0 0 0 2px #fff,0 0 0 4px #7c3aed' : ''}"
-              onclick="selectTryonColor(this,'${c}')">
-      </button>`).join('')}
-    </div>
-  </div>`;
-
-            el.innerHTML = html;
-        }
-
-        function selectTryonSz(el) {
-            document.querySelectorAll('.tryon-sz').forEach(b => {
-                b.style.background = '';
-                b.style.color = '';
-                b.classList.remove('text-white');
-                b.classList.add('bg-surface-container', 'text-on-surface-variant');
-            });
-            el.classList.remove('bg-surface-container', 'text-on-surface-variant');
-            el.classList.add('text-white');
-            el.style.background = 'linear-gradient(135deg,#7c3aed,#4f46e5)';
-        }
-
-        function selectTryonColor(el, color) {
-            document.querySelectorAll('.tryon-col').forEach(b => b.style.boxShadow = '');
-            el.style.boxShadow = '0 0 0 2px #fff,0 0 0 4px #7c3aed';
-            // Teinter le placeholder AR
-            document.getElementById('tryonPreview').style.background =
-                `linear-gradient(145deg,${color}22,${color}08)`;
-        }
-
-        function tryonCapture() {
-            const ph = document.getElementById('tryonPlaceholder');
-            const preview = document.getElementById('tryonPreview');
-            ph.innerHTML = `
-      <div class="text-center px-4">
-        <span class="material-symbols-outlined fi" style="font-size:44px;color:#7c3aed">checkroom</span>
-        <p class="font-headline font-bold text-sm text-on-surface mt-2">Eseyaj Vityèl</p>
-        <p class="font-label text-xs text-on-surface-variant mt-1 leading-relaxed">
-          Fonksyon sa a ap vini byento.<br/>
-          <span style="color:#7c3aed;font-weight:700">Ap devlope — disponib talè</span>
-        </p>
-      </div>`;
-            preview.style.background = 'linear-gradient(145deg,rgba(124,58,237,.12),rgba(79,70,229,.06))';
-            toast('Eseyaj vityèl ap disponib talè');
-        }
-
-        // Notifier pour Phase 2
-        function notifyTryon() {
-            toast('Ou pral resevwa yon notifikasyon lè AR disponib');
-            addNotif({
-                id: 'n_tryon_' + Date.now(), type: 'system', icon: 'try',
-                title: 'Try-On AR', body: 'Yo ap prepare entegrasyon ML Kit + AR Core pou Phase 2.',
-                time: 'Kounye a', read: false, color: '#7c3aed',
-            });
-            closeSheets();
-        }
+        // Eseyaj Vityèl (Try-On AR) retire nan tès 2-3 moun (2026-07-19) —
+        // se te yon plas-tenè "Phase 2" san fonksyon; Thrasher pa vle l ankò.
 
         // ── Override renderChatMsgs pou sipòte type 'location' ──
         // ══════════════════════════════════════════════════════════
