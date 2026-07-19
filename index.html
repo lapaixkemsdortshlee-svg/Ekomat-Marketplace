@@ -772,20 +772,6 @@
             }
         }
 
-        .flash-badge {
-            background: linear-gradient(135deg, #98443e, #b65a41);
-            color: #fff;
-            font-family: 'Manrope', sans-serif;
-            font-size: 10px;
-            font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            letter-spacing: .03em;
-        }
-
         /* Badj FLASH ki klignote dirèkteman sou kat pwodwi a nan feed la
            (Thrasher 2026-07-19 — pa gen carousel separe ankò). Détay yo
            (% + tan ki rete) parèt lè yo klike sou pwodwi a. */
@@ -5036,15 +5022,20 @@
                         ? FLASH_DEALS.find(f => f.product_id === p.id && new Date(f.ends_at).getTime() > Date.now())
                         : null;
                     if (!fd) return '';
-                    return `<div id="detailFlashBanner" class="flex items-center gap-3 p-3.5 rounded-xl amb" style="background:linear-gradient(135deg,#97422b,#b85c3a);color:#fcf9f4">
-        <span class="material-symbols-outlined fi flash-badge" style="font-size:24px">local_fire_department</span>
-        <div class="flex-1 min-w-0">
-          <p class="font-headline font-extrabold text-sm">Flash Deal −${fd.pct}%</p>
-          <p class="font-label text-[11px] leading-snug" style="color:rgba(252,249,244,.85)">Pri a ap tounen ${fpc(p.oldP || fd.oldP || p.p)} lè tan an fini</p>
+                    return `<div id="detailFlashBanner" class="flex items-center gap-3 px-3.5 py-3 rounded-2xl amb" style="background:linear-gradient(135deg,#97422b,#b85c3a);color:#fcf9f4">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(252,249,244,.18)">
+          <span class="material-symbols-outlined fi" style="font-size:20px;color:#fcf9f4">bolt</span>
         </div>
-        <div class="text-right flex-shrink-0">
-          <p class="font-headline font-extrabold text-lg" data-fd-countdown="${fd.ends_at}" style="letter-spacing:.05em;font-variant-numeric:tabular-nums">--:--:--</p>
-          <p class="font-label text-[10px] uppercase tracking-[.08em]" style="color:rgba(252,249,244,.8)">tan ki rete</p>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1.5">
+            <span class="font-headline font-extrabold text-sm tracking-tight">Flash Deal</span>
+            <span class="font-label font-extrabold px-1.5 rounded-full" style="font-size:10px;line-height:1.5;background:#fcf9f4;color:#97422b">−${fd.pct}%</span>
+          </div>
+          <p class="font-label text-[11px] leading-snug mt-0.5 truncate" style="color:rgba(252,249,244,.82)">Pri a ap tounen ${fpc(p.oldP || fd.oldP || p.p)} lè tan an fini</p>
+        </div>
+        <div class="flex-shrink-0 text-center px-2.5 py-1.5 rounded-xl" style="background:rgba(28,28,25,.2)">
+          <p class="font-headline font-extrabold text-base leading-none" data-fd-countdown="${fd.ends_at}" style="letter-spacing:.03em;font-variant-numeric:tabular-nums">--:--:--</p>
+          <p class="font-label mt-1" style="font-size:8.5px;line-height:1;letter-spacing:.1em;text-transform:uppercase;color:rgba(252,249,244,.72)">tan ki rete</p>
         </div>
       </div>`;
                 })()}
