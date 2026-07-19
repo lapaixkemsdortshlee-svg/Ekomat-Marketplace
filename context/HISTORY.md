@@ -7,6 +7,20 @@
 
 ---
 
+## 2026-07-19 : 3 modifs QA (flash deal, try-on, chat admin plein écran) + relecture des 11 bugs
+
+Suite du test 2-3 moun. Thrasher envoie 3 screenshots + 3 modifs, et demande de re-vérifier que les 11 bugs marchent (certains comme flash deal ne marchaient pas).
+
+- **Flash Deal absent — VRAIE CAUSE trouvée (systematic-debugging).** La table `flash_deals` était vide → aucun bandeau. Cause racine : la policy INSERT était **admin-only** (`is_admin()`), mais ce sont les **vendeurs** qui créent les rabais (bouton « Rediksyon » + flux publication) → chaque insert vendeur était **rejeté en silence par la RLS** (`console.warn` avalait l'erreur), alors que le prix produit (old_price) montrait bien le rabais. Fix : migration `20260719100000_flash_deals_seller_rls.sql` — un vendeur peut gérer les flash deals de ses PROPRES produits (product_id → products.seller_id = auth.uid()) ; policies admin conservées (RLS permissive = OR). Bonus : `submitDiscountProduct` remonte maintenant l'erreur flash deal au lieu de l'avaler. Appliquée via MCP + version réconciliée.
+- **Eseyaj Vityèl (try-on AR « Phase 2 ») retiré.** C'était un placeholder sans fonction (silhouette + « Zona AR — ML Kit ak AR Core »). Supprimé : la feuille `#tryonSheet`, le bouton d'entrée dans la fiche produit (catégories mode/cosmetique/accessoire), et tout le module JS (openTryon, renderTryonOptions, selectTryonSz/Color, tryonCapture, notifyTryon, TRYON_STATS). Zéro orphelin.
+- **Chat admin (Konvèsasyon lekti sèlman) → plein écran.** `viewAdminConvo` était un bottom-sheet 85vh ; passé en plein écran (`inset-0`, safe-area, bouton retour) avec les noms des participants (résolus sur les threads dans `loadAdminConversations`).
+- **Relecture des 11 bugs (#212) — tout vérifié OK** sur la vraie base : 3 RPC présentes (attach_payment_proof, increment_product_views, advance_order_status), bucket payment-proofs + colonne, 4 policies SELECT storage, 0 code AYIM restant, orders ont atteint `completed` (Bug 5 close-transaction prouvé en prod), visites non nulles et dédupliquées (Dove 4, JBL 4, Bracelet 2 — l'écart views vs distinct viewers = vues invités comptées mais non attribuées, correct). 0 erreur front en 24h. Les 7 marqueurs code clés (célébration payment_verified, applyUserCurrency, _pendingOrder, requireLogin, closeTransaction, submitAdminRejectPayment, openNotifDetail) tous présents.
+- SW v44→v45, tw.css rebâti (classes try-on arbitraires retirées). ui 11/11, 0 erreur syntaxe, boot headless propre.
+
+**Leçon durable :** une feature qui « ne marche pas » alors que l'UI a l'air correcte = suspecter une RLS INSERT trop restrictive qui rejette en silence (le client `console.warn` et continue). Le flash deal montrait le rabais (products.old_price, écriture owner OK) mais jamais le bandeau (flash_deals insert admin-only, rejeté). Toujours vérifier que le rôle qui déclenche l'écriture a bien la policy correspondante.
+
+---
+
 ## 2026-07-18 (nuit) : 11 bugs test 2-3 moun (#212) + mode invité & vrais visiteurs uniques (#213)
 
 Session lancée par `/prime` avec un .docx de Thrasher listant **11 bugs** trouvés en testant l'app à plusieurs comptes. Analyse d'abord : extraction des 11 screenshots (WMF → PNG via parsing DIB), lecture, vérif de chaque bug sur le vrai code + la vraie base (Supabase MCP).
