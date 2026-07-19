@@ -7,6 +7,17 @@
 
 ---
 
+## 2026-07-19 (suite 2) : Fix + redesign carte Flash Deal sur la fiche produit (skill ui-ux-pro-max)
+
+Thrasher (screenshot IMG_7757) : « à l'intérieur c'est le chaos » sur la fiche du Bracelet — le bandeau flash deal était énorme et affichait le texte brut « local_fire_department » au lieu de l'icône.
+
+- **Vraie cause (conflit CSS)** : l'icône `<span class="material-symbols-outlined fi flash-badge">local_fire_department</span>` avait la classe `.flash-badge` (définie ligne 775, APRÈS `.material-symbols-outlined` ligne 60) qui force `font-family: Manrope` → écrase la police Material Symbols → le ligature s'affiche en texte dans une pilule Manrope → pilule géante qui explose la mise en page (~450px de haut). La police complète était bien chargée ; c'était purement le override de font-family.
+- **Fix + redesign** (demande « belle carte, pas trop grosse, plus petite ») : icône `bolt` dans une **pastille fixe 36×36** (plus jamais de blowup possible), « Flash Deal » + pilule crème « −X% », sous-ligne truncate, countdown dans une puce sombre à droite. Carte compacte **~65px** (vs ~450px). `.flash-badge` (CSS mort après le retrait du carousel) supprimé. Vérifié par rendu headless + mesure de hauteur + screenshot envoyé à Thrasher.
+- Leçon : ne JAMAIS appliquer une classe qui définit `font-family` à un span `.material-symbols-outlined` — l'icône se transforme en texte. Icône = toujours un élément dédié.
+- SW v46→v47, tw.css inchangé.
+
+---
+
 ## 2026-07-19 (suite) : Flash Deal — badge clignotant sur la carte produit (fin du carousel)
 
 Retour QA Thrasher sur le flash deal (screenshot IMG_7756) : il ne veut PAS de carte/carousel séparé (« ÒF ESPESYAL / Flash Deals » avec cartes) — quand 5 vendeurs mettent des flash deals ça fait trop de cartes moches, surtout sans image. Il veut juste **un petit badge rust « ⚡ FLASH » qui clignote directement sur la carte du produit** dans le feed, et au clic voir les détails (% + temps restant).
