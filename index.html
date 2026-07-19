@@ -14947,13 +14947,18 @@
       </div>
     </div>
 
-    <!-- Response Time -->
+    <!-- Ansyènte (Manm depi) — siyal konfyans ki toujou disponib.
+         Anvan: bandwòl "tan repons" ki te toujou vid (response_time pa janm
+         ranpli, epi RLS mesaj yo anpeche kalkile l bò kliyan san yon fuit).
+         Kounye a li montre depi ki lè vandè a manm — done ki toujou la
+         (created_at) — epi li kache nèt si nou pa gen dat la (okenn bwat vid). -->
+    ${seller.memberSince ? `
     <div class="px-5 mt-4 seller-animate seller-animate-delay-3">
       <div class="flex items-center gap-2 px-3 py-2.5 rounded-lg" style="background:rgba(0,102,111,.05)">
         <span class="material-symbols-outlined fi text-primary flex-shrink-0" style="font-size:14px">schedule</span>
-        <p class="font-label text-xs text-on-surface-variant">${seller.responseTime}</p>
+        <p class="font-label text-xs text-on-surface-variant">Manm Ekomat depi ${esc(seller.memberSince)}</p>
       </div>
-    </div>
+    </div>` : ''}
 
     <!-- Seller's Products -->
     <div class="px-5 mt-6 pb-8">
@@ -16114,7 +16119,6 @@
                 bio: data.bio || '',
                 specialties: data.specialties || [],
                 phone: data.phone || '',
-                responseTime: data.response_time || '',
                 badges: data.badges || [],
             };
             SELLERS[sellerId] = seller;
