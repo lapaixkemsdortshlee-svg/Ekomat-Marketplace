@@ -310,6 +310,18 @@
             .chart-fade { animation: none; }
         }
 
+        /* ── Area chart mak Ekomat (kouch entèaktif: crosshair + tooltip) ── */
+        .ekm-chart { position: relative; --ekc-line: #00666f; --ekc-grid: rgba(61,73,73,.16); --ekc-lbl: #6d7979; --ekc-ring: #fff; }
+        body.dark .ekm-chart { --ekc-line: #5ad7e6; --ekc-grid: rgba(255,255,255,.10); --ekc-lbl: #a8b0b0; --ekc-ring: #2e2e2a; }
+        .ekm-chart svg { display: block; width: 100%; touch-action: pan-y; }
+        .ekm-cross { position: absolute; width: 0; border-left: 1.5px dashed var(--ekc-line); opacity: 0; transition: opacity .15s ease; pointer-events: none; }
+        .ekm-dot { position: absolute; width: 10px; height: 10px; border-radius: 999px; background: var(--ekc-line); border: 2px solid var(--ekc-ring); transform: translate(-50%,-50%); opacity: 0; transition: opacity .15s ease; pointer-events: none; box-shadow: 0 1px 4px rgba(28,28,25,.25); }
+        .ekm-tip { position: absolute; transform: translateX(-50%); pointer-events: none; background: #1c1c19; color: #fcf9f4; border-radius: 10px; padding: 5px 10px; font-family: 'Manrope', sans-serif; font-size: 11px; line-height: 1.4; white-space: nowrap; box-shadow: 0 4px 14px rgba(28,28,25,.28); opacity: 0; transition: opacity .15s ease; z-index: 4; }
+        body.dark .ekm-tip { background: #fcf9f4; color: #1c1c19; }
+        .ekm-tip b { font-size: 12.5px; font-weight: 800; }
+        .ekm-xlbls { display: flex; justify-content: space-between; margin-top: 4px; }
+        .ekm-xlbls span { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 600; color: var(--ekc-lbl); }
+
         @keyframes slideup {
             from {
                 opacity: 0;
@@ -7746,20 +7758,92 @@
         }
         window.loadSellerAnalytics = loadSellerAnalytics;
 
-        function _sparkSvg(values, w, h) {
-            if (!values.length) return '';
-            const max = Math.max(1, ...values);
-            const stepX = w / Math.max(1, values.length - 1);
-            const pts = values.map((v, i) => [i * stepX, h - (v / max) * (h - 4) - 2]);
-            const points = pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-            let len = 0;
-            for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i-1][0], pts[i][1] - pts[i-1][1]);
-            const areaPoints = '0,' + h + ' ' + points + ' ' + w + ',' + h;
-            return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block">
-                <polygon points="${areaPoints}" fill="rgba(0,102,111,.12)" class="chart-fade"/>
-                <polyline points="${points}" fill="none" stroke="#00666f" stroke-width="2" stroke-linejoin="round" class="chart-draw" style="--dash:${Math.ceil(len) || w}"/>
-            </svg>`;
+        const _EKC = {};
+        const _EKC_MO = ['jan', 'fev', 'mas', 'avr', 'me', 'jen', 'jiy', 'out', 'sep', 'okt', 'nov', 'des'];
+        function _ekcDay(d) { return d ? parseInt(d.slice(8, 10), 10) + ' ' + (_EKC_MO[+d.slice(5, 7) - 1] || '') : ''; }
+        // Tanjant Fritsch-Carlson: koub la pa janm depase anba 0 sou jou san lavant
+        function _ekcMonoSegs(p) {
+            const n = p.length, dx = [], m = [], t = [];
+            for (let i = 0; i < n - 1; i++) { dx[i] = p[i + 1][0] - p[i][0]; m[i] = (p[i + 1][1] - p[i][1]) / (dx[i] || 1); }
+            t[0] = m[0]; t[n - 1] = m[n - 2];
+            for (let i = 1; i < n - 1; i++) t[i] = (m[i - 1] * m[i] <= 0) ? 0 : (m[i - 1] + m[i]) / 2;
+            for (let i = 0; i < n - 1; i++) {
+                if (!m[i]) { t[i] = 0; t[i + 1] = 0; continue; }
+                const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+                if (s > 9) { const tau = 3 / Math.sqrt(s); t[i] = tau * a * m[i]; t[i + 1] = tau * b * m[i]; }
+            }
+            const segs = [];
+            for (let i = 0; i < n - 1; i++) {
+                const h = dx[i];
+                segs.push('C' + (p[i][0] + h / 3).toFixed(1) + ',' + (p[i][1] + t[i] * h / 3).toFixed(1) + ' '
+                    + (p[i + 1][0] - h / 3).toFixed(1) + ',' + (p[i + 1][1] - t[i + 1] * h / 3).toFixed(1) + ' '
+                    + p[i + 1][0].toFixed(1) + ',' + p[i + 1][1].toFixed(1));
+            }
+            return segs;
         }
+        function _areaChartSvg(series, id, h) {
+            if (series.length < 2) return '';
+            h = h || 150;
+            const w = 320, padT = 14, padB = 10, padX = 6;
+            const vals = series.map(d => Number(d.sales) || 0);
+            const n = vals.length, max = Math.max(1, ...vals);
+            const stepX = (w - padX * 2) / (n - 1);
+            const baseY = h - padB;
+            const pts = vals.map((v, i) => [padX + i * stepX, padT + (1 - v / max) * (baseY - padT)]);
+            const segs = _ekcMonoSegs(pts);
+            const M = 'M' + pts[0][0].toFixed(1) + ',' + pts[0][1].toFixed(1);
+            const lineD = M + segs.join('');
+            // dènye segman an pwentiye: jodi a poko fini
+            const solidD = n > 2 ? M + segs.slice(0, -1).join('') : lineD;
+            const tailD = n > 2 ? 'M' + pts[n - 2][0].toFixed(1) + ',' + pts[n - 2][1].toFixed(1) + segs[segs.length - 1] : '';
+            const areaD = lineD + 'L' + pts[n - 1][0].toFixed(1) + ',' + baseY + 'L' + pts[0][0].toFixed(1) + ',' + baseY + 'Z';
+            let len = 0;
+            for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+            const grid = [0, .5, 1].map(f => {
+                const y = (padT + f * (baseY - padT)).toFixed(1);
+                return `<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="var(--ekc-grid)" stroke-width="1" stroke-dasharray="4,4" vector-effect="non-scaling-stroke"/>`;
+            }).join('');
+            _EKC[id] = { series, pts, w, h, padX, stepX };
+            const mid = series[Math.floor((n - 1) / 2)];
+            return `<div class="ekm-chart" id="${id}" onpointerdown="_ekcMove(event,'${id}')" onpointermove="_ekcMove(event,'${id}')" onpointerleave="_ekcHide('${id}')">
+                <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${h}px">
+                    <defs><linearGradient id="${id}-g" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="var(--ekc-line)" stop-opacity=".26"/>
+                        <stop offset="1" stop-color="var(--ekc-line)" stop-opacity="0"/>
+                    </linearGradient></defs>
+                    ${grid}
+                    <path d="${areaD}" fill="url(#${id}-g)" stroke="none" class="chart-fade"/>
+                    <path d="${solidD}" fill="none" stroke="var(--ekc-line)" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke" class="chart-draw" style="--dash:${Math.ceil(len * 1.15)}"/>
+                    ${tailD ? `<path d="${tailD}" fill="none" stroke="var(--ekc-line)" stroke-width="2" stroke-linecap="round" stroke-dasharray="5,4" vector-effect="non-scaling-stroke" class="chart-fade"/>` : ''}
+                </svg>
+                <div class="ekm-cross" id="${id}-c" style="top:${padT}px;height:${baseY - padT}px"></div>
+                <div class="ekm-dot" id="${id}-d"></div>
+                <div class="ekm-tip" id="${id}-t"></div>
+                <div class="ekm-xlbls"><span>${_ekcDay(series[0].day)}</span><span>${_ekcDay(mid && mid.day)}</span><span>Jodi a</span></div>
+            </div>`;
+        }
+        function _ekcMove(e, id) {
+            const c = _EKC[id], box = document.getElementById(id);
+            if (!c || !box) return;
+            const svg = box.querySelector('svg'), r = svg.getBoundingClientRect();
+            if (!r.width) return;
+            const sx = r.width / c.w;
+            const i = Math.max(0, Math.min(c.series.length - 1, Math.round(((e.clientX - r.left) / sx - c.padX) / c.stepX)));
+            const p = c.pts[i], d = c.series[i];
+            const x = p[0] * sx, y = p[1];
+            const cross = document.getElementById(id + '-c'), dot = document.getElementById(id + '-d'), tip = document.getElementById(id + '-t');
+            cross.style.left = x + 'px'; cross.style.opacity = 1;
+            dot.style.left = x + 'px'; dot.style.top = y + 'px'; dot.style.opacity = 1;
+            tip.innerHTML = '<b>' + fpc(Number(d.sales) || 0) + '</b><br>' + _ekcDay(d.day) + (i === c.series.length - 1 ? ' · jodi a' : '');
+            tip.style.opacity = 1;
+            tip.style.top = Math.max(0, y - 52) + 'px';
+            const half = tip.offsetWidth / 2 + 4;
+            tip.style.left = Math.max(half, Math.min(r.width - half, x)) + 'px';
+        }
+        function _ekcHide(id) {
+            ['-c', '-d', '-t'].forEach(s => { const el = document.getElementById(id + s); if (el) el.style.opacity = 0; });
+        }
+        window._ekcMove = _ekcMove; window._ekcHide = _ekcHide;
         function _barsSvg(rows, w, h) {
             if (!rows.length) return '';
             const max = Math.max(1, ...rows.map(r => r.sales));
@@ -7799,11 +7883,7 @@
                   </div>
                   <div class="bg-surface-container-lowest rounded-xl p-3 mb-3 amb">
                     <p class="font-label text-[11px] font-bold text-on-surface-variant mb-1.5">Lavant pa jou</p>
-                    ${_sparkSvg(a.last30.map(d => d.sales), 320, 64)}
-                    <div class="flex justify-between mt-1.5">
-                        <span class="font-label text-[10px] text-on-surface-variant">${a.last30[0]?.day || ''}</span>
-                        <span class="font-label text-[10px] text-on-surface-variant">${a.last30[a.last30.length-1]?.day || ''}</span>
-                    </div>
+                    ${_areaChartSvg(a.last30, 'ekcSellerSales', 150)}
                   </div>
                   <div class="bg-surface-container-lowest rounded-xl p-3 amb">
                     <p class="font-label text-[11px] font-bold text-on-surface-variant mb-2">Top pwodwi</p>
