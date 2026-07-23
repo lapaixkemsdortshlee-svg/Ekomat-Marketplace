@@ -490,9 +490,9 @@
         }
 
         /* Fèy plen ekran (tach enpòtan/long): notifikasyon, verifikasyon,
-           anons, paramèt, sant èd, modifye pwofil/pwodwi, lokalizasyon. Fèy
-           aksyon rapid yo rete bottom-sheet ak handle. */
-        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet, #escrowPaySheet, #mapSheet, #orderSheet {
+           anons, paramèt, sant èd, modifye pwofil/pwodwi, lokalizasyon,
+           favori, zòn kolekte. Fèy aksyon rapid yo rete bottom-sheet ak handle. */
+        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet, #escrowPaySheet, #mapSheet, #orderSheet, #favsSheet, #pickupSheet {
             top: 0;
             height: 100dvh;
             max-height: 100dvh;
@@ -507,14 +507,14 @@
             transition: transform .36s cubic-bezier(.32, .72, 0, 1), visibility 0s linear .36s;
         }
 
-        #notifSheet.on, #verifySheet.on, #announceSheet.on, #settingsSheet.on, #helpSheet.on, #editProfileSheet.on, #editProductSheet.on, #escrowPaySheet.on, #mapSheet.on, #orderSheet.on {
+        #notifSheet.on, #verifySheet.on, #announceSheet.on, #settingsSheet.on, #helpSheet.on, #editProfileSheet.on, #editProductSheet.on, #escrowPaySheet.on, #mapSheet.on, #orderSheet.on, #favsSheet.on, #pickupSheet.on {
             visibility: visible;
             transition: transform .36s cubic-bezier(.32, .72, 0, 1), visibility 0s linear 0s;
         }
 
         /* Kat lokalizasyon: fèy plen ekran (pa gen handle, gen bouton fèmen),
            epi kat la ka pran tout ekran an pou w manevre pin nan alèz. */
-        #mapSheet .handle { display: none; }
+        #mapSheet .handle, #favsSheet .handle, #pickupSheet .handle { display: none; }
         #mapFullBtn {
             position: absolute;
             top: 8px;
@@ -3150,7 +3150,7 @@
     </div>
 
     <!-- ══ FAVORIS SHEET — Lis pwodwi favori yo ══ -->
-    <div class="sheet" id="favsSheet" style="max-height:85dvh">
+    <div class="sheet" id="favsSheet">
         <div class="handle"></div>
         <div class="flex items-center justify-between mb-4">
             <div>
@@ -3919,7 +3919,13 @@
     <!-- ══ PICKUP POINT PICKER SHEET ══ -->
     <div class="sheet" id="pickupSheet">
         <div class="handle"></div>
-        <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-1">Zòn Kolekte</h3>
+        <div class="flex items-center justify-between mb-1">
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Zòn Kolekte</h3>
+            <button onclick="closeSheets()" aria-label="Fèmen"
+                class="w-8 h-8 flex items-center justify-center rounded-full bg-surface-container active:bg-surface-container-high flex-shrink-0">
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:16px">close</span>
+            </button>
+        </div>
         <p class="font-body text-sm text-on-surface-variant mb-4">Detekte zòn GPS reyèl ou pou kòmand ou yo.</p>
         <button onclick="detectPickupLocation()" id="pickupGpsBtn"
             class="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl amb active:scale-[.99] transition-transform"
