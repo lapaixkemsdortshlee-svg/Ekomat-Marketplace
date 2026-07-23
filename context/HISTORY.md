@@ -7,6 +7,18 @@
 
 ---
 
+## 2026-07-23 : Redesign graf « Lavant pa jou » — area chart mak Ekomat (PR #223, mergée)
+
+Thrasher (via /prime) : les graphiques de l'app font « un peu AI » ; les refaire sur le modèle area chart bklit-ui fourni, aux couleurs du brand, avec les skills. Skills activés : dataviz (méthode + validateur palette), ayitimarket, verification-before-completion.
+
+- **Cible unique : `_sparkSvg`** (seule série temporelle de l'app, analytics vendeur). Les barres horizontales (top produits, funnel admin) gardées telles quelles : autre forme (classement, pas temps), déjà brandées.
+- **Nouveau `_areaChartSvg`** : courbe monotone Fritsch-Carlson (pas de creux sous 0 les jours sans vente), dégradé teal → transparent, grille horizontale pointillée, dernier segment pointillé (« jodi a » = jour en cours), crosshair snap-au-jour + point + tooltip pilule (valeur `fpc` en gras, date kreyòl, clamp aux bords, `touch-action: pan-y` pour garder le scroll), labels dates kreyòl intégrés (`_EKC_MO`). Dark : ligne `#5AD7E6` (règle BRAND.md), tooltip inversé crème, via variables CSS sous `body.dark`. Composant réutilisable (registre `_EKC` + id par site d'appel) si l'admin veut une série temporelle un jour.
+- **Palette** : validateur dataviz — les FAIL chroma/lightness sont hors scope (série unique, pas catégoriel, le script le dit lui-même) ; le check pertinent (contraste série vs surface ≥ 3:1) PASS en clair et en sombre.
+- **QA sur le vrai fichier servi tel quel** (leçon #187/#192 réappliquée) : 4 screenshots (clair, tooltip milieu, clamp bord droit, sombre) envoyés à Thrasher. ui+smoke 11/11 local, CI verte (CodeQL, smoke, e2e, Vercel). Zéro classe Tailwind neuve (CSS custom `ekm-*`) → pas de rebuild tw.css. SW v49→v50. Mergée par Thrasher dans la foulée.
+- Note env : le Playwright pinné du repo veut chromium-1228 absent du conteneur → `executablePath: /opt/pw-browsers/chromium` (le `playwright.config.mjs` du repo le fait déjà hors CI).
+
+---
+
 ## 2026-07-19 (suite 3) : Bannière-horloge vide dans la boutique vendeur → « Manm depi » (ancienneté)
 
 Thrasher (screenshot IMG_7758) : dans la boutique vendeur, une carte grise avec **juste une icône horloge teal et aucun texte** — l'air cassée. « À quoi sert cette icône ? Si inutile, retire-la ; si elle mérite une fonction, donne-lui-en une et rends-la fonctionnelle. »
