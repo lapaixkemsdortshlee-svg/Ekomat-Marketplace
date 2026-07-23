@@ -22,7 +22,7 @@
 - [x] **1.3 (Alita)** Créer la routine **« Santé hebdo »** : lundi `0 13 * * 1` UTC (8h00 Haïti), session fraîche : advisors Supabase (sécurité + perf), `error_overview()`, `escrow_attention_orders()`, KPIs `funnel_overview()`. Rapport synthétique + notification.
 - [x] **1.4 (Alita)** Créer la routine **« Sentinelle »** : quotidienne `0 22 * * *` UTC (17h00 Haïti) : vérifier `error_logs` récents et commandes escrow en attente anormale. **Silencieuse si RAS** (pas de notification), alerte seulement si problème.
 - [x] **1.5 (Alita)** Tester chaque routine avec un déclenchement manuel (`fire_trigger`) et vérifier que la notification arrive chez Thrasher. ✅ Notification de test reçue et confirmée par Thrasher le 2026-07-05.
-- [ ] **1.6 (Thrasher)** Après 1 semaine : valider les horaires et le niveau de bruit (trop / pas assez), ajuster.
+- [x] **1.6 (Thrasher)** Après 1 semaine : valider les horaires et le niveau de bruit (trop / pas assez), ajuster. ✅ Validé le 2026-07-23 : niveau de bruit « parfait, garde tel quel » et horaires « bons » (brief 7h, santé lundi 8h, sentinelle 17h). Aucun ajustement. Le rythme réel = 1 notif/jour (brief) + 1/semaine (lundi), sentinelle muette si RAS.
 
 ### Vérification du chantier
 Une semaine complète où : le brief du matin arrive seul, le rapport du lundi arrive seul, et la sentinelle n'a rien envoyé les jours sans problème.
@@ -98,7 +98,7 @@ Une alerte sentinelle réelle reçue par Thrasher hors session, sur au moins un 
 
 | Chantier | État | Dernière mise à jour |
 |---|---|---|
-| 1. Routines | ✅ Fonctionnel — briefs tirent seuls, notifs push+email confirmées reçues (2026-07-09) ; reste 1.6 : bilan de bruit | 2026-07-09 |
+| 1. Routines | ✅ TERMINÉ — briefs tirent seuls, notifs push+email confirmées ; bilan de bruit validé par Thrasher (rythme parfait, horaires bons) | 2026-07-23 |
 | 2. Déploiement Supabase | ✅ TERMINÉ — pipeline validé de bout en bout (migration test en prod via le workflow) | 2026-07-05 |
 | 3. Mémoire | ✅ TERMINÉ — 7 leçons semées, discipline câblée, recall vérifié (2026-07-09) | 2026-07-09 |
 | 4. Canal sortant | ✅ Décidé : push + email, WhatsApp écarté (revoir dans 1 mois si besoin) | 2026-07-05 |
