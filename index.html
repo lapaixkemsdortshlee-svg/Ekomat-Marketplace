@@ -316,6 +316,8 @@
         .ekm-chart svg { display: block; width: 100%; touch-action: pan-y; }
         .ekm-cross { position: absolute; width: 0; border-left: 1.5px dashed var(--ekc-line); opacity: 0; transition: opacity .15s ease; pointer-events: none; }
         .ekm-dot { position: absolute; width: 10px; height: 10px; border-radius: 999px; background: var(--ekc-line); border: 2px solid var(--ekc-ring); transform: translate(-50%,-50%); opacity: 0; transition: opacity .15s ease; pointer-events: none; box-shadow: 0 1px 4px rgba(28,28,25,.25); }
+        .ekm-dot::after { content: ''; position: absolute; inset: -7px; border-radius: 999px; border: 2px solid var(--ekc-line); animation: haloPulse 1.4s ease-out infinite; }
+        @keyframes haloPulse { 0% { transform: scale(.55); opacity: .65; } 100% { transform: scale(1.5); opacity: 0; } }
         .ekm-tip { position: absolute; transform: translateX(-50%); pointer-events: none; background: #1c1c19; color: #fcf9f4; border-radius: 10px; padding: 5px 10px; font-family: 'Manrope', sans-serif; font-size: 11px; line-height: 1.4; white-space: nowrap; box-shadow: 0 4px 14px rgba(28,28,25,.28); opacity: 0; transition: opacity .15s ease; z-index: 4; }
         body.dark .ekm-tip { background: #fcf9f4; color: #1c1c19; }
         .ekm-tip b { font-size: 12.5px; font-weight: 800; }
@@ -327,7 +329,7 @@
         body.dark .ekm-pie { --pie-1: #5ad7e6; --pie-2: #f99188; --pie-3: #6b9bff; --pie-o: #6b7472; --pie-ring: #2e2e2a; --pie-ink: #fcf9f4; --pie-sub: #a8b0b0; }
         .ekm-pie-ring { position: relative; width: 130px; height: 130px; flex: 0 0 auto; }
         .ekm-pie-ring svg { width: 100%; height: 100%; display: block; animation: pieGrow .6s cubic-bezier(.22,.61,.36,1) both; }
-        .pie-slice { stroke: var(--pie-ring); stroke-width: 2.5; transition: opacity .18s ease; animation: pieFade .5s ease both; cursor: pointer; }
+        .pie-slice { stroke: var(--pie-ring); stroke-width: 2.5; transition: opacity .18s ease, transform .22s cubic-bezier(.34,1.4,.64,1), filter .2s ease; animation: pieFade .5s ease both; cursor: pointer; will-change: transform; }
         .ekm-pie-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; text-align: center; }
         .ekm-pie-cv { font-family: 'Manrope', sans-serif; font-size: 15px; font-weight: 800; color: var(--pie-ink); line-height: 1.1; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ekm-pie-cl { font-family: 'Manrope', sans-serif; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--pie-sub); margin-top: 2px; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -339,8 +341,20 @@
         .ekm-leg-v { font-family: 'Manrope', sans-serif; font-size: 10.5px; font-weight: 700; color: var(--pie-sub); flex: 0 0 auto; }
         @keyframes pieGrow { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes pieFade { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ── Bar chart funnel mak Ekomat (etap ki reponn nan touche) ── */
+        .ekm-funnel { --fb-track: #e5e2dd; --fb-glow: rgba(0,102,111,.5); }
+        body.dark .ekm-funnel { --fb-track: rgba(255,255,255,.09); }
+        .ekm-fbar { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 2px 0; margin-bottom: 7px; cursor: pointer; transition: opacity .18s ease; }
+        .ekm-funnel.has-active .ekm-fbar:not(.on) { opacity: .38; }
+        .ekm-fbar-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+        .ekm-fbar-track { height: 9px; background: var(--fb-track); border-radius: 999px; overflow: hidden; transition: height .18s ease; }
+        .ekm-fbar.on .ekm-fbar-track { height: 12px; }
+        .ekm-fbar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#00666f,#00818c); transition: filter .2s ease; }
+        .ekm-fbar.on .ekm-fbar-fill { filter: drop-shadow(0 0 5px var(--fb-glow)); }
         @media (prefers-reduced-motion: reduce) {
             .ekm-pie-ring svg, .pie-slice { animation: none; }
+            .ekm-dot::after { animation: none; opacity: 0; }
         }
 
         @keyframes slideup {
@@ -7884,17 +7898,19 @@
             const sum = slices.reduce((s, x) => s + Number(x.value), 0) || 1;
             const size = 130, cx = size / 2, cy = size / 2, rO = 62, rI = 38, gap = 0.045;
             let a = -Math.PI / 2;
+            const mids = [];
+            const ev = i => ` onpointerdown="_epcSet('${id}',${i},true,event)" onpointerenter="_epcSet('${id}',${i},false,event)" onpointerleave="_epcSet('${id}',-1,false,event)"`;
             const paths = slices.map((s, i) => {
                 const frac = Number(s.value) / sum;
                 const a0 = a + gap / 2, a1 = a + frac * 2 * Math.PI - gap / 2;
+                mids.push(a + frac * Math.PI);
                 a += frac * 2 * Math.PI;
                 const d = _epcArc(cx, cy, rO, rI, a0, Math.max(a0, a1));
-                return `<path d="${d}" fill="${s.color}" class="pie-slice" data-i="${i}" style="animation-delay:${(i * 0.08).toFixed(2)}s"`
-                    + ` onpointerenter="_epcHi('${id}',${i})" onpointerleave="_epcHi('${id}',-1)"/>`;
+                return `<path d="${d}" fill="${s.color}" class="pie-slice" data-i="${i}" style="animation-delay:${(i * 0.08).toFixed(2)}s"${ev(i)}/>`;
             }).join('');
-            _EPC[id] = { slices, total: total != null ? Number(total) : sum };
+            _EPC[id] = { slices, total: total != null ? Number(total) : sum, mids, active: -1, hover: -1 };
             const legend = slices.map((s, i) => `
-                <button type="button" class="ekm-leg" data-i="${i}" onpointerenter="_epcHi('${id}',${i})" onpointerleave="_epcHi('${id}',-1)">
+                <button type="button" class="ekm-leg" data-i="${i}"${ev(i)}>
                     <span class="ekm-leg-k" style="background:${s.color}"></span>
                     <span class="ekm-leg-l">${esc(s.label)}</span>
                     <span class="ekm-leg-v">${fpcK(Number(s.value))} · ${Math.round(Number(s.value) / sum * 100)}%</span>
@@ -7910,17 +7926,33 @@
                 <div class="ekm-legwrap">${legend}</div>
             </div>`;
         }
-        function _epcHi(id, i) {
+        function _epcApply(id) {
             const c = _EPC[id]; if (!c) return;
             const box = document.getElementById(id); if (!box) return;
-            box.querySelectorAll('.pie-slice').forEach(p => { p.style.opacity = (i < 0 || +p.dataset.i === i) ? 1 : 0.28; });
-            box.querySelectorAll('.ekm-leg').forEach(b => { b.classList.toggle('on', +b.dataset.i === i); });
+            const cur = (c.hover >= 0) ? c.hover : c.active;
+            box.querySelectorAll('.pie-slice').forEach(p => {
+                const i = +p.dataset.i;
+                p.style.opacity = (cur < 0 || i === cur) ? 1 : 0.25;
+                if (i === cur) {
+                    const off = 5, m = c.mids[i] || 0;
+                    p.style.transform = 'translate(' + (Math.cos(m) * off).toFixed(1) + 'px,' + (Math.sin(m) * off).toFixed(1) + 'px)';
+                    p.style.filter = 'drop-shadow(0 0 5px ' + c.slices[i].color + ')';
+                } else { p.style.transform = ''; p.style.filter = ''; }
+            });
+            box.querySelectorAll('.ekm-leg').forEach(b => b.classList.toggle('on', +b.dataset.i === cur));
             const cv = document.getElementById(id + '-cv'), cl = document.getElementById(id + '-cl');
             if (!cv || !cl) return;
-            if (i < 0) { cv.textContent = fpcK(c.total); cl.textContent = 'Total'; }
-            else { const s = c.slices[i]; cv.textContent = fpcK(Number(s.value)); cl.textContent = s.label; }
+            if (cur < 0) { cv.textContent = fpcK(c.total); cl.textContent = 'Total'; }
+            else { const s = c.slices[cur]; cv.textContent = fpcK(Number(s.value)); cl.textContent = s.label; }
         }
-        window._epcHi = _epcHi;
+        // tap=true (touche/clik): seleksyon ki rete; tap=false: sinèl sourit sèlman
+        function _epcSet(id, i, tap, ev) {
+            const c = _EPC[id]; if (!c) return;
+            if (tap) c.active = (c.active === i) ? -1 : i;
+            else { if (ev && ev.pointerType && ev.pointerType !== 'mouse') return; c.hover = i; }
+            _epcApply(id);
+        }
+        window._epcSet = _epcSet;
         // Konstwi slices donut la: top 3 pwodwi + "Lòt" (rès la pou konplete total peye a)
         function _topProductSlices(topProducts, paidTotal) {
             const tp = (topProducts || []).filter(p => Number(p.sales) > 0);
@@ -9914,17 +9946,17 @@
                       ret = data.retention || {}, rf = data.referral || {}, rv = data.revenue || {};
                 const chip = (label, value, color) =>
                     `<span class="font-label text-xs font-bold px-2 py-1 rounded-lg" style="background:${color}1a;color:${color}">${label}: ${value}</span>`;
-                // Bar orizontal anime — yon sèl tenti teal (grandè = mezi la).
-                const hbar = (label, valTxt, ratio, i) => `
-                    <div style="margin-bottom:9px">
-                        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+                // Bar orizontal ki reponn nan touche — tape yon etap pou mete l devan.
+                const hbar = (label, valTxt, ratio, i, gid) => `
+                    <button type="button" class="ekm-fbar" data-i="${i}" onpointerdown="_fbTap('${gid}',${i})">
+                        <div class="ekm-fbar-top">
                             <span class="font-label text-xs font-bold text-on-surface">${label}</span>
                             <span class="font-label text-xs"><strong style="color:#00666f">${valTxt}</strong></span>
                         </div>
-                        <div style="height:9px;background:#e5e2dd;border-radius:999px;overflow:hidden">
-                            <div class="bar-grow-x" style="width:${Math.max(2, ratio*100).toFixed(1)}%;height:100%;border-radius:999px;background:linear-gradient(90deg,#00666f,#00818c);animation-delay:${(i*0.1).toFixed(2)}s"></div>
+                        <div class="ekm-fbar-track">
+                            <div class="ekm-fbar-fill bar-grow-x" style="width:${Math.max(2, ratio*100).toFixed(1)}%;animation-delay:${(i*0.1).toFixed(2)}s"></div>
                         </div>
-                    </div>`;
+                    </button>`;
                 const maxStage = Math.max(1, ac.total_users||0);
                 const stages = [
                     ['Moun ki enskri', (ac.total_users||0)+' · +'+(ac.new_7d||0)+' nan 7 jou', (ac.total_users||0)/maxStage],
@@ -9942,9 +9974,9 @@
                         <p class="font-label text-[11px] font-bold uppercase tracking-[.12em] mb-3" style="color:#97422b">
                             <span class="material-symbols-outlined align-middle" style="font-size:13px">insights</span>
                             Kijan biznis la ap grandi</p>
-                        ${stages.map((s,i)=>hbar(s[0],s[1],s[2],i)).join('')}
+                        <div class="ekm-funnel" id="funnelStages">${stages.map((s,i)=>hbar(s[0],s[1],s[2],i,'funnelStages')).join('')}</div>
                         <p class="font-label text-[10px] font-bold uppercase tracking-[.12em] text-on-surface-variant mt-3 mb-2">Lajan ki antre</p>
-                        ${revs.map((r,i)=>hbar(r[0],r[1],r[2],i+4)).join('')}
+                        <div class="ekm-funnel" id="funnelRev">${revs.map((r,i)=>hbar(r[0],r[1],r[2],i,'funnelRev')).join('')}</div>
                         <div class="flex flex-wrap gap-2 mt-2">
                             ${chip('Mwayèn pa kòmand', fp(rv.aov_htg||0)+' HTG', '#00666f')}
                             ${chip('Vini ak envitasyon', ac.referral_acquired||0, '#97422b')}
@@ -9957,6 +9989,16 @@
             }
         }
         window.renderFunnelHealth = renderFunnelHealth;
+
+        // Tape yon bar funnel pou mete l devan (lòt yo pal); re-tape pou anile.
+        function _fbTap(id, i) {
+            const box = document.getElementById(id); if (!box) return;
+            const next = (box.getAttribute('data-active') === String(i)) ? '' : String(i);
+            box.setAttribute('data-active', next);
+            box.classList.toggle('has-active', next !== '');
+            box.querySelectorAll('.ekm-fbar').forEach(b => b.classList.toggle('on', next !== '' && +b.dataset.i === i));
+        }
+        window._fbTap = _fbTap;
 
         // ── Lavant peye pa jou (tout platfòm) — menm area chart ak analytics vandè a ──
         async function renderAdminSalesChart() {
