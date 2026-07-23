@@ -7857,7 +7857,7 @@
             const cross = document.getElementById(id + '-c'), dot = document.getElementById(id + '-d'), tip = document.getElementById(id + '-t');
             cross.style.left = x + 'px'; cross.style.opacity = 1;
             dot.style.left = x + 'px'; dot.style.top = y + 'px'; dot.style.opacity = 1;
-            tip.innerHTML = '<b>' + fpc(Number(d.sales) || 0) + '</b><br>' + _ekcDay(d.day) + (i === c.series.length - 1 ? ' · jodi a' : '');
+            tip.innerHTML = '<b>' + fpcK(Number(d.sales) || 0) + '</b><br>' + _ekcDay(d.day) + (i === c.series.length - 1 ? ' · jodi a' : '');
             tip.style.opacity = 1;
             tip.style.top = Math.max(0, y - 52) + 'px';
             const half = tip.offsetWidth / 2 + 4;
@@ -7897,13 +7897,13 @@
                 <button type="button" class="ekm-leg" data-i="${i}" onpointerenter="_epcHi('${id}',${i})" onpointerleave="_epcHi('${id}',-1)">
                     <span class="ekm-leg-k" style="background:${s.color}"></span>
                     <span class="ekm-leg-l">${esc(s.label)}</span>
-                    <span class="ekm-leg-v">${fpc(Number(s.value))} · ${Math.round(Number(s.value) / sum * 100)}%</span>
+                    <span class="ekm-leg-v">${fpcK(Number(s.value))} · ${Math.round(Number(s.value) / sum * 100)}%</span>
                 </button>`).join('');
             return `<div class="ekm-pie" id="${id}">
                 <div class="ekm-pie-ring">
                     <svg viewBox="0 0 ${size} ${size}">${paths}</svg>
                     <div class="ekm-pie-center">
-                        <span class="ekm-pie-cv" id="${id}-cv">${fpc(total != null ? Number(total) : sum)}</span>
+                        <span class="ekm-pie-cv" id="${id}-cv">${fpcK(total != null ? Number(total) : sum)}</span>
                         <span class="ekm-pie-cl" id="${id}-cl">Total</span>
                     </div>
                 </div>
@@ -7917,8 +7917,8 @@
             box.querySelectorAll('.ekm-leg').forEach(b => { b.classList.toggle('on', +b.dataset.i === i); });
             const cv = document.getElementById(id + '-cv'), cl = document.getElementById(id + '-cl');
             if (!cv || !cl) return;
-            if (i < 0) { cv.textContent = fpc(c.total); cl.textContent = 'Total'; }
-            else { const s = c.slices[i]; cv.textContent = fpc(Number(s.value)); cl.textContent = s.label; }
+            if (i < 0) { cv.textContent = fpcK(c.total); cl.textContent = 'Total'; }
+            else { const s = c.slices[i]; cv.textContent = fpcK(Number(s.value)); cl.textContent = s.label; }
         }
         window._epcHi = _epcHi;
         // Konstwi slices donut la: top 3 pwodwi + "Lòt" (rès la pou konplete total peye a)
@@ -7945,9 +7945,9 @@
                     <p class="font-label text-sm text-on-surface-variant mt-2">Pa gen kòmand pou analize ankò.</p>
                   </div>`
                 : `<div class="grid grid-cols-2 gap-3 mb-3">
-                    ${card(fpc(a.paidSales), 'Lavant Eskwo+')}
+                    ${card(fpcK(a.paidSales), 'Lavant Eskwo+')}
                     ${card(a.paidOrders + '', 'Kòmand peye')}
-                    ${card(fpc(a.avgOrder), 'Mwayèn / kòmand')}
+                    ${card(fpcK(a.avgOrder), 'Mwayèn / kòmand')}
                     ${card((a.conversion || 0) + '%', 'Konvèsyon (vizit→kòmand)')}
                   </div>
                   <div class="bg-surface-container-lowest rounded-xl p-3 mb-3 amb">
@@ -9986,7 +9986,7 @@
                     <div class="bg-surface-container-lowest rounded-xl p-3 amb">
                         <div class="flex items-center justify-between mb-1.5">
                             <p class="font-label text-[11px] font-bold text-on-surface-variant">Lavant peye pa jou — tout platfòm</p>
-                            <p class="font-label text-xs font-bold" style="color:#00666f">${fpc(total)}</p>
+                            <p class="font-label text-xs font-bold" style="color:#00666f">${fpcK(total)}</p>
                         </div>
                         ${_areaChartSvg(days, 'ekcAdminSales', 150)}
                     </div>`;
@@ -12018,6 +12018,23 @@
                 return '$' + (n / r).toFixed(2);
             }
             return fp(n) + ' HTG';
+        }
+
+        // Nonm konpak pou espas sere (graf yo): >= 10 000 -> "10K", >= 1M -> "1.6M".
+        function _kNum(n) {
+            n = Number(n) || 0;
+            if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (n >= 1e4) return Math.round(n / 1e3) + 'K';
+            return fp(Math.round(n));
+        }
+        // Menm bagay ak fpc men konpak pou pri ki gwo (pou tèks pa debòde).
+        function fpcK(htgAmount) {
+            const n = Number(htgAmount) || 0;
+            if (CURRENCY.current === 'USD') {
+                const r = CURRENCY.rate || 130, usd = n / r;
+                return '$' + (usd >= 1e4 ? _kNum(usd) : usd.toFixed(2));
+            }
+            return _kNum(n) + ' HTG';
         }
 
         // Kick off the rate refresh in the background. Fire-and-forget —

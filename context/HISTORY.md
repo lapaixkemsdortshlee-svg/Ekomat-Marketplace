@@ -7,6 +7,21 @@
 
 ---
 
+## 2026-07-23 (suite) : Graphiques de l'app tous refaits au brand Ekomat (5 PR, toutes mergées)
+
+Suite de la même session /prime. Après le premier area chart (#223 ci-dessous), Thrasher a enchaîné : area chart côté admin, puis pie/donut pour les top produits, puis un format de prix compact. Skills restés actifs : dataviz (méthode + validateur palette), ayitimarket, verification-before-completion.
+
+- **#224 (docs)** — entrée HISTORY du premier area chart. Mergée.
+- **#225 — Area chart admin.** Carte « Lavant peye pa jou — tout platfòm » en tête de l'onglet Estatistik, via `renderAdminSalesChart()` (requête `orders` états payés / 30 j, bucket par jour, dégradation silencieuse comme les cartes santé). Réutilise `_areaChartSvg` avec l'id `ekcAdminSales`. SW v50→v51. Mergée.
+- **#226 — Donut « Top pwodwi » (vandè + admin).** Remplace les barres `_barsSvg` (retiré, orphelin) par un donut brand. Nouveau composant `_pieChartSvg` : donut SVG (inner radius), gaps 2px couleur surface entre tranches, animation étagée, **centre interactif** (total ↔ produit survolé, via `_epcHi` + registre `_EPC`), légende synchronisée (valeur + %). Admin : `renderAdminTopProducts()` agrège par produit sur 30 j. Le funnel admin garde ses barres `hbar` (autre forme). SW v51→v52. Mergée.
+  - **Décision de fond (sparring + dataviz) : top 3 + « Lòt », pas top 5.** Un pie encode une composition (parts d'un tout), pas un classement — le centre montre le vrai total, « Lòt » complète les ventes payées. Et surtout : **le brand Ekomat n'a que 2 familles de teintes saturées (teal + rust)** → au-delà de 3 tranches, deux couleurs tombent sous le seuil de distinction du validateur (ΔE vision normale < 15 = échec dur que les labels ne rachètent pas). La règle dataviz dans ce cas = réduire les séries. Palette validée : clair teal `#00666f` / rust `#97422b` / bleu drapeau `#00209f` / Lòt `#a3acac` ; sombre `#5ad7e6` / `#f99188` / `#6b9bff` / `#6b7472`. La 3e teinte vient des couleurs drapeau (BRAND.md §7), légitimement brand. Piloté par variables CSS `--pie-*` sous `body.dark`.
+- **#227 — Format prix compact `fpcK` (this PR).** Demande Thrasher : « si les prix dépassent 10 000 GDS, les mettre en 10K pour que ça ne déborde pas » (le centre du donut « 161 300 HTG » touchait les bords). Nouveau `fpcK` (respecte la devise comme `fpc`) + `_kNum` : ≥ 10 000 → « 10K », ≥ 1M → « 1.6M » (strip .0), sinon groupé précis. Appliqué **seulement aux endroits contraints des graphiques** : centre + légende du donut, tooltip area, cartes stat prix (paidSales, avgOrder), en-tête admin. Les prix produits ailleurs (fiches, panier) gardent `fpc` précis — changement surgical, pas transversal. Vérifié : `_kNum(10000)=10K`, `161300=161K`, `1600000=1.6M`, `9999=9 999`. SW v52→v53.
+- **QA** à chaque PR sur le vrai `index.html` servi tel quel (leçon #187/#192) : screenshots clair/tooltip/hover/sombre envoyés. ui+smoke 11/11 local à chaque fois, CI verte (CodeQL, smoke, e2e, Vercel). Zéro classe Tailwind neuve sur toute la série (CSS custom `ekm-*` / `pie-*`) → pas de rebuild tw.css.
+
+**Résultat : tous les graphiques de l'app (area + donut, vendeur + admin) partagent un système visuel unique** — mêmes couleurs de marque, mêmes interactions tactiles, même comportement clair/sombre. Le « un peu AI » du départ est traité. Composants `_areaChartSvg` et `_pieChartSvg` réutilisables pour toute future métrique.
+
+---
+
 ## 2026-07-23 : Redesign graf « Lavant pa jou » — area chart mak Ekomat (PR #223, mergée)
 
 Thrasher (via /prime) : les graphiques de l'app font « un peu AI » ; les refaire sur le modèle area chart bklit-ui fourni, aux couleurs du brand, avec les skills. Skills activés : dataviz (méthode + validateur palette), ayitimarket, verification-before-completion.
