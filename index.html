@@ -2278,6 +2278,7 @@
             <div id="admin-stats" class="hidden">
                 <p class="font-label text-[11px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
                     Estatistik ak sante sistèm</p>
+                <div id="adminSalesChart" class="mb-4"></div>
                 <div id="funnelHealth" class="mb-4"></div>
                 <div id="escrowHealth" class="mb-4"></div>
                 <div id="sysHealth" class="mb-4"></div>
@@ -8731,7 +8732,7 @@
             ["verif", "orders", "users", "pending", "convos", "stats"].forEach(t => { document.getElementById("admin-" + t).classList.toggle("hidden", t !== tab); });
             if (tab === 'convos') loadAdminConversations();
             if (tab === 'pending') renderAdminPending();
-            if (tab === 'stats') { renderFunnelHealth(); renderEscrowHealth(); renderSystemHealth(); }
+            if (tab === 'stats') { renderAdminSalesChart(); renderFunnelHealth(); renderEscrowHealth(); renderSystemHealth(); }
         }
 
         // ── Admin: pwodwi an atant verifikasyon ──────────────────────
@@ -9886,6 +9887,42 @@
             }
         }
         window.renderFunnelHealth = renderFunnelHealth;
+
+        // ── Lavant peye pa jou (tout platfòm) — menm area chart ak analytics vandè a ──
+        async function renderAdminSalesChart() {
+            const box = document.getElementById('adminSalesChart');
+            if (!box || !db) return;
+            try {
+                const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+                const paidStates = ['payment_verified', 'ready_for_pickup', 'picked_up',
+                                    'otp_confirmed', 'released', 'completed', 'delivered'];
+                const { data, error } = await db.from('orders')
+                    .select('total_amount, status, created_at')
+                    .in('status', paidStates)
+                    .gte('created_at', since);
+                if (error) throw error;
+                const buckets = {};
+                for (let i = 29; i >= 0; i--) {
+                    const d = new Date(Date.now() - i * 24 * 3600 * 1000);
+                    buckets[d.toISOString().slice(0, 10)] = 0;
+                }
+                (data || []).forEach(o => {
+                    const k = String(o.created_at || '').slice(0, 10);
+                    if (k in buckets) buckets[k] += Number(o.total_amount) || 0;
+                });
+                const days = Object.keys(buckets).map(day => ({ day, sales: buckets[day] }));
+                const total = days.reduce((s, d) => s + d.sales, 0);
+                box.innerHTML = `
+                    <div class="bg-surface-container-lowest rounded-xl p-3 amb">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <p class="font-label text-[11px] font-bold text-on-surface-variant">Lavant peye pa jou — tout platfòm</p>
+                            <p class="font-label text-xs font-bold" style="color:#00666f">${fpc(total)}</p>
+                        </div>
+                        ${_areaChartSvg(days, 'ekcAdminSales', 150)}
+                    </div>`;
+            } catch (e) { box.innerHTML = ''; console.warn('[admin_sales_chart]', e && e.message); }
+        }
+        window.renderAdminSalesChart = renderAdminSalesChart;
 
         // Bug 4.2: opens a clear confirmation sheet instead of a native
         // prompt() — admin sees a summary of the order they're about to
