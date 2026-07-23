@@ -322,6 +322,27 @@
         .ekm-xlbls { display: flex; justify-content: space-between; margin-top: 4px; }
         .ekm-xlbls span { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 600; color: var(--ekc-lbl); }
 
+        /* ── Donut mak Ekomat (top pwodwi) — koulè pa mòd, legliz sinkwonize ── */
+        .ekm-pie { --pie-1: #00666f; --pie-2: #97422b; --pie-3: #00209f; --pie-o: #a3acac; --pie-ring: #fff; --pie-ink: #1c1c19; --pie-sub: #6d7979; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        body.dark .ekm-pie { --pie-1: #5ad7e6; --pie-2: #f99188; --pie-3: #6b9bff; --pie-o: #6b7472; --pie-ring: #2e2e2a; --pie-ink: #fcf9f4; --pie-sub: #a8b0b0; }
+        .ekm-pie-ring { position: relative; width: 130px; height: 130px; flex: 0 0 auto; }
+        .ekm-pie-ring svg { width: 100%; height: 100%; display: block; animation: pieGrow .6s cubic-bezier(.22,.61,.36,1) both; }
+        .pie-slice { stroke: var(--pie-ring); stroke-width: 2.5; transition: opacity .18s ease; animation: pieFade .5s ease both; cursor: pointer; }
+        .ekm-pie-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; text-align: center; }
+        .ekm-pie-cv { font-family: 'Manrope', sans-serif; font-size: 15px; font-weight: 800; color: var(--pie-ink); line-height: 1.1; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ekm-pie-cl { font-family: 'Manrope', sans-serif; font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--pie-sub); margin-top: 2px; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ekm-legwrap { flex: 1 1 130px; min-width: 130px; display: flex; flex-direction: column; gap: 5px; }
+        .ekm-leg { display: flex; align-items: center; gap: 7px; width: 100%; background: none; border: 0; padding: 3px 4px; border-radius: 8px; cursor: pointer; text-align: left; transition: background .15s ease; }
+        .ekm-leg.on { background: color-mix(in oklab, var(--pie-ink) 8%, transparent); }
+        .ekm-leg-k { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+        .ekm-leg-l { font-family: 'Manrope', sans-serif; font-size: 11.5px; font-weight: 600; color: var(--pie-ink); flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ekm-leg-v { font-family: 'Manrope', sans-serif; font-size: 10.5px; font-weight: 700; color: var(--pie-sub); flex: 0 0 auto; }
+        @keyframes pieGrow { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes pieFade { from { opacity: 0; } to { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) {
+            .ekm-pie-ring svg, .pie-slice { animation: none; }
+        }
+
         @keyframes slideup {
             from {
                 opacity: 0;
@@ -2279,6 +2300,7 @@
                 <p class="font-label text-[11px] font-bold uppercase tracking-[.12em] text-on-surface-variant mb-3">
                     Estatistik ak sante sistèm</p>
                 <div id="adminSalesChart" class="mb-4"></div>
+                <div id="adminTopChart" class="mb-4"></div>
                 <div id="funnelHealth" class="mb-4"></div>
                 <div id="escrowHealth" class="mb-4"></div>
                 <div id="sysHealth" class="mb-4"></div>
@@ -7845,24 +7867,70 @@
             ['-c', '-d', '-t'].forEach(s => { const el = document.getElementById(id + s); if (el) el.style.opacity = 0; });
         }
         window._ekcMove = _ekcMove; window._ekcHide = _ekcHide;
-        function _barsSvg(rows, w, h) {
-            if (!rows.length) return '';
-            const max = Math.max(1, ...rows.map(r => r.sales));
-            const barH = Math.max(10, Math.floor(h / rows.length) - 8);
-            return rows.map((r, i) => {
-                const pct = (r.sales / max) * 100;
-                return `<div style="margin-bottom:8px">
-                    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#3d4949">
-                        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${esc(r.title)}</span>
-                        <span style="color:#00666f;font-weight:700">${fpc(r.sales)}</span>
-                    </div>
-                    <div style="height:6px;background:#e5e2dd;border-radius:999px;overflow:hidden;margin-top:3px">
-                        <div class="bar-grow-x" style="width:${pct}%;height:100%;border-radius:999px;background:linear-gradient(90deg,#00666f,#00818c);animation-delay:${(i*0.08).toFixed(2)}s"></div>
-                    </div>
-                </div>`;
-            }).join('');
-        }
 
+        // ── Donut top-pwodwi: konpozisyon (pati nan yon tout), pa yon klasman ──
+        const _EPC = {};
+        function _epcArc(cx, cy, rO, rI, a0, a1) {
+            const large = (a1 - a0) > Math.PI ? 1 : 0;
+            const pol = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+            const [x0, y0] = pol(rO, a0), [x1, y1] = pol(rO, a1), [x2, y2] = pol(rI, a1), [x3, y3] = pol(rI, a0);
+            return `M${x0.toFixed(2)},${y0.toFixed(2)} A${rO},${rO} 0 ${large} 1 ${x1.toFixed(2)},${y1.toFixed(2)}`
+                + ` L${x2.toFixed(2)},${y2.toFixed(2)} A${rI},${rI} 0 ${large} 0 ${x3.toFixed(2)},${y3.toFixed(2)} Z`;
+        }
+        // slices: [{ label, value, color }] ; total = vrè total (santral la), pou pati "Lòt" byen kadre
+        function _pieChartSvg(slices, id, total) {
+            slices = (slices || []).filter(s => Number(s.value) > 0);
+            if (!slices.length) return '';
+            const sum = slices.reduce((s, x) => s + Number(x.value), 0) || 1;
+            const size = 130, cx = size / 2, cy = size / 2, rO = 62, rI = 38, gap = 0.045;
+            let a = -Math.PI / 2;
+            const paths = slices.map((s, i) => {
+                const frac = Number(s.value) / sum;
+                const a0 = a + gap / 2, a1 = a + frac * 2 * Math.PI - gap / 2;
+                a += frac * 2 * Math.PI;
+                const d = _epcArc(cx, cy, rO, rI, a0, Math.max(a0, a1));
+                return `<path d="${d}" fill="${s.color}" class="pie-slice" data-i="${i}" style="animation-delay:${(i * 0.08).toFixed(2)}s"`
+                    + ` onpointerenter="_epcHi('${id}',${i})" onpointerleave="_epcHi('${id}',-1)"/>`;
+            }).join('');
+            _EPC[id] = { slices, total: total != null ? Number(total) : sum };
+            const legend = slices.map((s, i) => `
+                <button type="button" class="ekm-leg" data-i="${i}" onpointerenter="_epcHi('${id}',${i})" onpointerleave="_epcHi('${id}',-1)">
+                    <span class="ekm-leg-k" style="background:${s.color}"></span>
+                    <span class="ekm-leg-l">${esc(s.label)}</span>
+                    <span class="ekm-leg-v">${fpc(Number(s.value))} · ${Math.round(Number(s.value) / sum * 100)}%</span>
+                </button>`).join('');
+            return `<div class="ekm-pie" id="${id}">
+                <div class="ekm-pie-ring">
+                    <svg viewBox="0 0 ${size} ${size}">${paths}</svg>
+                    <div class="ekm-pie-center">
+                        <span class="ekm-pie-cv" id="${id}-cv">${fpc(total != null ? Number(total) : sum)}</span>
+                        <span class="ekm-pie-cl" id="${id}-cl">Total</span>
+                    </div>
+                </div>
+                <div class="ekm-legwrap">${legend}</div>
+            </div>`;
+        }
+        function _epcHi(id, i) {
+            const c = _EPC[id]; if (!c) return;
+            const box = document.getElementById(id); if (!box) return;
+            box.querySelectorAll('.pie-slice').forEach(p => { p.style.opacity = (i < 0 || +p.dataset.i === i) ? 1 : 0.28; });
+            box.querySelectorAll('.ekm-leg').forEach(b => { b.classList.toggle('on', +b.dataset.i === i); });
+            const cv = document.getElementById(id + '-cv'), cl = document.getElementById(id + '-cl');
+            if (!cv || !cl) return;
+            if (i < 0) { cv.textContent = fpc(c.total); cl.textContent = 'Total'; }
+            else { const s = c.slices[i]; cv.textContent = fpc(Number(s.value)); cl.textContent = s.label; }
+        }
+        window._epcHi = _epcHi;
+        // Konstwi slices donut la: top 3 pwodwi + "Lòt" (rès la pou konplete total peye a)
+        function _topProductSlices(topProducts, paidTotal) {
+            const tp = (topProducts || []).filter(p => Number(p.sales) > 0);
+            const top3 = tp.slice(0, 3);
+            const slices = top3.map((p, i) => ({ label: p.title || 'Pwodwi', value: Number(p.sales), color: `var(--pie-${i + 1})` }));
+            const shown = top3.reduce((s, p) => s + Number(p.sales), 0);
+            const rest = Math.max(0, Number(paidTotal || 0) - shown);
+            if (rest > 0.5) slices.push({ label: 'Lòt', value: rest, color: 'var(--pie-o)' });
+            return slices;
+        }
         function renderSellerAnalytics(a) {
             const card = (val, lbl, color) => `<div class="bg-surface-container-lowest rounded-xl p-3 text-center amb">
                 <p class="font-headline font-extrabold text-lg" style="color:${color || '#00666f'}">${val}</p>
@@ -7888,7 +7956,9 @@
                   </div>
                   <div class="bg-surface-container-lowest rounded-xl p-3 amb">
                     <p class="font-label text-[11px] font-bold text-on-surface-variant mb-2">Top pwodwi</p>
-                    ${_barsSvg(a.topProducts, 320, 24 * Math.min(5, a.topProducts.length))}
+                    ${(() => { const sl = _topProductSlices(a.topProducts, a.paidSales);
+                        return sl.length ? _pieChartSvg(sl, 'epcSellerTop', a.paidSales)
+                            : '<p class="font-label text-xs text-on-surface-variant">Pa gen lavant pwodwi ankò.</p>'; })()}
                   </div>`
             }`;
         }
@@ -8732,7 +8802,7 @@
             ["verif", "orders", "users", "pending", "convos", "stats"].forEach(t => { document.getElementById("admin-" + t).classList.toggle("hidden", t !== tab); });
             if (tab === 'convos') loadAdminConversations();
             if (tab === 'pending') renderAdminPending();
-            if (tab === 'stats') { renderAdminSalesChart(); renderFunnelHealth(); renderEscrowHealth(); renderSystemHealth(); }
+            if (tab === 'stats') { renderAdminSalesChart(); renderAdminTopProducts(); renderFunnelHealth(); renderEscrowHealth(); renderSystemHealth(); }
         }
 
         // ── Admin: pwodwi an atant verifikasyon ──────────────────────
@@ -9923,6 +9993,39 @@
             } catch (e) { box.innerHTML = ''; console.warn('[admin_sales_chart]', e && e.message); }
         }
         window.renderAdminSalesChart = renderAdminSalesChart;
+
+        // ── Top pwodwi platfòm (donut, 30 jou) — menm konpozan ak vandè a ──
+        async function renderAdminTopProducts() {
+            const box = document.getElementById('adminTopChart');
+            if (!box || !db) return;
+            try {
+                const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+                const paidStates = ['payment_verified', 'ready_for_pickup', 'picked_up',
+                                    'otp_confirmed', 'released', 'completed', 'delivered'];
+                const { data, error } = await db.from('orders')
+                    .select('product_id, product_title, total_amount, status, created_at')
+                    .in('status', paidStates)
+                    .gte('created_at', since);
+                if (error) throw error;
+                const byProd = new Map();
+                (data || []).forEach(o => {
+                    const k = o.product_id || o.product_title || 'unknown';
+                    const cur = byProd.get(k) || { title: o.product_title || 'Pwodwi', sales: 0 };
+                    cur.sales += Number(o.total_amount) || 0;
+                    byProd.set(k, cur);
+                });
+                const top = Array.from(byProd.values()).sort((a, b) => b.sales - a.sales);
+                const total = top.reduce((s, p) => s + p.sales, 0);
+                const slices = _topProductSlices(top, total);
+                if (!slices.length) { box.innerHTML = ''; return; }
+                box.innerHTML = `
+                    <div class="bg-surface-container-lowest rounded-xl p-3 amb">
+                        <p class="font-label text-[11px] font-bold text-on-surface-variant mb-2">Top pwodwi — tout platfòm</p>
+                        ${_pieChartSvg(slices, 'epcAdminTop', total)}
+                    </div>`;
+            } catch (e) { box.innerHTML = ''; console.warn('[admin_top_products]', e && e.message); }
+        }
+        window.renderAdminTopProducts = renderAdminTopProducts;
 
         // Bug 4.2: opens a clear confirmation sheet instead of a native
         // prompt() — admin sees a summary of the order they're about to
