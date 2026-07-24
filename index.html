@@ -325,6 +325,9 @@
         .ekm-xlbls span { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 600; color: var(--ekc-lbl); }
 
         /* ── Fèy legal (Kondisyon & Konfidansyalite) ── */
+        /* Pi wo pase lòt fèy yo (90) pou l kouvri fèy akseptasyon an nèt lè
+           w louvri l soti ladan (pa gen sipèpozisyon ankò). */
+        #legalSheet { z-index: 95; }
         #legalBody { overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .lgl-doc { margin-top: 28px; }
         .lgl-clause { padding: 16px 0; border-top: 1px solid rgba(188,201,200,.22); }
@@ -3705,7 +3708,7 @@
     <!-- ══ FÈY LEGAL — Kondisyon & Konfidansyalite ══ -->
     <div class="sheet" id="legalSheet">
         <div class="flex items-center gap-2 mb-4">
-            <button onclick="closeSheets()" aria-label="Fèmen"
+            <button onclick="closeLegal()" aria-label="Fèmen"
                 class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
                 <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
             </button>
@@ -3930,6 +3933,16 @@
                 <div class="flex-1 text-left">
                     <p class="font-headline font-bold text-sm text-on-surface">Sant Èd</p>
                     <p class="font-label text-xs text-on-surface-variant">Gid, kesyon frekan ak kijan tout bagay mache</p>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">chevron_right</span>
+            </button>
+            <button onclick="closeSheets();openLegal()" class="w-full flex items-center gap-3 p-4 active:bg-surface-container-low transition-colors" style="border-bottom:1px solid rgba(188,201,200,.1)">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:rgba(0,102,111,.08)">
+                    <span class="material-symbols-outlined fi text-primary" style="font-size:18px">gavel</span>
+                </div>
+                <div class="flex-1 text-left">
+                    <p class="font-headline font-bold text-sm text-on-surface">Kondisyon &amp; Konfidansyalite</p>
+                    <p class="font-label text-xs text-on-surface-variant">Kondisyon itilizasyon ak politik done yo</p>
                 </div>
                 <span class="material-symbols-outlined text-on-surface-variant" style="font-size:18px">chevron_right</span>
             </button>
@@ -14733,8 +14746,20 @@
             const box = document.getElementById('legalBody');
             if (box && !box.dataset.filled) { box.innerHTML = _legalDocsHTML(); box.dataset.filled = '1'; }
             if (typeof openSheet === 'function') openSheet('legalSheet');
+            // Toujou kòmanse anlè (fèy la ka te deja gen yon pozisyon scroll).
+            const s = document.getElementById('legalSheet'); if (s) s.scrollTop = 0;
         }
         window.openLegal = openLegal;
+        // Fèmen SÈLMAN fèy legal la (pou l retounen sou fèy ki anba a, pa egzanp
+        // fèy akseptasyon an oswa Paramèt). Retire scrim lan sèlman si pa gen
+        // okenn lòt fèy ouvri.
+        function closeLegal() {
+            document.getElementById('legalSheet')?.classList.remove('on');
+            if (!document.querySelector('.sheet.on')) {
+                document.getElementById('scrim')?.classList.remove('on');
+            }
+        }
+        window.closeLegal = closeLegal;
 
         async function _writeTermsConsent() {
             try {
