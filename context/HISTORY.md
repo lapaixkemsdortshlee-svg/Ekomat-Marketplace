@@ -7,6 +7,22 @@
 
 ---
 
+## 2026-07-24 (nuit) : QA terrain — mòd sonm pa-kont, carte précise, Conditions & Confidentialité (3 PR : #229 à #231) + note fidélité
+
+Suite de la même longue session. Après la série graphique (voir entrée du 2026-07-23), Thrasher a enchaîné des retours terrain iPhone, puis une nouvelle feature (conditions légales). Skills actifs : systematic-debugging, ayitimarket, verification-before-completion, artifact-design, dataviz.
+
+- **Fin de la série graphique (dans #227)** : au-delà du format compact `fpcK`, ajout des **effets interactifs au toucher** — le vrai bug était que les effets étaient câblés sur `pointerenter/leave` (survol souris), invisibles sur iPhone. Basculés sur le tap : donut (tranche poussée + halo + centre), area (anneau qui pulse), et le funnel « Kijan biznis la ap grandi » transformé en vrai bar chart brand tap-réactif. Sparring maintenu : le funnel reste en barres (pas pie — les étapes ne sont pas des parts d'un tout).
+- **#229 — 2 fix.** (1) **Mòd sonm pa-kont** : `aym_dark` était une clé localStorage GLOBALE → un compte en sombre forçait tous les autres comptes de l'appareil (2e fois cette leçon après la devise, Bug 9). Clé par uid `aym_dark_<uid>`, hydratée au login/logout comme `applyUserCurrency`. (2) **Adresses carte précises** : `reverseGeocode` restait à `zoom=16` (niveau quartier → « Dos Morne Delmas ») ET ignorait `address.road`. Fix : `zoom=18` + rue en tête du label (« Rue Cassagnol, Delmas 33 »). CodeQL a signalé le stockage GPS en clair dans le cache `aym_geozone` → retiré lat/lng du cache (label seul), fix vert.
+- **#230 — Conditions d'utilisation + Politique de confidentialité (feature).** L'app n'avait AUCUN document réel, alors que l'écran login affichait déjà « ou aksepte kondisyon itilizasyon · done ou yo pwoteje » → promesse écrite non tenue, rendue vraie. Deux docs Kreyòl fidèles aux flux (escrow/OTP, libération auto 7j, MonCash manuel, **3%** — pas 10% comme le funnel !, CIN, soft-delete, litiges admin). Case à cocher OBLIGATOIRE au signup, consentement **versionné** (`TERMS_VERSION` + colonnes `profiles.terms_version`/`terms_accepted_at`, migration `20260724010000` déployée via db-migrate + **vérifiée en prod : colonnes présentes, version enregistrée sans divergence**). Feuille de rattrapage pour comptes existants (non bloquante, dégrade si DB absente). Lisible depuis Réglages + Assistant Ekomat. Page publique `legal.html` pour l'URL exigée par les stores. Contenu validé par Thrasher sur brouillon (artifact) avant intégration. Contact = Assistant pour l'instant, email à venir.
+- **#231 — Fix fèy legal (retour terrain).** Depuis la feuille d'acceptation, « Li kondisyon yo » superposait la légale et l'acceptation (openSheet n'empile pas, même z-index 90) → z-index 95 sur la légale + `closeLegal()` qui ne ferme QUE la légale (retour à l'acceptation) ; + lien « Kondisyon & Konfidansyalite » ajouté dans Paramèt → Aksyon.
+- **Note produit** : **Points de fidélité** ajoutés aux projets futurs (CONTEXT.md) avec avis sparring (prématuré tant que l'acquisition est le goulot ; trancher qui finance les points ; exploiter le parrainage d'abord).
+
+**Leçons durables :** (1) toute préférence globale en localStorage fuit entre comptes sur un même appareil → clé par uid (confirmé 2 fois : devise puis dark mode). (2) reverseGeocode : ignorer `address.road` + zoom bas = noms de quartier vagues ; rue en tête + zoom 18. (3) ne jamais stocker lat/lng en clair dans localStorage (CodeQL clear-text). (4) `openSheet` n'empile pas les feuilles : ouvrir une feuille par-dessus une autre exige un z-index supérieur + un close dédié (sinon superposition au même z-index 90). (5) le harness QA n'a pas le SDK Supabase (CDN bloqué) → `db` null : les chemins DB se testent par inspection + vérif prod via MCP, l'UI se teste headless.
+
+SW v53→v57 sur cette portion. Toutes les PR mergées, CI verte, migration confirmée en prod.
+
+---
+
 ## 2026-07-23 (suite) : Graphiques de l'app tous refaits au brand Ekomat (5 PR, toutes mergées)
 
 Suite de la même session /prime. Après le premier area chart (#223 ci-dessous), Thrasher a enchaîné : area chart côté admin, puis pie/donut pour les top produits, puis un format de prix compact. Skills restés actifs : dataviz (méthode + validateur palette), ayitimarket, verification-before-completion.
