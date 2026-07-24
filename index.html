@@ -4687,6 +4687,7 @@
             // Monnen pa-kont (Bug 9): idrate preferans kont sa a anvan feed la
             // rann, konsa yon lòt kont sou menm aparèy la pa fòse USD sou li.
             if (typeof applyUserCurrency === 'function') applyUserCurrency();
+            if (typeof applyUserDarkMode === 'function') applyUserDarkMode();
             if (A.user.role === "admin") setupAdminFab();
             else document.getElementById("fab")?.classList.remove("hidden");
             updateCartBadge();
@@ -8797,6 +8798,7 @@
             // Reyinisyalize monnen an sou preferans envite a (Bug 9) — pa kite
             // monnen dènye kont lan kolbore sou pwochen kont ki konekte a.
             if (typeof applyUserCurrency === 'function') applyUserCurrency();
+            if (typeof applyUserDarkMode === 'function') applyUserDarkMode();
             document.getElementById("topbar").classList.add("hidden");
             document.getElementById("bottomNav").classList.add("hidden");
             document.getElementById("fab").classList.add("hidden");
@@ -10803,10 +10805,12 @@
                 return _geoFallback(lat, lng);
             }
             _geoThrottleAt = now;
+            // zoom=18: presizyon ri/bilding (16 te rete nan nivo gwo katye
+            // -> non vag tankou "Dos Morne Delmas" olye "Rue Cassagnol").
             const url = 'https://us1.locationiq.com/v1/reverse'
                 + '?key=' + encodeURIComponent(LOCATIONIQ_KEY)
                 + '&lat=' + lat + '&lon=' + lng
-                + '&format=json&accept-language=fr&zoom=16&addressdetails=1';
+                + '&format=json&accept-language=fr&zoom=18&addressdetails=1';
             const ctrl = new AbortController();
             const timer = setTimeout(() => ctrl.abort(), 8000);
             try {
@@ -10817,14 +10821,17 @@
                 if (!res.ok) return _geoFallback(lat, lng);
                 const data = await res.json();
                 const ad = data.address || {};
+                // Ri a AN PREMYE (adrès presi jan Google/Apple Maps bay li):
+                // "Rue Cassagnol, Delmas 33" olye yon non katye vag.
+                const road = ad.road || ad.pedestrian || ad.residential || ad.footway || '';
                 const neighborhood = ad.neighbourhood || ad.suburb || ad.quarter || ad.city_district || '';
                 const city = ad.city || ad.town || ad.village || ad.county || '';
-                let label = [neighborhood, city].filter(Boolean).join(', ');
+                let label = [road, neighborhood, city].filter(Boolean).slice(0, 2).join(', ');
                 if (!label && data.display_name) label = data.display_name.split(',').slice(0, 2).join(',').trim();
                 if (!label && city) label = 'Zòn pre ' + city;
                 if (!label) label = `${(+lat).toFixed(4)}, ${(+lng).toFixed(4)}`;
-                const result = { label, neighborhood, city, lat, lng, raw: data };
-                try { localStorage.setItem('aym_geozone', JSON.stringify({ label, neighborhood, city, lat, lng })); } catch (_) { }
+                const result = { label, road, neighborhood, city, lat, lng, raw: data };
+                try { localStorage.setItem('aym_geozone', JSON.stringify({ label, road, neighborhood, city, lat, lng })); } catch (_) { }
                 return result;
             } catch (_e) {
                 clearTimeout(timer);
@@ -14524,11 +14531,29 @@
         //  Thème:           theme/ (Colors, Typography, Shadows)
         // ══════════════════════════════════════════════════════════
         // ══════════════════════════════════════════════════════════
-        let DARK_MODE = localStorage.getItem('aym_dark') === '1';
+        // Mòd sonm se PA-KONT (menm leson ak monnen, Bug 9 tès 2-3 moun):
+        // anvan, `aym_dark` te global sou aparèy la → yon kont ki mete sonm
+        // te fòse tout lòt kont yo an sonm. Chak kont gen pwòp kle l kounye a.
+        function _darkKey() {
+            return 'aym_dark_' + (A.user && A.user.uid ? A.user.uid : 'guest');
+        }
+        let DARK_MODE = localStorage.getItem('aym_dark_guest') === '1';
+
+        // Idrate mòd sonm kont aktyèl la (apre koneksyon oswa dekoneksyon).
+        function applyUserDarkMode() {
+            let on = false;
+            try {
+                on = localStorage.getItem(_darkKey()) === '1';
+                localStorage.removeItem('aym_dark');
+            } catch (_) { }
+            DARK_MODE = on;
+            applyDarkMode();
+        }
+        window.applyUserDarkMode = applyUserDarkMode;
 
         function toggleDarkMode(on) {
             DARK_MODE = on;
-            localStorage.setItem('aym_dark', on ? '1' : '0');
+            localStorage.setItem(_darkKey(), on ? '1' : '0');
             applyDarkMode();
             const bg = document.getElementById('darkToggleBg');
             if (bg) bg.style.background = on ? '#00666f' : '#e5e2dd';
