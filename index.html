@@ -10785,10 +10785,11 @@
             try { return JSON.parse(localStorage.getItem('aym_geozone') || 'null'); }
             catch (_) { return null; }
         }
-        // Fallback: dènye zòn konnen, sinon kowòdone GPS brit.
+        // Fallback: dènye zòn konnen (label sèlman — kach la pa kenbe GPS,
+        // CodeQL clear-text storage), kowòdone yo soti nan agiman aktyèl yo.
         function _geoFallback(lat, lng) {
             const cached = _lastGeocode();
-            if (cached && cached.label) return cached;
+            if (cached && cached.label) return Object.assign({}, cached, { lat, lng });
             return {
                 label: `${(+lat).toFixed(4)}, ${(+lng).toFixed(4)}`,
                 neighborhood: '', city: '', lat, lng, raw: null,
@@ -10831,7 +10832,7 @@
                 if (!label && city) label = 'Zòn pre ' + city;
                 if (!label) label = `${(+lat).toFixed(4)}, ${(+lng).toFixed(4)}`;
                 const result = { label, road, neighborhood, city, lat, lng, raw: data };
-                try { localStorage.setItem('aym_geozone', JSON.stringify({ label, road, neighborhood, city, lat, lng })); } catch (_) { }
+                try { localStorage.setItem('aym_geozone', JSON.stringify({ label, road, neighborhood, city })); } catch (_) { }
                 return result;
             } catch (_e) {
                 clearTimeout(timer);
