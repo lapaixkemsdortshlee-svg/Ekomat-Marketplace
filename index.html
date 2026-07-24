@@ -324,6 +324,19 @@
         .ekm-xlbls { display: flex; justify-content: space-between; margin-top: 4px; }
         .ekm-xlbls span { font-family: 'Manrope', sans-serif; font-size: 10px; font-weight: 600; color: var(--ekc-lbl); }
 
+        /* ── Fèy legal (Kondisyon & Konfidansyalite) ── */
+        #legalBody { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .lgl-doc { margin-top: 28px; }
+        .lgl-clause { padding: 16px 0; border-top: 1px solid rgba(188,201,200,.22); }
+        body.dark .lgl-clause { border-top-color: rgba(255,255,255,.08); }
+        .lgl-clause h4 { display: flex; gap: 8px; align-items: baseline; margin: 0 0 6px; }
+        .lgl-clause h4 .n { color: #00666f; font-weight: 800; flex: 0 0 auto; }
+        body.dark .lgl-clause h4 .n { color: #5ad7e6; }
+        .lgl-clause ul { margin: 0; padding-left: 18px; }
+        .lgl-clause li { margin: 5px 0; }
+        .lgl-kw { color: #00666f; font-weight: 700; }
+        body.dark .lgl-kw { color: #5ad7e6; }
+
         /* ── Donut mak Ekomat (top pwodwi) — koulè pa mòd, legliz sinkwonize ── */
         .ekm-pie { --pie-1: #00666f; --pie-2: #97422b; --pie-3: #00209f; --pie-o: #a3acac; --pie-ring: #fff; --pie-ink: #1c1c19; --pie-sub: #6d7979; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
         body.dark .ekm-pie { --pie-1: #5ad7e6; --pie-2: #f99188; --pie-3: #6b9bff; --pie-o: #6b7472; --pie-ring: #2e2e2a; --pie-ink: #fcf9f4; --pie-sub: #a8b0b0; }
@@ -539,7 +552,7 @@
         /* Fèy plen ekran (tach enpòtan/long): notifikasyon, verifikasyon,
            anons, paramèt, sant èd, modifye pwofil/pwodwi, lokalizasyon,
            favori, zòn kolekte. Fèy aksyon rapid yo rete bottom-sheet ak handle. */
-        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet, #escrowPaySheet, #mapSheet, #orderSheet, #favsSheet, #pickupSheet {
+        #notifSheet, #verifySheet, #announceSheet, #settingsSheet, #helpSheet, #editProfileSheet, #editProductSheet, #escrowPaySheet, #mapSheet, #orderSheet, #favsSheet, #pickupSheet, #legalSheet {
             top: 0;
             height: 100dvh;
             max-height: 100dvh;
@@ -554,7 +567,7 @@
             transition: transform .36s cubic-bezier(.32, .72, 0, 1), visibility 0s linear .36s;
         }
 
-        #notifSheet.on, #verifySheet.on, #announceSheet.on, #settingsSheet.on, #helpSheet.on, #editProfileSheet.on, #editProductSheet.on, #escrowPaySheet.on, #mapSheet.on, #orderSheet.on, #favsSheet.on, #pickupSheet.on {
+        #notifSheet.on, #verifySheet.on, #announceSheet.on, #settingsSheet.on, #helpSheet.on, #editProfileSheet.on, #editProductSheet.on, #escrowPaySheet.on, #mapSheet.on, #orderSheet.on, #favsSheet.on, #pickupSheet.on, #legalSheet.on {
             visibility: visible;
             transition: transform .36s cubic-bezier(.32, .72, 0, 1), visibility 0s linear 0s;
         }
@@ -1502,6 +1515,17 @@
                         <button type="button" onclick="sendPasswordReset()" class="font-label text-xs font-bold text-primary active:opacity-60">Modpas bliye?</button>
                     </div>
 
+                    <label id="authTermsRow" class="flex items-start gap-2.5 mt-1 cursor-pointer">
+                        <input type="checkbox" id="authTermsCheck" class="flex-shrink-0" style="width:18px;height:18px;margin-top:2px;accent-color:#00666f"/>
+                        <span class="font-label text-[12px] text-on-surface-variant leading-relaxed">
+                            Mwen li epi aksepte
+                            <button type="button" onclick="openLegal()" class="font-bold text-primary underline">Kondisyon Itilizasyon</button>
+                            ak
+                            <button type="button" onclick="openLegal()" class="font-bold text-primary underline">Politik Konfidansyalite</button>
+                            Ekomat.
+                        </span>
+                    </label>
+
                     <button onclick="emailSignUp()" id="emailSignUpBtn"
                         class="w-full py-4 rounded-xl cta font-headline font-extrabold text-base active:scale-[.98] transition-transform flex items-center justify-center gap-2 amb">
                         Kreye Kont
@@ -1530,7 +1554,8 @@
                 </button>
 
                 <p class="font-label text-[11px] text-on-surface-variant text-center mt-5 leading-relaxed">
-                    En continuant, ou aksepte kondisyon itilizasyon Ekomat.<br/>Done ou yo pwoteje.
+                    Done ou yo pwoteje ·
+                    <button type="button" onclick="openLegal()" class="font-bold text-primary underline">Kondisyon &amp; Konfidansyalite</button>
                 </p>
             </div>
         </div>
@@ -3677,6 +3702,40 @@
         <div id="annList" class="mt-4 space-y-2"></div>
     </div>
 
+    <!-- ══ FÈY LEGAL — Kondisyon & Konfidansyalite ══ -->
+    <div class="sheet" id="legalSheet">
+        <div class="flex items-center gap-2 mb-4">
+            <button onclick="closeSheets()" aria-label="Fèmen"
+                class="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-surface-container-low transition-colors">
+                <span class="material-symbols-outlined text-on-surface" style="font-size:22px">arrow_back</span>
+            </button>
+            <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight">Kondisyon &amp; Konfidansyalite</h3>
+        </div>
+        <div id="legalBody" class="flex-1"></div>
+    </div>
+
+    <!-- ══ FÈY AKSEPTASYON KONDISYON (kont ki poko aksepte vèsyon aktyèl la) ══ -->
+    <div class="sheet" id="termsGateSheet">
+        <div class="handle"></div>
+        <div class="w-12 h-12 rounded-2xl cta flex items-center justify-center mb-4 amb">
+            <span class="material-symbols-outlined fi text-white" style="font-size:24px">gavel</span>
+        </div>
+        <h3 class="font-headline font-extrabold text-xl text-on-surface tracking-tight mb-1.5">Kondisyon nou yo</h3>
+        <p class="font-body text-sm text-on-surface-variant leading-relaxed mb-4">
+            Nou mete Kondisyon Itilizasyon ak Politik Konfidansyalite Ekomat yo alekri. Tanpri li yo epi aksepte pou kontinye.
+        </p>
+        <button onclick="openLegal()"
+            class="w-full py-3 rounded-xl font-headline font-bold text-sm mb-2.5 active:scale-[.98] transition-transform flex items-center justify-center gap-2"
+            style="background:rgba(0,102,111,.08);color:#00666f">
+            <span class="material-symbols-outlined fi" style="font-size:18px">description</span>
+            Li kondisyon yo
+        </button>
+        <button onclick="acceptTerms()" id="termsAcceptBtn"
+            class="w-full py-4 rounded-xl cta font-headline font-extrabold text-base active:scale-[.98] transition-transform amb">
+            Mwen aksepte
+        </button>
+    </div>
+
     <!-- ══ BOT SUPPORT SHEET — Asistan Ekomat ══ -->
     <div class="sheet" id="botSheet">
         <div class="handle"></div>
@@ -3736,6 +3795,12 @@
                 <span class="material-symbols-outlined fi text-primary flex-shrink-0"
                     style="font-size:18px">shield</span>
                 <span class="font-label font-bold text-sm text-on-surface">Kijan Escrow pwoteje mwen ?</span>
+            </button>
+            <button onclick="botAnswer('legal')"
+                class="w-full flex items-center gap-3 p-3.5 rounded-xl bg-surface-container-lowest active:bg-surface-container-low transition-colors amb text-left">
+                <span class="material-symbols-outlined fi text-primary flex-shrink-0"
+                    style="font-size:18px">gavel</span>
+                <span class="font-label font-bold text-sm text-on-surface">Kondisyon &amp; vi prive</span>
             </button>
             <button onclick="botAnswer('admin')"
                 class="w-full flex items-center gap-3 p-3.5 rounded-xl active:bg-surface-container-low transition-colors text-left"
@@ -4524,6 +4589,8 @@
             const link = document.getElementById('authToggleLink');
 
             const forgotRow = document.getElementById('forgotPwRow');
+            // Kaz kondisyon yo obligatwa sèlman lè w ap kreye yon kont.
+            document.getElementById('authTermsRow')?.classList.toggle('hidden', _authMode !== 'signup');
             if (_authMode === 'login') {
                 nameFields.forEach(f => f.closest('.grid')?.classList.add('hidden'));
                 if (btn) btn.textContent = 'Konekte';
@@ -4558,6 +4625,13 @@
                 const fn = document.getElementById('authFirstName')?.value?.trim() || '';
                 const ln = document.getElementById('authLastName')?.value?.trim() || '';
                 if (!fn) { toast('Premye non obligatwa'); if (btn) btn.classList.remove('btn-loading'); return; }
+                if (!document.getElementById('authTermsCheck')?.checked) {
+                    toast('Ou dwe aksepte Kondisyon yo pou kreye yon kont');
+                    if (btn) btn.classList.remove('btn-loading'); return;
+                }
+                // Make konsantman an; li pral ekri nan pwofil la apre koneksyon
+                // (li siviv rechajman paj konfimasyon imel la).
+                try { localStorage.setItem('aym_terms_pending', String(TERMS_VERSION)); } catch (_) { }
                 if (typeof supabaseEmailSignUp === 'function') {
                     await supabaseEmailSignUp(email, password, fn, ln);
                 }
@@ -14610,6 +14684,97 @@
         // ══════════════════════════════════════════════════════════
         //  BOT SUPPORT — Asistan Ekomat
         // ══════════════════════════════════════════════════════════
+        // ══ Kondisyon & Konfidansyalite — konsantman vèsyone ══
+        // Monte vèsyon an lè tèks la chanje anpil → app la ap re-mande.
+        const TERMS_VERSION = 1;
+
+        function _lglClause(n, title, inner) {
+            return `<section class="lgl-clause"><h4 class="font-headline font-bold text-[15px] text-on-surface"><span class="n">${n}.</span> ${title}</h4>${inner}</section>`;
+        }
+        function _legalDocsHTML() {
+            const kw = (t) => `<span class="lgl-kw">${t}</span>`;
+            const tos = [
+                ['1', 'Kiyès nou ye', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Ekomat se yon ${kw('platfòm entèmedyè')} ki mete achtè ak vandè ann Ayiti (ak dyaspora a) an kontak. ${kw('Nou pa vann pwodwi yo tèt nou')} — se vandè endepandan ki mete yo an vann. Nou bay zouti pou tranzaksyon an fèt an sekirite (sistèm eskwo), men se vandè a ki responsab pwodwi li vann. Lè w itilize Ekomat, ou dakò ak kondisyon sa yo.</p>`],
+                ['2', 'Kont ou', `<ul class="font-body text-sm text-on-surface-variant leading-relaxed"><li>Ou dwe bay ${kw('enfòmasyon vre')} lè w kreye kont ou.</li><li>Ou responsab tout sa k pase sou kont ou. Pa pataje modpas ou.</li><li>Ou dwe gen omwen ${kw('18 an')}.</li><li>Nou ka sispann yon kont ki bay fo enfòmasyon oswa ki vyole kondisyon sa yo.</li></ul>`],
+                ['3', 'Pou vandè yo', `<ul class="font-body text-sm text-on-surface-variant leading-relaxed"><li>Pou vann, ou dwe ${kw('verifye idantite w')} ak yon CIN oswa yon Paspò — yon administratè ap tcheke l.</li><li>Ou responsab pwodwi w yo: deskripsyon egzak, foto reyèl, pri klè, epi ou gen dwa vann yo.</li><li>Pwodwi entèdi: nenpòt bagay ilegal, danjre, kontrefè, oswa ki vyole lwa peyi a.</li></ul>`],
+                ['4', 'Kijan yon acha mache (eskwo)', `<ul class="font-body text-sm text-on-surface-variant leading-relaxed"><li>Lè yon achtè peye, lajan an ${kw('pa ale dirèk')} bay vandè a: li rete bloke (eskwo) jiskaske achtè a konfime li resevwa pwodwi a ak yon kòd OTP.</li><li>Kounye a, peman yo fèt ak ${kw('MonCash')} epi yo verifye alamen pa ekip Ekomat.</li><li>Se Ekomat ki lage lajan an bay vandè a apre konfimasyon resepsyon an. Si achtè a pa reponn epi pa gen okenn dezakò, lajan an ka lage otomatikman apre ${kw('7 jou')}.</li></ul>`],
+                ['5', 'Komisyon', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Ekomat pran yon ti komisyon sou chak vant (${kw('kounye a 3%')}). Montan an toujou parèt anvan ou konfime tranzaksyon an.</p>`],
+                ['6', 'Livrezon ak ranmasaj', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Achtè ak vandè antann yo sou yon pwen ranmasaj. Ekomat fasilite kontak la men li pa responsab transpò a menm.</p>`],
+                ['7', 'Ranbousman ak dezakò', `<ul class="font-body text-sm text-on-surface-variant leading-relaxed"><li>Si yon pwodwi pa rive, oswa li pa koresponn ak deskripsyon an, achtè a ka louvri yon ${kw('dezakò')}.</li><li>Yon administratè ap egzamine ka a epi deside nan yon delè ${kw('7 jou')}.</li></ul>`],
+                ['8', 'Sa ou pa gen dwa fè', `<ul class="font-body text-sm text-on-surface-variant leading-relaxed"><li>Bay fo enfòmasyon, fè fwod, oswa eseye kontounen sistèm eskwo a.</li><li>Pataje kontni ilegal, voye mesaj abi, oswa deranje lòt itilizatè.</li></ul>`],
+                ['9', 'Sispansyon kont', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Nou ka avèti, sispann, oswa bloke yon kont ki vyole kondisyon sa yo, san ranbousman komisyon ki deja peye.</p>`],
+                ['10', 'Responsablite', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Ekomat bay yon sèvis "jan li ye a". Kòm nou pa vandè a, ${kw('nou pa garanti kalite oswa eta chak pwodwi')}. Nou fè tout efò rezonab pou platfòm nan rete an sekirite, men nou pa responsab pou aksyon endividyèl yon vandè oswa yon achtè.</p>`],
+                ['11', 'Chanjman nan kondisyon yo', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Nou ka mete kondisyon sa yo ajou. Lè yo chanje anpil, n ap mande w aksepte vèsyon ki nouvo a anvan w kontinye.</p>`],
+                ['12', 'Lwa aplikab', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Kondisyon sa yo swiv lwa peyi Dayiti.</p>`],
+                ['13', 'Kontak', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Pou nenpòt kesyon, kontakte nou atravè ${kw('Asistan Ekomat')} ki nan app la.</p>`],
+            ];
+            const priv = [
+                ['1', 'Ki done nou kolekte', `<ul class="font-body text-sm text-on-surface-variant leading-relaxed"><li>${kw('Kont:')} non, telefòn, imel, foto pwofil.</li><li>${kw('Verifikasyon vandè:')} foto CIN oswa Paspò w.</li><li>${kw('Peman:')} nimewo MonCash ak referans peman.</li><li>${kw('Pozisyon:')} si w bay pèmisyon, GPS ou pou zòn ranmasaj (opsyonèl).</li><li>${kw('Aktivite:')} pwodwi, kòmand, ak mesaj.</li><li>${kw('Done teknik:')} enfòmasyon aparèy pou notifikasyon ak sekirite.</li></ul>`],
+                ['2', 'Poukisa nou kolekte yo', `<ul class="font-body text-sm text-on-surface-variant leading-relaxed"><li>Pou fè tranzaksyon yo mache (eskwo, livrezon).</li><li>Pou verifye vandè yo epi konbat fwod.</li><li>Pou voye notifikasyon.</li><li>Pou bay sipò.</li></ul>`],
+                ['3', 'Ak kiyès nou pataje', `<ul class="font-body text-sm text-on-surface-variant leading-relaxed"><li>Founisè enfrastrikti (Supabase).</li><li>Sèvis notifikasyon (Firebase).</li><li>MonCash / Digicel pou peman.</li><li>${kw('Nou pa vann done w bay okenn lòt konpayi.')}</li></ul>`],
+                ['4', 'Pozisyon jeyografik', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Nou itilize pozisyon w sèlman pou zòn ranmasaj. Ou ka refize li, epi app la ap toujou mache.</p>`],
+                ['5', 'Konbyen tan nou kenbe done', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Nou kenbe done w pandan kont ou aktif, epi otan tan sa nesesè pou tranzaksyon ak obligasyon legal.</p>`],
+                ['6', 'Dwa ou', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Ou ka gade, korije, oswa mande efase enfòmasyon w. Kèk done ka rete pou entegrite kòmand ak eskwo yo. Pou fè yon demann, kontakte Asistan Ekomat.</p>`],
+                ['7', 'Sekirite', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Nou pwoteje done yo ak règ aksè (RLS), sistèm eskwo, ak koneksyon chifre (HTTPS). Okenn sistèm pa 100% san risk, men nou fè tout efò rezonab.</p>`],
+                ['8', 'Timoun', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Ekomat pa fèt pou moun ki gen mwens pase ${kw('18 an')}.</p>`],
+                ['9', 'Chanjman', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Si nou chanje politik sa a, n ap fè w konnen nan app la.</p>`],
+                ['10', 'Kontak', `<p class="font-body text-sm text-on-surface-variant leading-relaxed">Pou kesyon sou done w, kontakte Asistan Ekomat nan app la.</p>`],
+            ];
+            const block = (tag, title, sub, rows) =>
+                `<div class="lgl-doc"><p class="font-label text-[11px] font-bold uppercase tracking-[.12em] text-tertiary mb-1" style="color:#97422b">${tag}</p>
+                 <h3 class="font-headline font-extrabold text-lg text-on-surface tracking-tight">${title}</h3>
+                 <p class="font-body text-sm text-on-surface-variant mb-1">${sub}</p>
+                 ${rows.map(r => _lglClause(r[0], r[1], r[2])).join('')}</div>`;
+            return block('Dokiman 1', 'Kondisyon Itilizasyon', 'Règ ki genyen ant ou menm ak Ekomat.', tos)
+                 + block('Dokiman 2', 'Politik Konfidansyalite', 'Ki done nou kolekte, poukisa, ak sa nou fè avè yo.', priv)
+                 + `<p class="font-label text-[11px] text-on-surface-variant mt-6 mb-2">Vèsyon ${TERMS_VERSION} · jiyè 2026</p>`;
+        }
+        function openLegal() {
+            const box = document.getElementById('legalBody');
+            if (box && !box.dataset.filled) { box.innerHTML = _legalDocsHTML(); box.dataset.filled = '1'; }
+            if (typeof openSheet === 'function') openSheet('legalSheet');
+        }
+        window.openLegal = openLegal;
+
+        async function _writeTermsConsent() {
+            try {
+                if (db && A.user && A.user.uid) {
+                    await db.from('profiles').update({
+                        terms_version: TERMS_VERSION,
+                        terms_accepted_at: new Date().toISOString(),
+                    }).eq('id', A.user.uid);
+                }
+            } catch (_) { /* kolòn ka poko deplwaye — pa deranje itilizatè a */ }
+        }
+        async function acceptTerms() {
+            const btn = document.getElementById('termsAcceptBtn');
+            if (btn) btn.classList.add('btn-loading');
+            await _writeTermsConsent();
+            try { localStorage.removeItem('aym_terms_pending'); } catch (_) { }
+            if (A.user) A.user.termsVersion = TERMS_VERSION;
+            if (btn) btn.classList.remove('btn-loading');
+            closeSheets();
+            toast('Mèsi — ou aksepte kondisyon yo');
+        }
+        window.acceptTerms = acceptTerms;
+
+        // Apre koneksyon: enskripsyon ki fèk koche → ekri konsantman an;
+        // kont ki poko aksepte vèsyon aktyèl la → montre fèy akseptasyon (pa bloke).
+        async function _checkTermsConsent() {
+            if (!db || !A.user || !A.user.uid) return;
+            let pending = null;
+            try { pending = localStorage.getItem('aym_terms_pending'); } catch (_) { }
+            let ver = null;
+            try {
+                const { data } = await db.from('profiles').select('terms_version').eq('id', A.user.uid).maybeSingle();
+                ver = data ? Number(data.terms_version) : null;
+            } catch (_) { return; } // kolòn poko la → pa fè anyen
+            if (ver === TERMS_VERSION) { try { localStorage.removeItem('aym_terms_pending'); } catch (_) { } return; }
+            if (pending) { await _writeTermsConsent(); try { localStorage.removeItem('aym_terms_pending'); } catch (_) { } return; }
+            setTimeout(() => { if (typeof openSheet === 'function') openSheet('termsGateSheet'); }, 1200);
+        }
+        window._checkTermsConsent = _checkTermsConsent;
+
         const BOT_ANSWERS = {
             pay: {
                 q: 'Comment payer ? (MonCash)',
@@ -14631,6 +14796,11 @@
                 q: 'Kontakte Admin',
                 r: `Ranpli fòm tiket anba a. Admin pral reponn ou nan <strong>2 èdtan</strong> pandan jounen oswa nan <strong>maten</strong> si se aswè.\n\nAdmin ka ede ou ak:\n• Pwoblèm peman / verifikasyon MonCash\n• Litij ant achtè ak vandè\n• Pwoblèm livrezon / pwen kolèk\n• Verifikasyon kont vandè\n• Nenpòt lòt kesyon`,
                 ticket: true
+            },
+            legal: {
+                q: 'Kondisyon & vi prive',
+                r: `Men de dokiman legal Ekomat yo:\n• <strong>Kondisyon Itilizasyon</strong> — règ yo, eskwo, komisyon, responsablite.\n• <strong>Politik Konfidansyalite</strong> — ki done nou kolekte ak sa nou fè avè yo.\n\nPeze bouton anba a pou li yo.`,
+                openLegal: true
             }
         };
 
@@ -14672,6 +14842,14 @@
                 if (ans.ticket) {
                     document.getElementById('ticketBlock')?.classList.remove('hidden');
                     document.getElementById('botQuickBtns')?.classList.add('hidden');
+                }
+                if (ans.openLegal) {
+                    const b = document.createElement('button');
+                    b.className = 'w-full mt-1 py-3 rounded-xl font-headline font-bold text-sm active:scale-[.98] transition-transform flex items-center justify-center gap-2';
+                    b.style.cssText = 'background:rgba(0,102,111,.08);color:#00666f';
+                    b.innerHTML = '<span class="material-symbols-outlined fi" style="font-size:18px">description</span> Li kondisyon yo';
+                    b.onclick = () => { if (typeof openLegal === 'function') openLegal(); };
+                    msgs.appendChild(b);
                 }
                 msgs.scrollTop = msgs.scrollHeight;
             }, 900);
@@ -15776,6 +15954,9 @@
             try { localStorage.setItem('aym_geozone', JSON.stringify(A.pickupZone)); } catch (_) { }
             if (typeof _syncPubZoneField === 'function') _syncPubZoneField();
         }
+        // Konsantman kondisyon: ekri sa yon nouvo enskripsyon te koche, oswa
+        // mande yon kont ki poko aksepte vèsyon aktyèl la (pa bloke app la).
+        if (typeof _checkTermsConsent === 'function') _checkTermsConsent();
         // Pre-load adrès anrejistre yo pou pwofil menu/kòmand sheet la wè yo deja.
         if (typeof loadMyAddresses === 'function') {
             loadMyAddresses().catch(() => { /* annilo */ });
